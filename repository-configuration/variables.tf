@@ -13,7 +13,7 @@ variable "organisation" {
 variable "repository_description" {
   description = "GitHub repository description."
   type        = string
-  default     = "A simple API for controlled addition of data in environments where free text is not appropriate"
+  default     = "An API which manages IRIS's interactions with Integration Architecture, originally based on the ndt-demo-write-api."
 }
 
 variable "requirement_tracking_url_base" {

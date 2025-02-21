@@ -1,0 +1,16 @@
+resources:
+  - service-account.yaml
+  - deployment.yaml
+  - service.yaml
+  - istio/virtualService.yaml
+  - istio/gateway.yaml
+  - istio/preauthentication.yaml
+  - istio/requestAuthentication.yaml
+  - istio/authorizationpolicy/allow-ingress-to-iris-write-api.yaml
+  - istio/authorizationpolicy/deny-by-default.yaml
+
+labels:
+  - pairs:
+      app: iris-write-api
+      env: ENV_PLACEHOLDER
+      app.kubernetes.io/name: iris-write-api

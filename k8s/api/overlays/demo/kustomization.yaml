@@ -7,18 +7,15 @@ configMapGenerator:
   - name: iris-write-api-configs
     envs:
       - params.env
-secretGenerator:
-  - name: iris-write-api-secrets
-    envs:
-      - secrets.env
+
 
 patches:
-  - path: patches/gateway.yaml
+  - path: patches/virtualService.yaml
     target:
-      kind: Gateway
-  - path: patches/allow-ingress-to-write-api.yaml
+      kind: VirtualService
+  - path: patches/service-account.yaml
     target:
-      kind: AuthorizationPolicy
+      kind: ServiceAccount
 
 
 labels:

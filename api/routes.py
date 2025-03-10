@@ -568,6 +568,75 @@ def get_building_by_uprn(uprn: str, req: Request):
     return out
 
 
+@router.get(
+    "/flagged-buildings",
+    description="Gets all buildings that have been flagged"
+)
+def get_flagged_buildings(req: Request):
+    query = f"""
+        PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
+        PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX gp: <https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#>
+
+        SELECT
+            (REPLACE(STR(?uprn), "http://nationaldigitaltwin.gov.uk/data#uprn_", "") as ?UPRN)
+            (?building_toid_id AS ?TOID)
+            (?parent_building_toid_id AS ?ParentTOID)
+            (?flag as ?Flagged)
+            (REPLACE(STR(?flag_date), "http://iso.org/iso8601#", "") as ?FlagDate)
+        WHERE {{
+            ?state ies:isStateOf ?building .
+
+            ?building ies:isIdentifiedBy ?uprn .
+            ?uprn ies:representationValue ?uprn_id .
+            ?uprn rdf:type gp:UniquePropertyReferenceNumber .
+
+            ?flag ies:interestedIn ?building .
+            FILTER NOT EXISTS {{ ?flag_assessment ies:assessed ?flag . }}
+
+            OPTIONAL {{
+                ?building ies:isIdentifiedBy ?building_toid .
+                ?building_toid rdf:type ies:TOID .
+                ?building_toid ies:representationValue ?building_toid_id .
+            }}
+
+            OPTIONAL {{
+                ?building ies:isPartOf ?parent_building .
+                ?parent_building ies:isIdentifiedBy ?parent_building_toid .
+                ?parent_building_toid ies:representationValue ?parent_building_toid_id .
+                ?parent_building_toid rdf:type ies:TOID .
+            }}
+
+            OPTIONAL {{
+                ?flag ies:inPeriod ?flag_date .
+            }}
+        }}
+        GROUP BY
+            ?flag
+            ?flag_date
+            ?building_toid_id
+            ?parent_building_toid_id
+            ?uprn
+    """
+
+    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    
+    response_data = []
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            flag_data = {
+                "UPRN": result["UPRN"]["value"] if "UPRN" in result else None,
+                "TOID": result["TOID"]["value"] if "TOID" in result else None,
+                "ParentTOID": result["ParentTOID"]["value"] if "ParentTOID" in result else None,
+                "Flagged": result["Flagged"]["value"],
+                "FlagDate": result["FlagDate"]["value"] if "FlagDate" in result else None
+            }
+            response_data.append(flag_data)
+
+    return response_data
+
+
 @router.post(
     "/flag-to-visit",
     description="Add a flag to an Entity instance as being worth visiting - URI of Entity must be provided",

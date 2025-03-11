@@ -1,5 +1,5 @@
 import requests
-from api.utils import get_headers
+from utils import get_headers
 
 
 class AccessClient:

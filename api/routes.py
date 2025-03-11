@@ -8,10 +8,10 @@ import requests
 from dotenv import load_dotenv
 from requests import exceptions
 import uuid
-from api.access import AccessClient
+from access import AccessClient
 import configparser
-from api.utils import get_headers as get_forwarding_headers
-from api.models import (
+from utils import get_headers as get_forwarding_headers
+from models import (
     ies,
     ClassificationEmum,
     EDH,

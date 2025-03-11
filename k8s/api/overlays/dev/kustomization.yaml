@@ -8,7 +8,6 @@ configMapGenerator:
     envs:
       - params.env
 
-
 patches:
   - path: patches/virtualService.yaml
     target:
@@ -17,11 +16,9 @@ patches:
     target:
       kind: ServiceAccount
 
-
 labels:
   - pairs:
       env: dev
-
 
 images:
   - name: iris-write-api-image

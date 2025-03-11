@@ -6,17 +6,17 @@ metadata:
   name: iris-write-api
 spec:
   hosts:
-    - iris.demo.ndtp.co.uk
+    - placeholder
   gateways:
     - iris/iris-write-api-ingress-gateway
   http:
     - match:
         - uri:
-            prefix: /write-api
+            prefix: /api
 
       rewrite:
         uriRegexRewrite:
-          match: ^/write-api/?(.*)$
+          match: ^/api/?(.*)$
           rewrite: /\1
       route:
         - destination:

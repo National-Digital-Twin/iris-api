@@ -14,10 +14,10 @@ class AccessClient:
 
         # Check for the environment variable at startup.
         if not self.dev:
-            self.identity_api_base_url = os.environ.get('IDENTITY_API_BASE_URL')
-            if not self.identity_api_base_url:
-                logger.error("IDENTITY_API_BASE_URL environment variable is not set.")
-                raise Exception("IDENTITY_API_BASE_URL environment variable is not set.")
+            self.IDENTITY_API_URL = os.environ.get('IDENTITY_API_URL')
+            if not self.IDENTITY_API_URL:
+                logger.error("IDENTITY_API_URL environment variable is not set.")
+                raise Exception("IDENTITY_API_URL environment variable is not set.")
 
     def get_user_details(self, headers):
         # If in dev mode, return dummy data.
@@ -26,7 +26,7 @@ class AccessClient:
             return {"username": "Test User1", "user_id": "1234-5678-99ab-cdef"}
         
         # Build the full URL for the API call.
-        url = f"{self.identity_api_base_url}/api/v1/user-details"
+        url = f"{self.IDENTITY_API_URL}/api/v1/user-details"
         logger.info("Making API call to %s", url)
 
         try:

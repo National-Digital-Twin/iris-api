@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 from api.routes import router, run_sparql_query
 
 @pytest.fixture(autouse=True)
-def set_identity_api_base_url(monkeypatch):
+def set_IDENTITY_API_URL(monkeypatch):
     # Set the environment variable for all tests.
-    monkeypatch.setenv("IDENTITY_API_BASE_URL", "https://test.com")
+    monkeypatch.setenv("IDENTITY_API_URL", "https://test.com")
 
 @pytest.fixture
 def client():

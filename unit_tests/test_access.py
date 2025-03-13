@@ -58,6 +58,6 @@ def test_api_error_response(mocker, connection_string, headers):
 
 def test_missing_environment_variable(monkeypatch, connection_string, headers):
     # Remove the environment variable to simulate a missing configuration.
-    monkeypatch.delenv("IDENTITY_API_BASE_URL", raising=False)
-    with pytest.raises(Exception, match="IDENTITY_API_BASE_URL environment variable is not set"):
+    monkeypatch.delenv("IDENTITY_API_URL", raising=False)
+    with pytest.raises(Exception, match="IDENTITY_API_URL environment variable is not set"):
         AccessClient(connection_string, dev_mode=False)

@@ -1030,8 +1030,3 @@ def post_assessment(ass: IesAssessment, req: Request):
 
             return ass.uri
     raise HTTPException(status_code=400, detail="Could not create assessment")
-
-
-# #Create a temporary person for this demo...until we can do something else...
-# person = IesPerson(uri=test_person_uri,givenName = "Test",surname = "User")
-# post_person(person)

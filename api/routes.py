@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Request, Response, HTTPException
+from fastapi import APIRouter, Request, Response, HTTPException, Depends, Header
 import os
 import requests
 from dotenv import load_dotenv
@@ -63,6 +63,15 @@ if update_mode == "KAFKA":
     knowledgeAdapter = Adapter(
         knowledgeSink, name="IoW Write-Back API", source_name="local data"
     )
+
+
+async def get_auth_token(x_auth_request_access_token: str = Header(None)):
+    if not x_auth_request_access_token:
+        raise HTTPException(
+            status_code=401, 
+            detail="Authentication required. Missing x-auth-request-access-token header"
+        )
+    return x_auth_request_access_token
 
 
 def get_headers(security_labels):
@@ -307,9 +316,11 @@ def read_root():
     response_model=List[IesClass],
     description="returns all the subclasses of ies:Assessment that are in the ontology",
 )
-def get_assessments(req: Request):
+def get_assessments(req: Request, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(req.headers)
+    headers["x-auth-request-access-token"] = token
     sub_classes, sub_list = get_subtypes(
-        ies + "Assessment", get_forwarding_headers(req.headers)
+        ies + "Assessment", headers
     )
     global assessment_classes
     assessment_classes = sub_classes
@@ -321,10 +332,12 @@ def get_assessments(req: Request):
     response_model=List[IesClass],
     description="returns all the subclasses of BuildingState that are in the ontology",
 )
-def get_building_state_classes(req: Request):
+def get_building_state_classes(req: Request, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(req.headers)
+    headers["x-auth-request-access-token"] = token
     sub_classes, sub_list = get_subtypes(
         ndt_ont + "BuildingState",
-        get_forwarding_headers(req.headers),
+        headers,
         exclude_super=ies + "Location",
     )
     global building_state_classes
@@ -358,7 +371,10 @@ def post_person(per: IesPerson):
     response_model=List[Building],
     description="Gets all the buildings inside a geohash (min 5 digits) along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_geohash(geohash: str, req: Request):
+def get_buildings_in_geohash(geohash: str, req: Request, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(req.headers)
+    headers["x-auth-request-access-token"] = token
+
     if len(geohash) < 5:
         raise HTTPException(
             422, detail="Lat Lon range too wide, please provide at least five digits"
@@ -425,7 +441,7 @@ def get_buildings_in_geohash(geohash: str, req: Request):
 
     out = {}
     out_array = []
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    results = run_sparql_query(query, headers)
 
     if results and results["results"] and results["results"]["bindings"]:
         for result in results["results"]["bindings"]:
@@ -484,7 +500,10 @@ class InvalidateFlag(BaseModel):
     description="Post to this endpoint to invalidate an existing flag.",
     response_model=str,
 )
-def invalidate_flag(request: Request, invalid: InvalidateFlag):
+def invalidate_flag(request: Request, invalid: InvalidateFlag, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(request.headers)
+    headers["x-auth-request-access-token"] = token
+
     try:
         user = access_client.get_user_details(request.headers)
     except exceptions.RequestException as e:
@@ -499,7 +518,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     assessment = data_uri_stub + str(uuid.uuid4())
     (ass_subclasses, ass_list) = get_subtypes(
         prefix_dict["ndt_ont"] + "AssessToBeFalse",
-        get_forwarding_headers(request.headers),
+        headers,
     )
     # print(ass_subclasses)
     if (
@@ -528,7 +547,10 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     response_model=IesEntityAndStates,
     description="returns the building that corresponds to the provided UPRN",
 )
-def get_building_by_uprn(uprn: str, req: Request):
+def get_building_by_uprn(uprn: str, req: Request, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(req.headers)
+    headers["x-auth-request-access-token"] = token
+
     query = f'''SELECT ?building ?buildingType ?state ?stateType WHERE
                 {{
                     ?building ies:isIdentifiedBy ?uprnID .
@@ -540,7 +562,7 @@ def get_building_by_uprn(uprn: str, req: Request):
                     }}
                 }}
             '''
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    results = run_sparql_query(query, headers)
     building = {
         "uri": "",
         "types": [],
@@ -572,7 +594,10 @@ def get_building_by_uprn(uprn: str, req: Request):
     "/buildings/{uprn}/flag-history",
     description="Gets the flagging and assessment history for a specific building identified by its UPRN"
 )
-def get_building_flag_history(uprn: str, req: Request):
+def get_building_flag_history(uprn: str, req: Request, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(req.headers)
+    headers["x-auth-request-access-token"] = token
+
     query = f"""
         PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
         PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
@@ -632,7 +657,7 @@ def get_building_flag_history(uprn: str, req: Request):
             ?uprn
     """
 
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    results = run_sparql_query(query, headers)
     
     flag_history = []
     if results and results["results"] and results["results"]["bindings"]:
@@ -658,7 +683,10 @@ def get_building_flag_history(uprn: str, req: Request):
     "/flagged-buildings",
     description="Gets all buildings that have been flagged"
 )
-def get_flagged_buildings(req: Request):
+def get_flagged_buildings(req: Request, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(req.headers)
+    headers["x-auth-request-access-token"] = token
+
     query = f"""
         PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
         PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
@@ -706,7 +734,7 @@ def get_flagged_buildings(req: Request):
             ?uprn
     """
 
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    results = run_sparql_query(query, headers)
     
     response_data = []
     if results and results["results"] and results["results"]["bindings"]:
@@ -728,7 +756,10 @@ def get_flagged_buildings(req: Request):
     description="Add a flag to an Entity instance as being worth visiting - URI of Entity must be provided",
     response_model=str,
 )
-def post_flag_visit(request: Request, visited: IesEntity):
+def post_flag_visit(request: Request, visited: IesEntity, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(request.headers)
+    headers["x-auth-request-access-token"] = token
+
     if not visited or not visited.uri:
         raise HTTPException(422, "URI of flagged entity must be provided")
     try:
@@ -756,7 +787,7 @@ def post_flag_visit(request: Request, visited: IesEntity):
     """
     run_sparql_update(
         query=query,
-        forwarding_headers=get_forwarding_headers(request.headers),
+        forwarding_headers=headers,
         securityLabel=visited.securityLabel,
     )
     return flag_state
@@ -767,7 +798,10 @@ def post_flag_visit(request: Request, visited: IesEntity):
     description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
     response_model=str,
 )
-def post_flag_investigate(request: Request, visited: IesEntity):
+def post_flag_investigate(request: Request, visited: IesEntity, token: str = Depends(get_auth_token)):
+    headers = get_forwarding_headers(request.headers)
+    headers["x-auth-request-access-token"] = token
+
     if not visited or not visited.uri:
         raise HTTPException(422, "URI of flagged entity must be provided")
     try:
@@ -797,7 +831,7 @@ def post_flag_investigate(request: Request, visited: IesEntity):
     print(query)
     run_sparql_update(
         query=query,
-        forwarding_headers=get_forwarding_headers(request.headers),
+        forwarding_headers=headers,
         securityLabel=visited.securityLabel,
     )
     return flag_state

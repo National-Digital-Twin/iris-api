@@ -3,6 +3,7 @@ pass_through_headers = [
     "x-amzn-oidc-accesstoken",
     "x-amzn-oidc-identity",
     "Authorization",
+    "x-auth-request-access-token",
 ]
 
 

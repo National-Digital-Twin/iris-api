@@ -30,7 +30,7 @@ class AccessClient:
         logger.info("Making API call to %s", url)
 
         try:
-            res = requests.get(url, headers=get_headers(headers))
+            res = requests.get(url, headers=headers)
         except Exception as e:
             logger.exception("Error making API call: %s", e)
             return {"error": "API call failed", "details": str(e)}

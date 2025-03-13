@@ -1,10 +1,7 @@
 pass_through_headers = [
-    "x-amzn-oidc-data",
-    "x-amzn-oidc-accesstoken",
-    "x-amzn-oidc-identity",
+    "X-Auth-Request-Access-Token",
     "Authorization",
 ]
-
 
 def get_headers(headers):
     forward_headers = {}

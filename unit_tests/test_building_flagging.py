@@ -9,6 +9,11 @@ import requests
 from api.routes import router, access_client, run_sparql_update, create_person_insert, InvalidateFlag
 from api.models import IesEntity, EDH, ClassificationEmum
 
+@pytest.fixture(autouse=True)
+def set_identity_api_base_url(monkeypatch):
+    # Set the environment variable for all tests.
+    monkeypatch.setenv("IDENTITY_API_BASE_URL", "https://test.com")
+
 @pytest.fixture
 def client():
     """Create a test client with the router mounted on a FastAPI app."""
@@ -39,9 +44,10 @@ def entity_to_flag():
 # Test data: Invalid flag data with fully qualified URI
 @pytest.fixture
 def invalid_flag_data():
+    edh_instance = EDH(classification=ClassificationEmum.official)
     return InvalidateFlag(
-        flagUri="http://nationaldigitaltwin.gov.uk/data#flag-123",  # Use full URI
-        securityLabel=EDH(classification=ClassificationEmum.official)
+        flagUri="http://nationaldigitaltwin.gov.uk/data#flag-123",
+        securityLabel=edh_instance.model_dump()  # pass a dict instead of an instance
     )
 
 # Common patching for run_sparql_update and access_client.get_user_details

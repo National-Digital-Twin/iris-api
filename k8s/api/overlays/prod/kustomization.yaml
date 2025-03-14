@@ -15,7 +15,7 @@ patches:
 
 labels:
   - pairs:
-      env: dev
+      env: prod
 
 images:
   - name: iris-write-api-image

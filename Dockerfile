@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0"]
+CMD ["python", "api/main.py", "--host", "0.0.0.0"]

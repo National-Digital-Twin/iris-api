@@ -9,9 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     librdkafka-dev \
     libssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
     python3-dev
-
-RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

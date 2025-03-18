@@ -7,10 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cargo \
     git \
     libffi-dev \
-    libssl-dev \
     librdkafka-dev \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libssl-dev \
+    python3-dev
 
 WORKDIR /app
 

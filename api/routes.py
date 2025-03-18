@@ -194,7 +194,7 @@ def run_sparql_update(
             print(e)
             raise e
     else:
-        raise Exception("unknown update mode: " + update_mode)
+        raise ValueError("unknown update mode: " + update_mode)
 
 
 def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
@@ -661,7 +661,7 @@ def get_building_flag_history(uprn: str, req: Request):
     description="Gets all buildings that have been flagged"
 )
 def get_flagged_buildings(req: Request):
-    query = f"""
+    query = """
         PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
         PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -952,6 +952,7 @@ def post_assess_to_be_false(ass: IesAssessToBeFalse):
 )
 def post_uri_stub(uri: str):
     data_uri_stub = uri  # noqa: F841
+    return data_uri_stub
 
 @router.get(
     "/uri-stub",

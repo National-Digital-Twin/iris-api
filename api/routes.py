@@ -54,6 +54,8 @@ access_path = os.getenv("ACCESS_PATH", "/")
 broker = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
 fpTopic = os.getenv("IES_TOPIC", "knowledge")
 
+ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
+ISO_8601_URL = "http://iso.org/iso8601#"
 
 if update_mode == "KAFKA":
     from telicent_lib.sinks import KafkaSink
@@ -184,7 +186,7 @@ def run_sparql_update(
     elif update_mode == "KAFKA":
         g = Graph()
         g.update(query)
-        outData = g.serialize(format="nt")
+        out_data = g.serialize(format="nt")
         try:
             record = Record(get_headers(sec_label.to_string()), None, outData)
             knowledgeAdapter.send(record)
@@ -493,18 +495,18 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
                 e.response.status_code, f"Error calling Access:{e.response.reason}"
             )
         else:
-            raise HTTPException(500, "Error calling Access, Internal Server Error")
+            raise HTTPException(500, ACCESS_API_CALL_ERROR)
     assessor, person = create_person_insert(user["user_id"], user["username"])
-    assessment_time = "http://iso.org/iso8601#" + datetime.now().isoformat()
+    assessment_time = ISO_8601_URL + datetime.now().isoformat()
     assessment = data_uri_stub + str(uuid.uuid4())
-    (ass_subclasses, ass_list) = get_subtypes(
+    (assessment_subclasses, assessment_list) = get_subtypes(
         prefix_dict["ndt_ont"] + "AssessToBeFalse",
         get_forwarding_headers(request.headers),
     )
-    # print(ass_subclasses)
+
     if (
         invalid.assessmentTypeOverride != prefix_dict["ndt_ont"] + "AssessToBeFalse"
-        and lengthen(invalid.assessmentTypeOverride) not in ass_subclasses
+        and lengthen(invalid.assessmentTypeOverride) not in assessment_subclasses
     ):
         raise HTTPException(
             422, "assessmentTypeOverride must be a subclass of ndt_ont:AssessToBeFalse"
@@ -553,15 +555,15 @@ def get_building_by_uprn(uprn: str, req: Request):
                 building["types"].append(result["buildingType"]["value"])
             if result["state"]["value"]:
                 state = result["state"]["value"]
-                stateType = result["stateType"]["value"]
+                state_type = result["stateType"]["value"]
                 if state not in states:
                     states[state] = {
                         "uri": state,
                         "types": [],
                         "stateOf": building["uri"],
                     }
-                if stateType not in states[state]["types"]:
-                    states[state]["types"].append(stateType)
+                if state_type not in states[state]["types"]:
+                    states[state]["types"].append(state_type)
     out = {"entity": building, "states": []}
     for state in states:
         out["states"].append(states[state])
@@ -739,10 +741,10 @@ def post_flag_visit(request: Request, visited: IesEntity):
                 e.response.status_code, f"Error calling Access:{e.response.reason}"
             )
         else:
-            raise HTTPException(500, "Error calling Access, Internal Server Error")
+            raise HTTPException(500, ACCESS_API_CALL_ERROR)
     flagger, person = create_person_insert(user["user_id"], user["username"])
 
-    flag_time = "http://iso.org/iso8601#" + datetime.now().isoformat()
+    flag_time = ISO_8601_URL + datetime.now().isoformat()
     flag_state = data_uri_stub + str(uuid.uuid4())
     query = f"""
         {format_prefixes()}
@@ -778,11 +780,11 @@ def post_flag_investigate(request: Request, visited: IesEntity):
                 e.response.status_code, f"Error calling Access:{e.response.reason}"
             )
         else:
-            raise HTTPException(500, "Error calling Access, Internal Server Error")
+            raise HTTPException(500, ACCESS_API_CALL_ERROR)
 
     flagger, person = create_person_insert(user["user_id"], user["username"])
 
-    flag_time = "http://iso.org/iso8601#" + datetime.now().isoformat()
+    flag_time = ISO_8601_URL + datetime.now().isoformat()
     flag_state = data_uri_stub + str(uuid.uuid4())
     query = f"""
         {format_prefixes()}
@@ -814,7 +816,7 @@ def post_building_state(bs: IesState):
             )
     mint_uri(bs)
     if bs.startDateTime:
-        start_date = "http://iso.org/iso8601#" + bs.startDateTime.isoformat().replace(
+        start_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(
             " ", "T"
         )
         start_sparql = f"""
@@ -826,7 +828,7 @@ def post_building_state(bs: IesState):
         start_sparql = """"""
 
     if bs.endDateTime:
-        end_date = "http://iso.org/iso8601#" + bs.startDateTime.isoformat().replace(
+        end_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(
             " ", "T"
         )
         end_sparql = f"""
@@ -837,7 +839,6 @@ def post_building_state(bs: IesState):
     else:
         end_sparql = """"""
 
-    end_date = "http://iso.org/iso8601#" + bs.endDateTime.isoformat().replace(" ", "T")
     query = f"""INSERT DATA
             {{
                 <{bs.uri}> a <{bs.stateType}> .
@@ -951,8 +952,6 @@ def post_assess_to_be_false(ass: IesAssessToBeFalse):
 )
 def post_uri_stub(uri: str):
     data_uri_stub = uri  # noqa: F841
-    return
-
 
 @router.get(
     "/uri-stub",
@@ -970,7 +969,6 @@ def get_uri_stub():
 def post_default_security_label(label: EDH):
     global default_security_label
     default_security_label = label
-    return
 
 
 @router.get(
@@ -983,7 +981,7 @@ def get_default_security_label():
 
 
 # @app.post("/assessments")
-def post_assessment(ass: IesAssessment, req: Request):
+def post_assessment(ass: IesAssessment):
     mint_uri(ass)
     state_uri = ""
     start_state = ""
@@ -1006,10 +1004,10 @@ def post_assessment(ass: IesAssessment, req: Request):
             else:
                 user = data_uri_stub + "JaneDoe"  # DON'T KNOW HOW TO GET THE USER ID
 
-            start_date = "http://iso.org/iso8601#" + ass.startDate.isoformat().replace(
+            start_date = ISO_8601_URL + ass.startDate.isoformat().replace(
                 " ", "T"
             )
-            end_date = "http://iso.org/iso8601#" + ass.endDate.isoformat().replace(
+            end_date = ISO_8601_URL + ass.endDate.isoformat().replace(
                 " ", "T"
             )
             query = f"""INSERT DATA

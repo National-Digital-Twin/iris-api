@@ -118,7 +118,7 @@ An Insomnia (https://insomnia.rest/) test suite is also provided as a JSON confi
 
 ## Unit Tests
 
-Unit tests can be run by running the following command in the root directory : python -m pytest unit_tests/test_file_name.py
+Unit tests can be run by running the following command in the root directory: `python -m pytest`
 
 ## Security
 

@@ -1,9 +1,15 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 ARG PIP_EXTRA_INDEX_URL
 
 ARG PIP_EXTRA_INDEX_URL
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cargo \
     git \
+    libffi-dev \
+    libssl-dev \
+    librdkafka-dev \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

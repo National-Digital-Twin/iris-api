@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     python3-dev
 
+RUN rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV PATH /home/worker/.local/bin:${PATH}

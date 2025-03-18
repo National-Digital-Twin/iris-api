@@ -188,7 +188,7 @@ def run_sparql_update(
         g.update(query)
         out_data = g.serialize(format="nt")
         try:
-            record = Record(get_headers(sec_label.to_string()), None, outData)
+            record = Record(get_headers(sec_label.to_string()), None, out_data)
             knowledgeAdapter.send(record)
         except Exception as e:
             print(e)

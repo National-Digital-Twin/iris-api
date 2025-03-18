@@ -3,13 +3,13 @@ ARG PIP_EXTRA_INDEX_URL
 
 ARG PIP_EXTRA_INDEX_URL
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
     build-essential \
-    python3-dev \
+    cargo \
+    git \
     libffi-dev \
     libssl-dev \
     librdkafka-dev \
-    cargo \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

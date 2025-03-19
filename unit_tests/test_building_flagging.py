@@ -10,7 +10,7 @@ from api.routes import router, access_client, run_sparql_update, create_person_i
 from api.models import IesEntity, EDH, ClassificationEmum
 
 @pytest.fixture(autouse=True)
-def set_IDENTITY_API_URL(monkeypatch):
+def set_identity_api_url(monkeypatch):
     # Set the environment variable for all tests.
     monkeypatch.setenv("IDENTITY_API_URL", "https://test.com")
 
@@ -83,7 +83,7 @@ class TestFlagToVisit:
         """Test successful flagging of a building as 'to visit'"""
         response = client.post(
             "/flag-to-visit",
-            json=entity_to_flag.dict(exclude_none=True)
+            json=entity_to_flag.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 200
@@ -107,7 +107,7 @@ class TestFlagToVisit:
         
         response = client.post(
             "/flag-to-visit",
-            json=invalid_entity.dict(exclude_none=True)
+            json=invalid_entity.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 422
@@ -130,7 +130,7 @@ class TestFlagToVisit:
         
         response = client.post(
             "/flag-to-visit",
-            json=entity_to_flag.dict(exclude_none=True)
+            json=entity_to_flag.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 403
@@ -145,7 +145,7 @@ class TestFlagToInvestigate:
         """Test successful flagging of a building as 'to investigate'"""
         response = client.post(
             "/flag-to-investigate",
-            json=entity_to_flag.dict(exclude_none=True)
+            json=entity_to_flag.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 200
@@ -168,7 +168,7 @@ class TestFlagToInvestigate:
         
         response = client.post(
             "/flag-to-investigate",
-            json=invalid_entity.dict(exclude_none=True)
+            json=invalid_entity.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 422
@@ -187,7 +187,7 @@ class TestFlagToInvestigate:
         
         response = client.post(
             "/flag-to-investigate",
-            json=entity_to_flag.dict(exclude_none=True)
+            json=entity_to_flag.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 500
@@ -211,7 +211,7 @@ class TestInvalidateFlag:
         
         response = client.post(
             "/invalidate-flag",
-            json=invalid_flag_data.dict(exclude_none=True)
+            json=invalid_flag_data.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 200
@@ -234,7 +234,7 @@ class TestInvalidateFlag:
         
         response = client.post(
             "/invalidate-flag",
-            json=invalid_flag_data.dict(exclude_none=True)
+            json=invalid_flag_data.model_dump(exclude_none=True)
         )
         
         assert response.status_code == 422

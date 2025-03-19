@@ -15,9 +15,9 @@ patches:
 
 labels:
   - pairs:
-      env: dev
+      env: prod
 
 images:
-  - name: iris-write-api-image:template
+  - name: iris-write-api-image
     newName: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/api
     newTag: '1736464040'

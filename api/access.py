@@ -17,7 +17,7 @@ class AccessClient:
             self.IDENTITY_API_URL = os.environ.get('IDENTITY_API_URL')
             if not self.IDENTITY_API_URL:
                 logger.error("IDENTITY_API_URL environment variable is not set.")
-                raise Exception("IDENTITY_API_URL environment variable is not set.")
+                raise KeyError("IDENTITY_API_URL environment variable is not set.")
 
     def get_user_details(self, headers):
         # If in dev mode, return dummy data.

@@ -2,7 +2,7 @@ from telicent_labels import SecurityLabelBuilder, TelicentSecurityLabelsV2
 from enum import Enum
 from pydantic import BaseModel
 from datetime import datetime, date
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 ies = "http://ies.data.gov.uk/ontology/ies4#"
 
@@ -44,14 +44,13 @@ class IesThing(BaseModel):
         uri - the uri of the created data object
     """
 
-    uri: str = None
-    securityLabel: EDH = None
+    uri: Optional[str] = None
+    securityLabel: Optional[EDH] = None
     types: List[str] = []
 
 
 class IesElement(IesThing):
-    inPeriod: date = None
-    pass
+    inPeriod: Optional[date] = None
 
 
 class IesEntity(IesElement):
@@ -65,7 +64,7 @@ class IesAssessment(IesThing):
 
     assessedItem: str
     assessor: str
-    assessmentType: str = None
+    assessmentType: Optional[str] = None
 
 
 class IesAssessToBeTrue(IesAssessment):
@@ -100,8 +99,8 @@ class IesState(IesElement):
     """
 
     stateOf: str
-    startDateTime: datetime = None
-    endDateTime: datetime = None
+    startDateTime: Optional[datetime] = None
+    endDateTime: Optional[datetime] = None
 
 
 class IesAccount(IesThing):
@@ -110,8 +109,8 @@ class IesAccount(IesThing):
     """
 
     id: str
-    name: str = None
-    email: str = None
+    name: Optional[str] = None
+    email: Optional[str] = None
 
 
 class IesPerson(IesThing):
@@ -124,12 +123,12 @@ class IesPerson(IesThing):
 
 
 class Building(IesThing):
-    uprn: str = None
-    currentEnergyRating: str = None
+    uprn: Optional[str] = None
+    currentEnergyRating: Optional[str] = None
     types: List[str] = []
-    parentBuildingTOID: str = None
-    buildingTOID: str = None
-    parentBuilding: str = None
+    parentBuildingTOID: Optional[str] = None
+    buildingTOID: Optional[str] = None
+    parentBuilding: Optional[str] = None
     flags: Dict = {}
 
 
@@ -141,7 +140,7 @@ class IesEntityAndStates(BaseModel):
 class AccessUser(BaseModel):
     username: str
     user_id: str
-    active: bool = None
-    email: str = None
+    active: Optional[bool] = None
+    email: Optional[str] = None
     attributes: dict[str, str]
     groups: List[str]

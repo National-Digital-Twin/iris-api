@@ -23,7 +23,7 @@ spec:
                    name: iris-write-api-secrets
 
 
-          image: iris-write-api-image
+          image: iris-write-api-image:template
           livenessProbe:
             exec:
               command:

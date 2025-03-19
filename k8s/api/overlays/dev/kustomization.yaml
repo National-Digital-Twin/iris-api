@@ -21,6 +21,6 @@ labels:
       env: dev
 
 images:
-  - name: iris-write-api-image
+  - name: iris-write-api-image:template
     newName: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/api
     newTag: '1736464040'

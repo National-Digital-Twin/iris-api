@@ -24,6 +24,6 @@ labels:
 
 
 images:
-  - name: iris-write-api-image
+  - name: iris-write-api-image:template
     newName: 503561419905.dkr.ecr.eu-west-2.amazonaws.com/iris/write-api
     newTag: '1736464040'

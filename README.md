@@ -1,7 +1,7 @@
 # README
 
 **Repository:** `iris-api`
-**Description:** `This repository functions as the backend of IRIS and contains API routes that serve and process data to/from the frontend.`
+**Description:** `This repository functions as the backend of IRIS and contains API routes that serve and process data to/from the frontend`
 **SPDX-License-Identifier:** `Apache-2.0 AND OGL-UK-3.0 `
 
 ## Overview

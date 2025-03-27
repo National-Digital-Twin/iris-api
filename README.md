@@ -6,7 +6,7 @@
 
 ## Overview
 
-This repository functions as one of the core API services for the IRIS visualization application. It provides the neccessary REST styled endpoints to serve and route data to and from the IRIS visualization application.
+IRIS is a digital tool designed to support data-driven decision-making for retrofitting domestic properties by identifying homes that could benefit from energy efficiency improvements. It enables stakeholders to assess housing stock based on energy performance data to help target funding schemes and policy interventions more effectively. IRIS is part of the NDTP Demonstrator Programme. This repository functions as one of the core API services for the IRIS visualization application. It provides the neccessary REST styled endpoints to serve and route data to and from the IRIS visualization application.
 
 ## Prerequisites
 

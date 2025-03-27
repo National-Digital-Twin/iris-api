@@ -6,9 +6,7 @@
 
 ## Overview
 
-This repository contributes to the development of **secure, scalable, and interoperable data-sharing infrastructure**. It supports NDTP’s mission to enable **trusted, federated, and decentralised** data-sharing across organisations.
-
-This repository is one of several open-source components that underpin NDTP’s **Integration Architecture (IA)**—a framework designed to allow organisations to manage and exchange data securely while maintaining control over their own information. The IA is actively deployed and tested across multiple sectors, ensuring its adaptability and alignment with real-world needs.
+This repository functions as one of the core API services for the IRIS visualization application. It provides the neccessary REST styled endpoints to serve and route data to and from the IRIS visualization application.
 
 ## Prerequisites
 

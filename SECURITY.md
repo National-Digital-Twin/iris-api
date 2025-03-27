@@ -1,7 +1,7 @@
 # Security Policy  
 
-**Repository:** `iris-api`  
-**Description:** `Details the responsible disclosure process for security vulnerabilities.`  
+**Repository:** `iris-api`\
+**Description:** `Details the responsible disclosure process for security vulnerabilities`\
 **SPDX-License-Identifier:** `OGL-UK-3.0`
 
 ## Responsible Disclosure  

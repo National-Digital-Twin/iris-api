@@ -1,8 +1,8 @@
 # INSTALLATION
 
-**Repository:** `iris-api`
-**Description:** `This document contains detailed installation steps, including required dependencies and setup configurations.`
-**SPDX-License-Identifier:** `Apache-2.0 AND OGL-UK-3.0
+**Repository:** `iris-api`\
+**Description:** `This document contains detailed installation steps, including required dependencies and setup configurations.`\
+**SPDX-License-Identifier:** `Apache-2.0 AND OGL-UK-3.0`
 
 ## Prerequisites
 

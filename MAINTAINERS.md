@@ -1,8 +1,8 @@
 # Maintainers
 
-**Repository:** `iris-api`
-**Description:** `Lists maintainers responsible for reviewing issues, security, and documentation updates.`
-**SPDX-License-Identifier:** OGL-UK-3.0
+**Repository:** `iris-api`\
+**Description:** `Lists maintainers responsible for reviewing issues, security, and documentation updates.`\
+**SPDX-License-Identifier:** `OGL-UK-3.0`
 
 ## Introduction
 

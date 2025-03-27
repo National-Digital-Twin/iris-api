@@ -27,6 +27,6 @@ jobs:
           # If none of the above conditions match, block the PR
           echo "❌ Error: Invalid PR - '$HEAD_BRANCH' cannot be merged into '$BASE_BRANCH'."
           echo "✅ Allowed merges:"
-          echo "  - feature/*, hotfix/*, fix/* → develop"
+          echo "  - feature/*, hotfix/*, bugfix/* → develop"
           echo "  - release/* → main"
           exit 1

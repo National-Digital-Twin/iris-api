@@ -7,6 +7,10 @@ assignees: ''
 
 ---
 
+**Repository:** `iris-api`\
+**Description:** `Contains details on how to report a bug`\
+**SPDX-License-Identifier:** `OGL-UK-3.0`
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 

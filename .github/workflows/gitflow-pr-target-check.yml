@@ -13,7 +13,7 @@ jobs:
           HEAD_BRANCH="${{ github.head_ref }}"
 
           # Allow merging feature, hotfix, or bugfix into develop
-          if [[ "$HEAD_BRANCH" =~ ^(feature/|hotfix/|fix/) && "$BASE_BRANCH" == "develop" ]]; then
+          if [[ "$HEAD_BRANCH" =~ ^(feature/|hotfix/|bugfix/) && "$BASE_BRANCH" == "develop" ]]; then
             echo "✅ Allowed: $HEAD_BRANCH → $BASE_BRANCH"
             exit 0
           fi

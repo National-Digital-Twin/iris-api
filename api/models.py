@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from telicent_labels import SecurityLabelBuilder, TelicentSecurityLabelsV2
+from ianode_labels import SecurityLabelBuilder, IANodeSecurityLabelsV2
 from enum import Enum
 from pydantic import BaseModel
 from datetime import datetime, date
@@ -27,17 +27,17 @@ class EDH(BaseModel):
         builder = SecurityLabelBuilder()
         if len(self.permitted_organisations) > 0:
             builder.add_multiple(
-                TelicentSecurityLabelsV2.PERMITTED_ORGANISATIONS.value,
+                IANodeSecurityLabelsV2.PERMITTED_ORGANISATIONS.value,
                 *self.permitted_organisations,
             )
         if len(self.permitted_nationalities) > 0:
             builder.add_multiple(
-                TelicentSecurityLabelsV2.PERMITTED_NATIONALITIES.value,
+                IANodeSecurityLabelsV2.PERMITTED_NATIONALITIES.value,
                 *self.permitted_nationalities,
             )
         if self.classification:
             builder.add(
-                TelicentSecurityLabelsV2.CLASSIFICATION.value, self.classification.value
+                IANodeSecurityLabelsV2.CLASSIFICATION.value, self.classification.value
             )
         return builder.build()
 
@@ -135,6 +135,19 @@ class Building(IesThing):
     parentBuilding: Optional[str] = None
     flags: Dict = {}
 
+class SingleBuilding(IesThing):
+    uprn: Optional[str] = None
+    lodgement_date: Optional[str] = None
+    built_form: Optional[str] = None
+    structure_unit_type: Optional[str] = None
+    floor_construction: Optional[str] = None
+    floor_insulation: Optional[str] = None
+    roof_construction: Optional[str] = None
+    roof_insulation_location: Optional[str] = None
+    roof_insulation_thickness: Optional[str] = None
+    wall_construction: Optional[str] = None
+    wall_insulation: Optional[str] = None
+    window_glazing: Optional[str] = None
 
 class IesEntityAndStates(BaseModel):
     entity: IesEntity

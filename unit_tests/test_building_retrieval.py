@@ -3,11 +3,14 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import ANY, patch, MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.routes import router, run_sparql_query
+from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building
+from api.utils import get_headers as get_forwarding_headers
+from building_retrieval_mocks import mock_known_building, empty_query_response
 
 @pytest.fixture(autouse=True)
 def set_identity_api_url(monkeypatch):
@@ -130,56 +133,53 @@ class TestGetBuildingsInGeohash:
         assert len(buildings) == 0
 
 class TestGetBuildingByUprn:
-    def test_successful_get_building(self, client, mock_building_by_uprn_results, monkeypatch):
+    def test_successful_get_building(self, client, monkeypatch):
         """Test successful retrieval of a building by UPRN"""
         # Mock the run_sparql_query function
-        mock_query = MagicMock(return_value=mock_building_by_uprn_results)
+        uprn = 10023456789
+        mock_query = MagicMock()
+        mock_query.side_effect = mock_known_building
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings/10023456789")
+        response = client.get(f"/buildings/{uprn}")
         
         assert response.status_code == 200
         data = response.json()
         
-        # Check the entity data
-        entity = data["entity"]
-        assert entity["uri"] == "http://nationaldigitaltwin.gov.uk/data#building123"
-        assert len(entity["types"]) == 2
-        assert "http://ies.data.gov.uk/ontology/ies4#Building" in entity["types"]
-        assert "http://nationaldigitaltwin.gov.uk/ontology#ResidentialBuilding" in entity["types"]
-        
-        states = data["states"]
-        assert len(states) == 2
-        
-        # Check the energy rating state
-        energy_state = next(s for s in states if s["uri"] == "http://nationaldigitaltwin.gov.uk/data#state123")
-        assert "http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOfC" in energy_state["types"]
-        
-        # Check the occupied state
-        occupied_state = next(s for s in states if s["uri"] == "http://nationaldigitaltwin.gov.uk/data#state456")
-        assert "http://nationaldigitaltwin.gov.uk/ontology#OccupiedState" in occupied_state["types"]
-        
+        # Check the data
+        assert data["uprn"] == f"{uprn}"
+        assert data["lodgement_date"] == "2024-03-30"
+        assert data["built_form"] == "SemiDetached"
+        assert data["structure_unit_type"] == "House"
+        assert data["roof_construction"] == "RoofRooms"
+        assert data["roof_insulation_location"] == "InsulatedAssumed"
+        assert data["roof_insulation_thickness"] == "250mm_Insulation"
+        assert data["floor_construction"] == "Suspended"
+        assert data["floor_insulation"] == "NoInsulationInFloor"
+        assert data["wall_construction"] == "CavityWall"
+        assert data["wall_insulation"] == "InsulatedWall"
+        assert data["window_glazing"] == "DoubleGlazingBefore2002"
+       
         # Verify run_sparql_query was called with the correct params
-        mock_query.assert_called_once()
+        assert mock_query.call_count == 4
+        mock_query.assert_any_call(get_building(uprn), ANY)
+        mock_query.assert_any_call(get_roof_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_floor_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_walls_and_windows_for_building(uprn), ANY)
         call_args = mock_query.call_args[0]
-        assert '10023456789' in call_args[0]
+        assert str(uprn) in call_args[0]
     
     def test_building_not_found(self, client, monkeypatch):
         """Test when building is not found"""
         # Mock the run_sparql_query function to return empty results
-        empty_results = {"results": {"bindings": []}}
-        mock_query = MagicMock(return_value=empty_results)
+        mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
+        uprn = 99999999999
         
-        response = client.get("/buildings/99999999999")
+        response = client.get(f"/buildings/{uprn}")
         
-        assert response.status_code == 200
-        data = response.json()
-        
-        # Check the response structure
-        assert data["entity"]["uri"] == ""
-        assert len(data["entity"]["types"]) == 0
-        assert len(data["states"]) == 0
+        assert response.status_code == 404
+        assert response.json() == {"detail": f"Building with UPRN {uprn} not found"}
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

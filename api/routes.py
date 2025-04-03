@@ -15,6 +15,7 @@ import uuid
 from access import AccessClient
 import configparser
 from utils import get_headers as get_forwarding_headers
+from mappers import map_single_building_response
 from models import (
     ies,
     ClassificationEmum,
@@ -27,11 +28,12 @@ from models import (
     IesAssessment,
     IesAssessToBeTrue,
     Building,
+    SingleBuilding,
     IesEntityAndStates,
     IesAssessToBeFalse,
     IesAccount,
 )
-
+from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building
 from rdflib import Graph
 
 load_dotenv()
@@ -62,8 +64,8 @@ ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
 
 if update_mode == "KAFKA":
-    from telicent_lib.sinks import KafkaSink
-    from telicent_lib import Adapter, Record, RecordUtils
+    from ia_map_lib.sinks import KafkaSink
+    from ia_map_lib import Adapter, Record, RecordUtils
 
     knowledgeSink = KafkaSink(topic=fpTopic, broker=broker)
     knowledgeAdapter = Adapter(
@@ -531,47 +533,21 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
 
 @router.get(
     "/buildings/{uprn}",
-    response_model=IesEntityAndStates,
+    response_model=SingleBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
 def get_building_by_uprn(uprn: str, req: Request):
-    query = f'''SELECT ?building ?buildingType ?state ?stateType WHERE
-                {{
-                    ?building ies:isIdentifiedBy ?uprnID .
-                    ?building rdf:type ?buildingType .
-                    ?uprnID ies:representationValue "{uprn}" .
-                    OPTIONAL {{
-                        ?state ies:isStateOf ?building .
-                        ?state rdf:type ?stateType .
-                    }}
-                }}
-            '''
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    building = {
-        "uri": "",
-        "types": [],
-    }
-    states = {}
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            building["uri"] = result["building"]["value"]
-            if result["buildingType"]["value"] not in building["types"]:
-                building["types"].append(result["buildingType"]["value"])
-            if result["state"]["value"]:
-                state = result["state"]["value"]
-                state_type = result["stateType"]["value"]
-                if state not in states:
-                    states[state] = {
-                        "uri": state,
-                        "types": [],
-                        "stateOf": building["uri"],
-                    }
-                if state_type not in states[state]["types"]:
-                    states[state]["types"].append(state_type)
-    out = {"entity": building, "states": []}
-    for state in states:
-        out["states"].append(states[state])
-    return out
+    building_results = run_sparql_query(get_building(uprn), get_forwarding_headers(req.headers))
+    results_bindings = building_results["results"]["bindings"] if building_results and building_results["results"] else None
+    if not results_bindings:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Building with UPRN {uprn} not found",
+            )
+    roof_results = run_sparql_query(get_roof_for_building(uprn), get_forwarding_headers(req.headers))
+    floor_results = run_sparql_query(get_floor_for_building(uprn), get_forwarding_headers(req.headers))
+    wall_window_results = run_sparql_query(get_walls_and_windows_for_building(uprn), get_forwarding_headers(req.headers))
+    return map_single_building_response(uprn, building_results, roof_results, floor_results, wall_window_results)
 
 
 @router.get(

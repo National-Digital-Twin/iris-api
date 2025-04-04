@@ -59,7 +59,7 @@ jobs:
     needs: [api-ci, versioning]
     uses: ./.github/workflows/api-cd-push-to-ECR.yml
     with:
-      aws_account_number: "${{ vars.DEMO_AWS_ACCOUNT_ID }}"
+      aws_account_number: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"
       repo_name: iris/api
       app_name: iris/api
       version: ${{ needs.versioning.outputs.version }}

@@ -126,16 +126,15 @@ class IesPerson(IesThing):
     givenName: str
 
 
-class Building(IesThing):
+class SimpleBuilding(IesThing):
     uprn: Optional[str] = None
-    currentEnergyRating: Optional[str] = None
-    types: List[str] = []
-    parentBuildingTOID: Optional[str] = None
-    buildingTOID: Optional[str] = None
-    parentBuilding: Optional[str] = None
-    flags: Dict = {}
+    energy_rating: Optional[str] = None
+    structure_unit_type: Optional[str] = None
+    toid: Optional[str] = None
+    longitude: Optional[str] = None
+    latitude: Optional[str] = None
 
-class SingleBuilding(IesThing):
+class DetailedBuilding(IesThing):
     uprn: Optional[str] = None
     lodgement_date: Optional[str] = None
     built_form: Optional[str] = None

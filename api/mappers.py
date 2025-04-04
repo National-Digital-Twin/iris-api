@@ -1,4 +1,5 @@
-from models import SingleBuilding
+from models import SimpleBuilding, DetailedBuilding
+from re import match
 
 def strip_uri(uri: str) -> str:
     """
@@ -10,10 +11,15 @@ def strip_uri(uri: str) -> str:
     Returns:
         str: The resource.
     """
-    if "UPRN_" in uri:
+    if "http" not in uri:
+        # the uri is a literal value
+        return uri
+    elif "UPRN_" in uri:
         split = uri.split("UPRN_")
     elif "iso8601.iso.org/" in uri:
         split = uri.split("iso8601.iso.org/")
+    elif "UK_DOM_EPC" in uri:
+        split = uri.split("EPC_")
     else:
         split = uri.split("#")
     if len(split) > 1:
@@ -24,7 +30,7 @@ def strip_uri(uri: str) -> str:
 def get_value_from_result(result: dict, field: str) -> str:
     return strip_uri(result[field]["value"])
 
-def map_building_results(building: SingleBuilding, results: dict) -> None:
+def map_building_results(building: DetailedBuilding, results: dict) -> None:
     """
     Maps generic building data to a `SingleBuilding` instance.
     
@@ -41,7 +47,7 @@ def map_building_results(building: SingleBuilding, results: dict) -> None:
             building.built_form = get_value_from_result(result, "builtForm")
             building.structure_unit_type = get_value_from_result(result, "structureUnitType")
 
-def map_roof_results(building: SingleBuilding, results: dict) -> None:
+def map_roof_results(building: DetailedBuilding, results: dict) -> None:
     """
     Maps roof-related data to a `SingleBuilding` instance.
     
@@ -58,7 +64,7 @@ def map_roof_results(building: SingleBuilding, results: dict) -> None:
             building.roof_insulation_location = get_value_from_result(result, "roofInsulation")
             building.roof_insulation_thickness = get_value_from_result(result, "roofInsulationThickness")
 
-def map_floor_results(building: SingleBuilding, results: dict) -> None:
+def map_floor_results(building: DetailedBuilding, results: dict) -> None:
     """
     Maps floor-related data to a `SingleBuilding` instance.
     
@@ -74,7 +80,7 @@ def map_floor_results(building: SingleBuilding, results: dict) -> None:
             building.floor_construction = get_value_from_result(result, "floorConstruction")
             building.floor_insulation = get_value_from_result(result, "floorInsulation")
 
-def map_wall_window_results(building: SingleBuilding, results: dict) -> None:
+def map_wall_window_results(building: DetailedBuilding, results: dict) -> None:
     """
     Maps wall and window-related data to a `SingleBuilding` instance.
     
@@ -91,9 +97,9 @@ def map_wall_window_results(building: SingleBuilding, results: dict) -> None:
             building.wall_insulation = get_value_from_result(result, "wallInsulation")
             building.window_glazing = get_value_from_result(result, "windowGlazing")
 
-def map_single_building_response(uprn: str, building_results: dict, roof_results: dict, floor_results: dict, wall_window_results: dict) -> SingleBuilding:
+def map_single_building_response(uprn: str, building_results: dict, roof_results: dict, floor_results: dict, wall_window_results: dict) -> DetailedBuilding:
     """
-    Maps a `SingleBuilding` response from SPARQL requests made for generic, roof, floor, wall and window data.
+    Maps a `DetailedBuilding` response from SPARQL queries for generic, roof, floor, wall and window data.
     
     Args:
         urpn (str): The UPRN of the building.
@@ -103,12 +109,54 @@ def map_single_building_response(uprn: str, building_results: dict, roof_results
         wall_window_results (dict): Wall and window-related SPARQL data retrieved regarding the building e.g. the glazing of the windows.
         
     Returns:
-        SingleBuilding: A representation of a building.
+        DetailedBuilding: A detailed representation of a building.
     """
-    building = SingleBuilding()
+    building = DetailedBuilding()
     building.uprn = uprn
     map_building_results(building, building_results)
     map_roof_results(building, roof_results)
     map_floor_results(building, floor_results)
     map_wall_window_results(building, wall_window_results)
     return building
+
+def map_lat_long(building: SimpleBuilding, point: str) -> None:
+    """
+    Uses regex to extract the longitude and latitude from a POINT wkt literal and map to building attributes.
+    
+    Args:
+        building (SimpleBuilding): A simple representation of a building.
+        point (str): A POINT wkt literal e.g. "POINT(-1.1834759844410794 50.72234886358317)".
+        
+    Returns:
+        None        
+    """
+    result = match(r'POINT\((-?\d+\.\d+) (-?\d+\.\d+)\)', point)
+    if result:
+        # Extract longitude and latitude from the matched groups
+        building.longitude = float(result.group(1))
+        building.latitude = float(result.group(2))
+    else:
+        raise ValueError("Invalid format")
+
+def map_bounded_buildings_response(results) -> list[SimpleBuilding]:
+    """
+    Maps a `SimpleBuilding` array response from a SPARQL query result.
+    
+    Args:
+        results (dict): General SPARQL data retrieved regarding the building e.g. the UPRN, TOID, coordinates.
+    
+    Returns:
+        list[SimpleBuilding]: A list of `SimpleBuilding` instances.
+    """
+    buildings = []
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            building = SimpleBuilding()
+            building.uprn = get_value_from_result(result, "uprn")
+            building.toid = get_value_from_result(result, "toid")
+            building.energy_rating = get_value_from_result(result, "epcRating")
+            building.structure_unit_type = get_value_from_result(result, "structureUnitType")
+            point = get_value_from_result(result, "point")
+            map_lat_long(building, point)
+            buildings.append(building)
+    return buildings

@@ -15,7 +15,7 @@ import uuid
 from access import AccessClient
 import configparser
 from utils import get_headers as get_forwarding_headers
-from mappers import map_single_building_response
+from mappers import map_single_building_response, map_bounded_buildings_response
 from models import (
     ies,
     ClassificationEmum,
@@ -27,13 +27,13 @@ from models import (
     IesPerson,
     IesAssessment,
     IesAssessToBeTrue,
-    Building,
-    SingleBuilding,
+    SimpleBuilding,
+    DetailedBuilding,
     IesEntityAndStates,
     IesAssessToBeFalse,
     IesAccount,
 )
-from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building
+from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query
 from rdflib import Graph
 
 load_dotenv()
@@ -360,125 +360,28 @@ def post_person(per: IesPerson):
     run_sparql_update(query=query, securityLabel=per.securityLabel)
     return per.uri
 
+def generate_wkt_polygon(x_min, y_min, x_max, y_max):
+    """
+    Generates a WKT POLYGON string for a bounding box given min/max coordinates.
+
+    :param x_min: Minimum longitude (west)
+    :param y_min: Minimum latitude (south)
+    :param x_max: Maximum longitude (east)
+    :param y_max: Maximum latitude (north)
+    :return: WKT POLYGON string
+    """
+    return f'POLYGON(({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))'
 
 @router.get(
     "/buildings",
-    response_model=List[Building],
-    description="Gets all the buildings inside a geohash (min 5 digits) along with their types, TOIDs, UPRNs, and current energy ratings",
+    response_model=List[SimpleBuilding],
+    description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_geohash(geohash: str, req: Request):
-    if len(geohash) < 5:
-        raise HTTPException(
-            422, detail="Lat Lon range too wide, please provide at least five digits"
-        )
-    gh = "http://geohash.org/" + geohash
-
-    query = f"""
-        {format_prefixes()}
-        SELECT
-            ?building
-            ?uprn_id
-            ?building_toid_id
-            ?parent_building_toid_id
-            ?current_energy_rating
-            ?parent_building
-            ?type
-            ?flag
-            ?flag_type
-            ?flag_person
-            ?flag_date
-            ?flag_assessment
-            ?flag_ass_date
-            ?flag_assessor
-        WHERE {{
-            ?building ies:inLocation ?geopoint .
-            BIND(str(?geopoint) as ?gh) .
-            FILTER (STRSTARTS(?gh,"{gh}") )
-            ?building a ?type .
-
-            ?state ies:isStateOf ?building .
-            ?state a ?energy_rating .
-            BIND(REPLACE(str(?energy_rating),"http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOf","","i") as ?current_energy_rating)
-
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue ?uprn_id .
-            ?uprn rdf:type gp:UniquePropertyReferenceNumber .
-
-            OPTIONAL {{
-                ?flag ies:interestedIn ?building .
-                ?flag ies:isStateOf ?flag_person .
-                ?flag a ?flag_type .
-                ?flag ies:inPeriod ?flag_date .
-                OPTIONAL {{
-                    ?flag_assessment ies:assessed ?flag .
-                    ?flag_assessment ies:inPeriod ?flag_ass_date .
-                    ?flag_assessment ies:assessor ?flag_assessor .
-                }}
-            }}
-
-            OPTIONAL {{
-                ?building ies:isIdentifiedBy ?building_toid .
-                ?building_toid rdf:type ies:TOID .
-                ?building_toid ies:representationValue ?building_toid_id .
-            }}
-            OPTIONAL {{
-                ?building ies:isPartOf ?parent_building .
-                ?parent_building ies:isIdentifiedBy ?parent_building_toid .
-                ?parent_building_toid ies:representationValue ?parent_building_toid_id .
-                ?parent_building_toid rdf:type ies:TOID .
-            }}
-
-        }}
-    """
-
-    out = {}
-    out_array = []
+def get_buildings_in_bounding_box(minLong: str, maxLong: str, minLat: str, maxLat: str, req: Request):
+    polygon = generate_wkt_polygon(minLong, minLat, maxLong, maxLat)
+    query = get_buildings_in_bounding_box_query(polygon)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            building = shorten(result["building"]["value"])
-            typ = shorten(result["type"]["value"])
-            if building in out:
-                building_obj = out[building]
-                if typ not in building_obj["types"]:
-                    building_obj["types"].append(typ)
-            else:
-                energy_rating = result["current_energy_rating"]["value"]
-                building_obj = {
-                    "uri": building,
-                    "uprn": result["uprn_id"]["value"],
-                    "currentEnergyRating": energy_rating,
-                    "types": [typ],
-                    "flags": {},
-                    "invalidatedFlags": [],
-                }
-                out[building] = building_obj
-                out_array.append(building_obj)
-
-            if "flag" in result:
-                flag = shorten(result["flag"]["value"])
-                if flag not in building_obj["flags"]:
-                    flag_obj = {
-                        "flagType": shorten(result["flag_type"]["value"]),
-                        "flaggedBy": result["flag_person"]["value"],
-                        "date": result["flag_date"]["value"],
-                    }
-                    building_obj["flags"][flag] = flag_obj
-                else:
-                    flag_obj = building_obj["flags"][flag]
-                if "flag_assessment" in result:
-                    flag_obj["invalidated"] = result["flag_ass_date"]["value"]
-                    flag_obj["invalidatedBy"] = result["flag_assessor"]["value"]
-
-            if "building_toid_id" in result:
-                building_obj["buildingTOID"] = result["building_toid_id"]["value"]
-            elif "parent_building_toid_id" in result:
-                building_obj["parentBuildingTOID"] = result["parent_building_toid_id"][
-                    "value"
-                ]
-
-    return out_array
+    return map_bounded_buildings_response(results)
 
 
 class InvalidateFlag(BaseModel):
@@ -533,7 +436,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
 
 @router.get(
     "/buildings/{uprn}",
-    response_model=SingleBuilding,
+    response_model=DetailedBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
 def get_building_by_uprn(uprn: str, req: Request):

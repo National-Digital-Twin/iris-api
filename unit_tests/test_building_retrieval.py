@@ -8,9 +8,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.routes import router, run_sparql_query
-from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building
+from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query
 from api.utils import get_headers as get_forwarding_headers
-from building_retrieval_mocks import mock_known_building, empty_query_response
+from building_retrieval_mocks import mock_known_building, empty_query_response, bounded_buildings_response
 
 @pytest.fixture(autouse=True)
 def set_identity_api_url(monkeypatch):
@@ -78,59 +78,48 @@ def mock_building_by_uprn_results():
         }
     }
 
-class TestGetBuildingsInGeohash:
+class TestGetBuildingsInBoundingBox:
     def test_successful_get_buildings(self, client, mock_building_query_results, monkeypatch):
-        """Test successful retrieval of buildings in a geohash"""
-        mock_query = MagicMock(return_value=mock_building_query_results)
+        """Test successful retrieval of buildings in a bounding box"""
+        mock_query = MagicMock(return_value=bounded_buildings_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings?geohash=u10j7")
+        response = client.get("/buildings?minLong=-1.1835&maxLong=-1.1507&minLat=50.6445&maxLat=50.7261")
         
         assert response.status_code == 200
         buildings = response.json()
         
-        assert len(buildings) == 1
+        assert len(buildings) == 2
         building = buildings[0]
         
-        assert building["uri"] == "data:building123"
-        assert building["uprn"] == "10023456789"
-        assert building["currentEnergyRating"] == "C"
-        assert building["buildingTOID"] == "osgb1000012345678"
+        assert building["uprn"] == "100060763456"
+        assert building["energy_rating"] == "C"
+        assert building["structure_unit_type"] == "Bungalow"
+        assert building["toid"] == "osgb1000013062259"
+        assert building["longitude"] == -1.1834759844410794
+        assert building["latitude"] == 50.72234886358317
         
-        assert len(building["types"]) == 2
-        assert "ies:Building" in building["types"]
-        assert "ndt_ont:ResidentialBuilding" in building["types"]
-        
-        # Verify the flags
-        assert len(building["flags"]) == 2
-        assert "data:flag123" in building["flags"]
-        assert "data:flag456" in building["flags"]
-        
-        flag123 = building["flags"]["data:flag123"]
-        assert flag123["flagType"] == "ndt_ont:InterestedInVisiting"
-        assert flag123["flaggedBy"] == "http://nationaldigitaltwin.gov.uk/data#TestUser"
-        
-        flag456 = building["flags"]["data:flag456"]
-        assert flag456["flagType"] == "ndt_ont:InterestedInInvestigating"
-        assert flag456["flaggedBy"] == "http://nationaldigitaltwin.gov.uk/data#AnotherUser"
-        
-        # Verify run_sparql_query was called with the correct params
-        mock_query.assert_called_once()
-        call_args = mock_query.call_args[0]
-        assert "http://geohash.org/u10j7" in call_args[0]
+        self.verify_query_run_with_correct_args(mock_query)
     
     def test_empty_results(self, client, monkeypatch):
         """Test when no buildings are found"""
-        # Mock the run_sparql_query function to return empty results
-        empty_results = {"results": {"bindings": []}}
-        mock_query = MagicMock(return_value=empty_results)
+        mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings?geohash=u10j7")
+        response = client.get("/buildings?minLong=-1.1835&maxLong=-1.1507&minLat=50.6445&maxLat=50.7261")
         
         assert response.status_code == 200
         buildings = response.json()
         assert len(buildings) == 0
+        
+        self.verify_query_run_with_correct_args(mock_query)
+        
+    def verify_query_run_with_correct_args(self, mock_query):
+        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
+        mock_query.assert_any_call(get_buildings_in_bounding_box_query(polygon), ANY)
+        call_args = mock_query.call_args[0]
+        assert polygon in call_args[0]
+        
 
 class TestGetBuildingByUprn:
     def test_successful_get_building(self, client, monkeypatch):

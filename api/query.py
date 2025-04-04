@@ -126,3 +126,40 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
         }}
         LIMIT 1
     """
+    
+def get_buildings_in_bounding_box_query(polygon: str) -> str:
+    return f"""
+    PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+    PREFIX ies: <http://informationexchangestandard.org/ont/ies#>
+    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+    PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?uprn ?toid ?point ?epcRating ?structureUnitType WHERE {{
+        ?uprn a building:UPRN .  
+        ?_t a ies:TOID ;
+            ies:representationValue ?toid .
+        ?structureUnit ies:isIdentifiedBy ?_t .
+        ?structureUnit ies:isIdentifiedBy ?uprn .
+        ?structureUnit a building:StructureUnit .
+        ?structureUnit ies:inLocation ?locationPoint .
+        ?structureUnitState a building:StructureUnitState .
+        ?structureUnitState ies:isStateOf ?structureUnit .
+                    
+        ?_sut a ?structureUnitType .
+        ?structureUnitType a building:StructureUnitType .
+        ?_sut ies:isStateOf ?structureUnit .
+        
+        ?locationPoint ies:isRepresentedAs ?gp .
+        ?gp a ies:ISO19125-WKT ;
+            ies:representationValue ?point .
+        
+        ?epcCertificate a ?epcRating .
+        ?epcRating rdfs:subClassOf building:UKDomesticEPC .
+        ?epcCertificateCreated ies:isStateOf ?epcCertificate ;
+                                ies:isPartOf ?epcAssessment .
+        ?epcAssessment building:assessedStateForEnergyPerformance ?structureUnitState .
+        
+        FILTER(geof:sfIntersects(?point, "{polygon}"^^geo:wktLiteral))
+    }}
+    """

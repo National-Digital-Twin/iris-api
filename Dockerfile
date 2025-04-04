@@ -1,6 +1,5 @@
 FROM python:3.12-slim
 ARG PIP_EXTRA_INDEX_URL
-ARG GITHUB_ACCESS_TOKEN
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -15,12 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 ENV PATH /home/worker/.local/bin:${PATH}
-ENV GITHUB_ACCESS_TOKEN ${GITHUB_ACCESS_TOKEN}
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
-
-ENV GITHUB_ACCESS_TOKEN unset
+RUN --mount=type=secret,id=pat_token \
+    export GITHUB_ACCESS_TOKEN=$(cat /run/secrets/pat_token) && \
+    pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 

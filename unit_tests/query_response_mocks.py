@@ -84,7 +84,35 @@ def bounded_buildings_response():
         }
     }
         
-    
+def statistics_response():
+    return {
+        "results": {
+            "bindings": [
+                { 
+                    "wardName": { "type": "literal" , "value": "Bembridge" } ,
+                    "EPC_Rating_A": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "0" } ,
+                    "EPC_Rating_B": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "1" } ,
+                    "EPC_Rating_C": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "11" } ,
+                    "EPC_Rating_D": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "8" } ,
+                    "EPC_Rating_E": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "0" } ,
+                    "EPC_Rating_F": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "0" } ,
+                    "EPC_Rating_G": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "0" } ,
+                    "No_EPC_Rating": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "4" }
+                } ,
+                { 
+                    "wardName": { "type": "literal" , "value": "Binstead & Fishbourne" } ,
+                    "EPC_Rating_A": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "0" } ,
+                    "EPC_Rating_B": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "2" } ,
+                    "EPC_Rating_C": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "12" } ,
+                    "EPC_Rating_D": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "6" } ,
+                    "EPC_Rating_E": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "2" } ,
+                    "EPC_Rating_F": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "0" } ,
+                    "EPC_Rating_G": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "1" } ,
+                    "No_EPC_Rating": { "type": "literal" , "datatype": "http://www.w3.org/2001/XMLSchema#integer" , "value": "1" }
+                }
+            ]
+        }
+    }
 
 def mock_known_building(query, headers):
     uprn = 10023456789

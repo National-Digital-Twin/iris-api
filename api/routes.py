@@ -15,11 +15,12 @@ import uuid
 from access import AccessClient
 import configparser
 from utils import get_headers as get_forwarding_headers
-from mappers import map_single_building_response, map_bounded_buildings_response
+from mappers import map_single_building_response, map_bounded_buildings_response, map_epc_statistics_response
 from models import (
     ies,
     ClassificationEmum,
     EDH,
+    EpcStatistics,
     IesThing,
     IesClass,
     IesState,
@@ -33,7 +34,7 @@ from models import (
     IesAssessToBeFalse,
     IesAccount,
 )
-from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query
+from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query, get_statistics_for_wards
 from rdflib import Graph
 
 load_dotenv()
@@ -382,6 +383,16 @@ def get_buildings_in_bounding_box(minLong: str, maxLong: str, minLat: str, maxLa
     query = get_buildings_in_bounding_box_query(polygon)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_bounded_buildings_response(results)
+
+@router.get(
+    "/epc-statistics/wards",
+    response_model=List[EpcStatistics],
+    description="Gets the statistics for all wards",
+)
+def get_epc_statistics_for_wards(req: Request):
+    query = get_statistics_for_wards()
+    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    return map_epc_statistics_response(results)
 
 
 class InvalidateFlag(BaseModel):

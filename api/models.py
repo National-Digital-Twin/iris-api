@@ -147,6 +147,17 @@ class DetailedBuilding(IesThing):
     wall_construction: Optional[str] = None
     wall_insulation: Optional[str] = None
     window_glazing: Optional[str] = None
+    
+class EpcStatistics(IesThing):
+    name: Optional[str] = None
+    a_rating: Optional[int] = 0
+    b_rating: Optional[int] = 0
+    c_rating: Optional[int] = 0
+    d_rating: Optional[int] = 0
+    e_rating: Optional[int] = 0
+    f_rating: Optional[int] = 0
+    g_rating: Optional[int] = 0
+    no_rating: Optional[int] = 0
 
 class IesEntityAndStates(BaseModel):
     entity: IesEntity

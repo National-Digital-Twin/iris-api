@@ -7,10 +7,9 @@ from unittest.mock import ANY, patch, MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api.routes import router, run_sparql_query
+from api.routes import router
 from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query
-from api.utils import get_headers as get_forwarding_headers
-from building_retrieval_mocks import mock_known_building, empty_query_response, bounded_buildings_response
+from unit_tests.query_response_mocks import mock_known_building, empty_query_response, bounded_buildings_response
 
 @pytest.fixture(autouse=True)
 def set_identity_api_url(monkeypatch):
@@ -24,62 +23,8 @@ def client():
     app.include_router(router)
     return TestClient(app)
 
-# Mock SPARQL query results for building data
-@pytest.fixture
-def mock_building_query_results():
-    return {
-        "results": {
-            "bindings": [
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "type": {"value": "http://ies.data.gov.uk/ontology/ies4#Building"},
-                    "uprn_id": {"value": "10023456789"},
-                    "current_energy_rating": {"value": "C"},
-                    "flag": {"value": "http://nationaldigitaltwin.gov.uk/data#flag123"},
-                    "flag_type": {"value": "http://nationaldigitaltwin.gov.uk/ontology#InterestedInVisiting"},
-                    "flag_person": {"value": "http://nationaldigitaltwin.gov.uk/data#TestUser"},
-                    "flag_date": {"value": "2025-02-01T10:00:00"},
-                    "building_toid_id": {"value": "osgb1000012345678"}
-                },
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "type": {"value": "http://nationaldigitaltwin.gov.uk/ontology#ResidentialBuilding"},
-                    "uprn_id": {"value": "10023456789"},
-                    "current_energy_rating": {"value": "C"},
-                    "flag": {"value": "http://nationaldigitaltwin.gov.uk/data#flag456"},
-                    "flag_type": {"value": "http://nationaldigitaltwin.gov.uk/ontology#InterestedInInvestigating"},
-                    "flag_person": {"value": "http://nationaldigitaltwin.gov.uk/data#AnotherUser"},
-                    "flag_date": {"value": "2025-02-15T14:30:00"},
-                    "building_toid_id": {"value": "osgb1000012345678"}
-                }
-            ]
-        }
-    }
-
-# Mock SPARQL query results for building by UPRN
-@pytest.fixture
-def mock_building_by_uprn_results():
-    return {
-        "results": {
-            "bindings": [
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "buildingType": {"value": "http://ies.data.gov.uk/ontology/ies4#Building"},
-                    "state": {"value": "http://nationaldigitaltwin.gov.uk/data#state123"},
-                    "stateType": {"value": "http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOfC"}
-                },
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "buildingType": {"value": "http://nationaldigitaltwin.gov.uk/ontology#ResidentialBuilding"},
-                    "state": {"value": "http://nationaldigitaltwin.gov.uk/data#state456"},
-                    "stateType": {"value": "http://nationaldigitaltwin.gov.uk/ontology#OccupiedState"}
-                }
-            ]
-        }
-    }
-
 class TestGetBuildingsInBoundingBox:
-    def test_successful_get_buildings(self, client, mock_building_query_results, monkeypatch):
+    def test_successful_get_buildings(self, client, monkeypatch):
         """Test successful retrieval of buildings in a bounding box"""
         mock_query = MagicMock(return_value=bounded_buildings_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)

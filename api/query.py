@@ -163,3 +163,25 @@ def get_buildings_in_bounding_box_query(polygon: str) -> str:
         FILTER(geof:sfIntersects(?point, "{polygon}"^^geo:wktLiteral))
     }}
     """
+    
+def get_statistics_for_wards() -> str:
+    return """
+        PREFIX stats: <http://ndtp.co.uk/stats#> 
+
+        SELECT ?wardName ?EPC_Rating_A ?EPC_Rating_B ?EPC_Rating_C ?EPC_Rating_D ?EPC_Rating_E ?EPC_Rating_F ?EPC_Rating_G ?No_EPC_Rating 
+        WHERE { 
+            GRAPH <http://ndtp.co.uk/epc-ward-statistics> { 
+                ?stats a stats:EPCWardStats ; 
+                            stats:wardName ?wardName ; 
+                            stats:EPC_Rating_A ?EPC_Rating_A ; 
+                            stats:EPC_Rating_B ?EPC_Rating_B ; 
+                            stats:EPC_Rating_C ?EPC_Rating_C ; 
+                            stats:EPC_Rating_D ?EPC_Rating_D ; 
+                            stats:EPC_Rating_E ?EPC_Rating_E ; 
+                            stats:EPC_Rating_F ?EPC_Rating_F ; 
+                            stats:EPC_Rating_G ?EPC_Rating_G ; 
+                            stats:No_EPC_Rating ?No_EPC_Rating . 
+            } 
+        } 
+        ORDER BY ?wardName 
+    """

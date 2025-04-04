@@ -1,4 +1,4 @@
-from models import SimpleBuilding, DetailedBuilding
+from models import DetailedBuilding, EpcStatistics, SimpleBuilding
 from re import match
 
 def strip_uri(uri: str) -> str:
@@ -29,6 +29,9 @@ def strip_uri(uri: str) -> str:
     
 def get_value_from_result(result: dict, field: str) -> str:
     return strip_uri(result[field]["value"])
+
+def get_int_value_from_result(result: dict, field: str) -> str:
+    return int(strip_uri(result[field]["value"]))
 
 def map_building_results(building: DetailedBuilding, results: dict) -> None:
     """
@@ -138,7 +141,7 @@ def map_lat_long(building: SimpleBuilding, point: str) -> None:
     else:
         raise ValueError("Invalid format")
 
-def map_bounded_buildings_response(results) -> list[SimpleBuilding]:
+def map_bounded_buildings_response(results: dict) -> list[SimpleBuilding]:
     """
     Maps a `SimpleBuilding` array response from a SPARQL query result.
     
@@ -160,3 +163,30 @@ def map_bounded_buildings_response(results) -> list[SimpleBuilding]:
             map_lat_long(building, point)
             buildings.append(building)
     return buildings
+
+def map_epc_statistics_response(results: dict) -> list[EpcStatistics]:
+    """
+    Maps a `EpcStatistics` array response from a SPARQL query result.
+    
+    Args:
+        results (dict): Aggregated statistics for EPC data retrieved via SPARQL query.
+    
+    Returns:
+        list[EpcStatistics]: A list of `EpcStatistics` instances.
+    """
+    stats = []
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            stat = EpcStatistics()
+            stat.name = get_value_from_result(result, "wardName")
+            stat.a_rating = get_int_value_from_result(result, "EPC_Rating_A")
+            stat.b_rating = get_int_value_from_result(result, "EPC_Rating_B")
+            stat.c_rating = get_int_value_from_result(result, "EPC_Rating_C")
+            stat.d_rating = get_int_value_from_result(result, "EPC_Rating_D")
+            stat.e_rating = get_int_value_from_result(result, "EPC_Rating_E")
+            stat.f_rating = get_int_value_from_result(result, "EPC_Rating_F")
+            stat.g_rating = get_int_value_from_result(result, "EPC_Rating_G")
+            stat.no_rating = get_int_value_from_result(result, "No_EPC_Rating")
+            stats.append(stat)
+    return stats
+            

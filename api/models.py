@@ -128,6 +128,7 @@ class IesPerson(IesThing):
 
 class SimpleBuilding(IesThing):
     uprn: Optional[str] = None
+    first_line_of_address: Optional[str] = None
     energy_rating: Optional[str] = None
     structure_unit_type: Optional[str] = None
     toid: Optional[str] = None

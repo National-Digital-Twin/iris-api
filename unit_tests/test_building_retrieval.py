@@ -38,6 +38,7 @@ class TestGetBuildingsInBoundingBox:
         building = buildings[0]
         
         assert building["uprn"] == "100060763456"
+        assert building["first_line_of_address"] == "1 Apple Avenue"
         assert building["energy_rating"] == "C"
         assert building["structure_unit_type"] == "Bungalow"
         assert building["toid"] == "osgb1000013062259"

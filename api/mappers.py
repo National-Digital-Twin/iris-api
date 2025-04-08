@@ -156,6 +156,7 @@ def map_bounded_buildings_response(results: dict) -> list[SimpleBuilding]:
         for result in results["results"]["bindings"]:
             building = SimpleBuilding()
             building.uprn = get_value_from_result(result, "uprn")
+            building.first_line_of_address = get_value_from_result(result, "firstLineOfAddress")
             building.toid = get_value_from_result(result, "toid")
             building.energy_rating = get_value_from_result(result, "epcRating")
             building.structure_unit_type = get_value_from_result(result, "structureUnitType")

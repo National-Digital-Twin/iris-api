@@ -135,11 +135,15 @@ def get_buildings_in_bounding_box_query(polygon: str) -> str:
     PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    SELECT ?uprn ?toid ?point ?epcRating ?structureUnitType WHERE {{
+    SELECT ?uprn ?firstLineOfAddress ?toid ?point ?epcRating ?structureUnitType WHERE {{
         ?uprn a building:UPRN .  
         ?_t a ies:TOID ;
             ies:representationValue ?toid .
+         ?_firstAddressLine a ies:FirstLineOfAddress ;
+            ies:representationValue ?firstLineOfAddress .
+
         ?structureUnit ies:isIdentifiedBy ?_t .
+        ?structureUnit ies:isIdentifiedBy ?_firstAddressLine .
         ?structureUnit ies:isIdentifiedBy ?uprn .
         ?structureUnit a building:StructureUnit .
         ?structureUnit ies:inLocation ?locationPoint .

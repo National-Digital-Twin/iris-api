@@ -153,10 +153,10 @@ def get_buildings_in_bounding_box_query(polygon: str) -> str:
         ?_sut a ?structureUnitType .
         ?structureUnitType a building:StructureUnitType .
         ?_sut ies:isStateOf ?structureUnit .
-        
-        ?locationPoint ies:isRepresentedAs ?gp .
+
+        ?locationPoint geo:hasGeometry ?gp .
         ?gp a ies:ISO19125-WKT ;
-            ies:representationValue ?point .
+            geo:asWKT ?point .
         
         ?epcCertificate a ?epcRating .
         ?epcRating rdfs:subClassOf building:UKDomesticEPC .

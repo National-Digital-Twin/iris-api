@@ -30,6 +30,11 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
  This is the first public release of this repository under NDTP's open-source governance model.
  Since this release is **pre-1.0.0**, changes may still occur that are **not fully backward-compatible**.
 
+ ## [0.90.1] - 2025-xx-xx
+
+ - Updated internal dependencies
+
+
  #### Initial Features
  - View a choropleth map, summarising average EPC ratings per ward
  - Search for a property via address

@@ -43,7 +43,7 @@ jobs:
     needs: security-scanning
     timeout-minutes: 20
     env:
-      GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_ACCESS_TOKEN: ${{ secrets.GH_PACKAGES_PAT }}
     environment: development
     steps:
       - name: Checkout repository

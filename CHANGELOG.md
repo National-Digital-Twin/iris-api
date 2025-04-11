@@ -24,6 +24,8 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
  ### Documentation
 
  - Updated NOTICE.md with correct formatting
+ - Added endpoint to fetch user details
+ - Added endpoint to fetch sign out links
 
  ---
 

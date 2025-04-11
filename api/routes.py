@@ -762,45 +762,6 @@ def get_flagged_buildings(req: Request):
 
 
 @router.post(
-    "/flag-to-visit",
-    description="Add a flag to an Entity instance as being worth visiting - URI of Entity must be provided",
-    response_model=str,
-)
-def post_flag_visit(request: Request, visited: IesEntity):
-    if not visited or not visited.uri:
-        raise HTTPException(422, "URI of flagged entity must be provided")
-    try:
-        user = access_client.get_user_details(request.headers)
-    except exceptions.RequestException as e:
-        if e.response is not None:
-            raise HTTPException(
-                e.response.status_code, f"Error calling Access:{e.response.reason}"
-            )
-        else:
-            raise HTTPException(500, ACCESS_API_CALL_ERROR)
-    flagger, person = create_person_insert(user["user_id"], user["username"])
-
-    flag_time = ISO_8601_URL + datetime.now().isoformat()
-    flag_state = data_uri_stub + str(uuid.uuid4())
-    query = f"""
-        {format_prefixes()}
-        INSERT DATA {{
-            <{flag_state}> ies:interestedIn <{lengthen(visited.uri)}> .
-            <{flag_state}> ies:isStateOf <{flagger}> .
-            {person}
-            <{flag_state}> ies:inPeriod <{flag_time}> .
-            <{flag_state}> a ndt:InterestedInVisiting .
-        }}
-    """
-    run_sparql_update(
-        query=query,
-        forwarding_headers=get_forwarding_headers(request.headers),
-        securityLabel=visited.securityLabel,
-    )
-    return flag_state
-
-
-@router.post(
     "/flag-to-investigate",
     description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
     response_model=str,
@@ -832,7 +793,6 @@ def post_flag_investigate(request: Request, visited: IesEntity):
             <{flag_state}> a ndt:InterestedInInvestigating .
         }}
     """
-    print(query)
     run_sparql_update(
         query=query,
         forwarding_headers=get_forwarding_headers(request.headers),
@@ -941,40 +901,12 @@ def assess(ass: IesAssessment):
 
 # @app.post("/assessments/assess-to-be-true")
 def post_assess_to_be_true(ass: IesAssessToBeTrue):
-    mint_uri(ass)
-    if ass.inPeriod is None:
-        ass.inPeriod = datetime.datetime.now().isoformat()
-    if ass.assessor is None:
-        ass.assessor = test_person_uri
-    query = f"""INSERT DATA
-            {{
-                <{ass.uri}> a <{ass.types[0]}> .
-                <{ass.uri}> ies:assessed <{ass.assessedItem}> .
-                <{ass.uri}> ies:assessor <{ass.assessor}> .
-                <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}"""
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-    return ass.uri
+    return assess(ass)
 
 
 # @app.post("/assessments/assess-to-be-false")
 def post_assess_to_be_false(ass: IesAssessToBeFalse):
-    mint_uri(ass)
-    if ass.inPeriod is None:
-        ass.inPeriod = datetime.datetime.now().isoformat()
-    if ass.assessor is None:
-        ass.assessor = test_person_uri
-    query = f"""INSERT DATA
-            {{
-                <{ass.uri}> a <{ass.types[0]}> .
-                <{ass.uri}> ies:assessed <{ass.assessedItem}> .
-                <{ass.uri}> ies:assessor <{ass.assessor}> .
-                <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}"""
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-    return ass.uri
+    return assess(ass)
 
 
 @router.post(

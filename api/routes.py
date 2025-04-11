@@ -53,8 +53,8 @@ access_host = os.getenv("ACCESS_URL", "localhost")
 access_port = os.getenv("ACCESS_PORT", "8091")
 dev_mode = os.getenv("DEV", "False")
 access_path = os.getenv("ACCESS_PATH", "/")
-identity_api_path = os.getenv("IDENTITY_API_PATH", "http://localhost:3000/api")
-landing_page_path = os.getenv("LANDING_PAGE_PATH", "http://localhost:5173")
+identity_api_url = os.getenv("IDENTITY_API_URL", "http://localhost:3000/api")
+landing_page_url = os.getenv("LANDING_PAGE_URL", "http://localhost:5173")
 
 broker = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
 fpTopic = os.getenv("IES_TOPIC", "knowledge")
@@ -1068,17 +1068,17 @@ def get_user_details(request: Request):
         }
 
     user_details_response = requests.get(
-        f"{identity_api_path}/v1/user-details", headers=request.headers
+        f"{identity_api_url}/v1/user-details", headers=request.headers
     )
     return user_details_response.json()
 
 
 @router.get("/signout-links")
 def get_signout_links():
-    signout_links_response = requests.get(f"{identity_api_path}/v1/links/sign-out")
+    signout_links_response = requests.get(f"{identity_api_url}/v1/links/sign-out")
     if signout_links_response.status_code == 200:
         return {
-            "oauth2Signout": f"{landing_page_path}/oauth2/signout",
+            "oauth2Signout": f"{landing_page_url}/oauth2/signout",
             "signoutLink": signout_links_response.json(),
         }
     else:

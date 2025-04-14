@@ -32,7 +32,7 @@ def strip_uri(uri: str) -> str:
 def get_value_from_result(result: dict, field: str) -> str:
     return strip_uri(result[field]["value"])
 
-def get_int_value_from_result(result: dict, field: str) -> str:
+def get_int_value_from_result(result: dict, field: str) -> int:
     return int(strip_uri(result[field]["value"]))
 
 def map_building_results(building: DetailedBuilding, results: dict) -> None:

@@ -384,8 +384,8 @@ def generate_wkt_polygon(x_min, y_min, x_max, y_max):
     response_model=List[SimpleBuilding],
     description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_bounding_box(minLong: str, maxLong: str, minLat: str, maxLat: str, req: Request):
-    polygon = generate_wkt_polygon(minLong, minLat, maxLong, maxLat)
+def get_buildings_in_bounding_box(min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request):
+    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     query = get_buildings_in_bounding_box_query(polygon)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_bounded_buildings_response(results)

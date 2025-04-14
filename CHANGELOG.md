@@ -15,11 +15,17 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
  ---
 
+ ## Unreleased
+
+ - Updated dependencies (2025-04-10)
+
  ## [0.90.1] – 2025-03-28
 
  ### Documentation
 
  - Updated NOTICE.md with correct formatting
+ - Added endpoint to fetch user details
+ - Added endpoint to fetch sign out links
 
  ---
 
@@ -29,6 +35,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
  This is the first public release of this repository under NDTP's open-source governance model.
  Since this release is **pre-1.0.0**, changes may still occur that are **not fully backward-compatible**.
+
 
  #### Initial Features
  - View a choropleth map, summarising average EPC ratings per ward

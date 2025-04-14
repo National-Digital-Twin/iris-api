@@ -2,23 +2,17 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from pydantic import BaseModel
-from datetime import datetime
-from typing import List
-
-from fastapi import APIRouter, Request, Response, HTTPException
+import configparser
 import os
 import requests
-from dotenv import load_dotenv
-from requests import exceptions
 import uuid
+
 from access import AccessClient
-import configparser
-from utils import get_headers as get_forwarding_headers
+from datetime import datetime
+from dotenv import load_dotenv
+from fastapi import APIRouter, HTTPException, Request, Response
 from mappers import map_single_building_response, map_bounded_buildings_response, map_epc_statistics_response
 from models import (
-    ies,
-    ClassificationEmum,
     EDH,
     EpcStatistics,
     IesThing,
@@ -26,16 +20,26 @@ from models import (
     IesState,
     IesEntity,
     IesPerson,
+    ClassificationEmum,
+    IesAccount,
     IesAssessment,
+    IesAssessToBeFalse,
     IesAssessToBeTrue,
     SimpleBuilding,
     DetailedBuilding,
-    IesEntityAndStates,
-    IesAssessToBeFalse,
-    IesAccount,
+    IesClass,
+    IesEntity,
+    IesPerson,
+    IesState,
+    IesThing,
+    ies,
 )
 from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query, get_statistics_for_wards
+from pydantic import BaseModel
+from typing import List
 from rdflib import Graph
+from requests import exceptions
+from utils import get_headers as get_forwarding_headers
 
 load_dotenv()
 
@@ -57,6 +61,8 @@ access_host = os.getenv("ACCESS_URL", "localhost")
 access_port = os.getenv("ACCESS_PORT", "8091")
 dev_mode = os.getenv("DEV", "False")
 access_path = os.getenv("ACCESS_PATH", "/")
+identity_api_url = os.getenv("IDENTITY_API_URL", "http://localhost:3000/api")
+landing_page_url = os.getenv("LANDING_PAGE_URL", "http://localhost:5173")
 
 broker = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
 fpTopic = os.getenv("IES_TOPIC", "knowledge")
@@ -271,7 +277,7 @@ def create_person_insert(user_id, username):
     uri = data_uri_stub + user_id
     return (
         uri,
-        f'''
+        f"""
         <{uri}> a ies:Person .
         <{uri}> ies:hasName <{uri + "_NAME"}> .
         <{uri + "_NAME"}> a ies:PersonName .
@@ -281,7 +287,7 @@ def create_person_insert(user_id, username):
         <{uri + "_GIVENNAME"}> a ies:GivenName .
         <{uri + "_GIVENNAME"}> ies:inRepresentation <{uri + "_NAME"}> .
         <{uri + "_GIVENNAME"}> ies:representationValue "{names[0]}" .
-    ''',
+    """,
     )
 
 
@@ -344,7 +350,7 @@ def get_building_state_classes(req: Request):
 # @app.post("/people",description="Creates a new Person")
 def post_person(per: IesPerson):
     mint_uri(per)
-    query = f'''
+    query = f"""
     {format_prefixes()}
     INSERT DATA
             {{
@@ -357,7 +363,7 @@ def post_person(per: IesPerson):
                 <{per.uri + "_GIVENNAME"}> a ies:GivenName .
                 <{per.uri + "_GIVENNAME"}> ies:inRepresentation <{per.uri + "_NAME"}> .
                 <{per.uri + "_GIVENNAME"}> ies:representationValue "{per.givenName}" .
-            }}'''
+            }}"""
     run_sparql_update(query=query, securityLabel=per.securityLabel)
     return per.uri
 
@@ -466,7 +472,7 @@ def get_building_by_uprn(uprn: str, req: Request):
 
 @router.get(
     "/buildings/{uprn}/flag-history",
-    description="Gets the flagging and assessment history for a specific building identified by its UPRN"
+    description="Gets the flagging and assessment history for a specific building identified by its UPRN",
 )
 def get_building_flag_history(uprn: str, req: Request):
     query = f"""
@@ -529,21 +535,49 @@ def get_building_flag_history(uprn: str, req: Request):
     """
 
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    
+
     flag_history = []
     if results and results["results"] and results["results"]["bindings"]:
         for result in results["results"]["bindings"]:
             history_item = {
                 "UPRN": result["UPRN"]["value"] if "UPRN" in result else uprn,
                 "Flagged": result["Flagged"]["value"] if "Flagged" in result else None,
-                "FlagType": result["FlagType"]["value"] if "FlagType" in result else None,
-                "FlaggedByGivenName": result["FlaggedByGivenName"]["value"] if "FlaggedByGivenName" in result else None,
-                "FlaggedBySurname": result["FlaggedBySurname"]["value"] if "FlaggedBySurname" in result else None,
-                "FlagDate": result["FlagDate"]["value"] if "FlagDate" in result else None,
-                "AssessmentDate": result["AssessmentDate"]["value"] if "AssessmentDate" in result else None,
-                "AssessorGivenName": result["AssessorGivenName"]["value"] if "AssessorGivenName" in result else None,
-                "AssessorSurname": result["AssessorSurname"]["value"] if "AssessorSurname" in result else None,
-                "AssessmentReason": result["AssessmentReason"]["value"] if "AssessmentReason" in result else None
+                "FlagType": (
+                    result["FlagType"]["value"] if "FlagType" in result else None
+                ),
+                "FlaggedByGivenName": (
+                    result["FlaggedByGivenName"]["value"]
+                    if "FlaggedByGivenName" in result
+                    else None
+                ),
+                "FlaggedBySurname": (
+                    result["FlaggedBySurname"]["value"]
+                    if "FlaggedBySurname" in result
+                    else None
+                ),
+                "FlagDate": (
+                    result["FlagDate"]["value"] if "FlagDate" in result else None
+                ),
+                "AssessmentDate": (
+                    result["AssessmentDate"]["value"]
+                    if "AssessmentDate" in result
+                    else None
+                ),
+                "AssessorGivenName": (
+                    result["AssessorGivenName"]["value"]
+                    if "AssessorGivenName" in result
+                    else None
+                ),
+                "AssessorSurname": (
+                    result["AssessorSurname"]["value"]
+                    if "AssessorSurname" in result
+                    else None
+                ),
+                "AssessmentReason": (
+                    result["AssessmentReason"]["value"]
+                    if "AssessmentReason" in result
+                    else None
+                ),
             }
             flag_history.append(history_item)
 
@@ -551,8 +585,7 @@ def get_building_flag_history(uprn: str, req: Request):
 
 
 @router.get(
-    "/flagged-buildings",
-    description="Gets all buildings that have been flagged"
+    "/flagged-buildings", description="Gets all buildings that have been flagged"
 )
 def get_flagged_buildings(req: Request):
     query = """
@@ -603,59 +636,24 @@ def get_flagged_buildings(req: Request):
     """
 
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    
+
     response_data = []
     if results and results["results"] and results["results"]["bindings"]:
         for result in results["results"]["bindings"]:
             flag_data = {
                 "UPRN": result["UPRN"]["value"] if "UPRN" in result else None,
                 "TOID": result["TOID"]["value"] if "TOID" in result else None,
-                "ParentTOID": result["ParentTOID"]["value"] if "ParentTOID" in result else None,
+                "ParentTOID": (
+                    result["ParentTOID"]["value"] if "ParentTOID" in result else None
+                ),
                 "Flagged": result["Flagged"]["value"],
-                "FlagDate": result["FlagDate"]["value"] if "FlagDate" in result else None
+                "FlagDate": (
+                    result["FlagDate"]["value"] if "FlagDate" in result else None
+                ),
             }
             response_data.append(flag_data)
 
     return response_data
-
-
-@router.post(
-    "/flag-to-visit",
-    description="Add a flag to an Entity instance as being worth visiting - URI of Entity must be provided",
-    response_model=str,
-)
-def post_flag_visit(request: Request, visited: IesEntity):
-    if not visited or not visited.uri:
-        raise HTTPException(422, "URI of flagged entity must be provided")
-    try:
-        user = access_client.get_user_details(request.headers)
-    except exceptions.RequestException as e:
-        if e.response is not None:
-            raise HTTPException(
-                e.response.status_code, f"Error calling Access:{e.response.reason}"
-            )
-        else:
-            raise HTTPException(500, ACCESS_API_CALL_ERROR)
-    flagger, person = create_person_insert(user["user_id"], user["username"])
-
-    flag_time = ISO_8601_URL + datetime.now().isoformat()
-    flag_state = data_uri_stub + str(uuid.uuid4())
-    query = f"""
-        {format_prefixes()}
-        INSERT DATA {{
-            <{flag_state}> ies:interestedIn <{lengthen(visited.uri)}> .
-            <{flag_state}> ies:isStateOf <{flagger}> .
-            {person}
-            <{flag_state}> ies:inPeriod <{flag_time}> .
-            <{flag_state}> a ndt:InterestedInVisiting .
-        }}
-    """
-    run_sparql_update(
-        query=query,
-        forwarding_headers=get_forwarding_headers(request.headers),
-        securityLabel=visited.securityLabel,
-    )
-    return flag_state
 
 
 @router.post(
@@ -690,7 +688,6 @@ def post_flag_investigate(request: Request, visited: IesEntity):
             <{flag_state}> a ndt:InterestedInInvestigating .
         }}
     """
-    print(query)
     run_sparql_update(
         query=query,
         forwarding_headers=get_forwarding_headers(request.headers),
@@ -710,9 +707,7 @@ def post_building_state(bs: IesState):
             )
     mint_uri(bs)
     if bs.startDateTime:
-        start_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(
-            " ", "T"
-        )
+        start_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(" ", "T")
         start_sparql = f"""
                 <{bs.uri}_start> a ies:BoundingState .
                 <{bs.uri}_start> ies:isStartOf <{bs.uri}> .
@@ -722,9 +717,7 @@ def post_building_state(bs: IesState):
         start_sparql = """"""
 
     if bs.endDateTime:
-        end_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(
-            " ", "T"
-        )
+        end_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(" ", "T")
         end_sparql = f"""
                 <{bs.uri}_end> a ies:BoundingState .
                 <{bs.uri}_end> ies:isEndOf <{bs.uri}> .
@@ -766,7 +759,7 @@ def post_account(acc: IesAccount):
     else:
         name_sparql = """"""
 
-    query = f'''INSERT DATA
+    query = f"""INSERT DATA
         {{
             <{acc.uri}> a ies:Account .
             <{acc.uri + "ID"}> a ies:AccountNumber .
@@ -774,7 +767,7 @@ def post_account(acc: IesAccount):
             <{acc.uri}> ies:isIdentifiedBy <{acc.uri + "ID"}> .
             {email_sparql}
             {name_sparql}
-        }}'''
+        }}"""
     run_sparql_update(query=query, securityLabel=acc.securityLabel)
     return acc.uri
 
@@ -789,13 +782,13 @@ def assess(ass: IesAssessment):
     type_str = ""
     for typ in ass.types:
         type_str = type_str + f"<{ass.uri}> a <{typ}> . "
-    query = f'''INSERT DATA
+    query = f"""INSERT DATA
             {{
                 {type_str}
                 <{ass.uri}> ies:assessed <{ass.assessedItem}> .
                 <{ass.uri}> ies:assessor <{ass.assessor}> .
                 <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}'''
+            }}"""
     run_sparql_update(query=query, securityLabel=ass.securityLabel)
 
     return ass.uri
@@ -803,40 +796,12 @@ def assess(ass: IesAssessment):
 
 # @app.post("/assessments/assess-to-be-true")
 def post_assess_to_be_true(ass: IesAssessToBeTrue):
-    mint_uri(ass)
-    if ass.inPeriod is None:
-        ass.inPeriod = datetime.datetime.now().isoformat()
-    if ass.assessor is None:
-        ass.assessor = test_person_uri
-    query = f'''INSERT DATA
-            {{
-                <{ass.uri}> a <{ass.types[0]}> .
-                <{ass.uri}> ies:assessed <{ass.assessedItem}> .
-                <{ass.uri}> ies:assessor <{ass.assessor}> .
-                <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}'''
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-    return ass.uri
+    return assess(ass)
 
 
 # @app.post("/assessments/assess-to-be-false")
 def post_assess_to_be_false(ass: IesAssessToBeFalse):
-    mint_uri(ass)
-    if ass.inPeriod is None:
-        ass.inPeriod = datetime.datetime.now().isoformat()
-    if ass.assessor is None:
-        ass.assessor = test_person_uri
-    query = f'''INSERT DATA
-            {{
-                <{ass.uri}> a <{ass.types[0]}> .
-                <{ass.uri}> ies:assessed <{ass.assessedItem}> .
-                <{ass.uri}> ies:assessor <{ass.assessor}> .
-                <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}'''
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-    return ass.uri
+    return assess(ass)
 
 
 @router.post(
@@ -847,6 +812,7 @@ def post_assess_to_be_false(ass: IesAssessToBeFalse):
 def post_uri_stub(uri: str):
     data_uri_stub = uri  # noqa: F841
     return data_uri_stub
+
 
 @router.get(
     "/uri-stub",
@@ -899,12 +865,8 @@ def post_assessment(ass: IesAssessment):
             else:
                 user = data_uri_stub + "JaneDoe"  # DON'T KNOW HOW TO GET THE USER ID
 
-            start_date = ISO_8601_URL + ass.startDate.isoformat().replace(
-                " ", "T"
-            )
-            end_date = ISO_8601_URL + ass.endDate.isoformat().replace(
-                " ", "T"
-            )
+            start_date = ISO_8601_URL + ass.startDate.isoformat().replace(" ", "T")
+            end_date = ISO_8601_URL + ass.endDate.isoformat().replace(" ", "T")
             query = f"""INSERT DATA
             {{
                 <{state_uri}> a <{state_type}> .
@@ -923,3 +885,28 @@ def post_assessment(ass: IesAssessment):
 
             return ass.uri
     raise HTTPException(status_code=400, detail="Could not create assessment")
+
+
+@router.get("/user-details")
+def get_user_details(request: Request):
+    if dev_mode:
+        return {
+            "content": {"email": "local.user@test.com", "displayName": "Local User"}
+        }
+
+    user_details_response = requests.get(
+        f"{identity_api_url}/v1/user-details", headers=request.headers
+    )
+    return user_details_response.json()
+
+
+@router.get("/signout-links")
+def get_signout_links():
+    signout_links_response = requests.get(f"{identity_api_url}/v1/links/sign-out")
+    if signout_links_response.status_code == 200:
+        return {
+            "oauth2Signout": f"{landing_page_url}/oauth2/signout",
+            "signoutLink": signout_links_response.json(),
+        }
+    else:
+        return f"Error {signout_links_response.status_code}: {signout_links_response.json()}"

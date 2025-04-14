@@ -2,11 +2,12 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from ianode_labels import SecurityLabelBuilder, IANodeSecurityLabelsV2
+from datetime import date, datetime
 from enum import Enum
+from typing import Dict, List, Optional
+
+from ianode_labels import IANodeSecurityLabelsV2, SecurityLabelBuilder
 from pydantic import BaseModel
-from datetime import datetime, date
-from typing import List, Dict, Optional
 
 ies = "http://ies.data.gov.uk/ontology/ies4#"
 
@@ -172,3 +173,4 @@ class AccessUser(BaseModel):
     email: Optional[str] = None
     attributes: dict[str, str]
     groups: List[str]
+

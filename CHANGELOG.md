@@ -18,6 +18,10 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
  ## Unreleased
 
  - Updated dependencies (2025-04-10)
+ - The `/buildings` endpoint has been updated to expect viewport coordinates (e.g. a minimum and maximum longitude and latitude) rather than a geohash. It then generates a polygon from these coordinates, which is then used to run a GeoSPARQL query on a named graph.
+ - The `/building/{uprn}` endpoint has been updated to run building-specific queries which fetch metadata about the roof, floors, walls etc. of the building. 
+ - A new endpoint - `/epc-statistics/wards` - has been introduced, which queries a named graph to fetch the aggregated EPC statistics for the wards. 
+ - A new `mappers.py` file has been introduced which exposes a set of functions mapping the responses received from the Secure Agent Graph to models.
 
  ## [0.90.1] – 2025-03-28
 

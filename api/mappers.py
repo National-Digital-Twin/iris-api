@@ -18,8 +18,6 @@ def strip_uri(uri: str) -> str:
         split = uri.split("UPRN_")
     elif "iso8601.iso.org/" in uri:
         split = uri.split("iso8601.iso.org/")
-    elif "UK_DOM_EPC" in uri:
-        split = uri.split("EPC_")
     else:
         split = uri.split("#")
     if len(split) > 1:

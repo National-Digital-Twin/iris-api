@@ -71,7 +71,7 @@ def bounded_buildings_response():
                     "firstLineOfAddress": { "type": "uri" , "value": "1 Apple Avenue" } ,
                     "toid": { "type": "literal" , "value": "osgb1000013062259" } ,
                     "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.1834759844410794 50.72234886358317)" } ,
-                    "epcRating": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#UK_DOM_EPC_C" } ,
+                    "epcRating": { "type": "uri" , "value": "C" } ,
                     "structureUnitType": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Bungalow" }
                 } ,
                 { 
@@ -79,7 +79,7 @@ def bounded_buildings_response():
                     "firstLineOfAddress": { "type": "uri" , "value": "2 Orange Road" } ,
                     "toid": { "type": "literal" , "value": "osgb1000013076936" } ,
                     "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.178467890878929 50.725098060722736)" } ,
-                    "epcRating": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#UK_DOM_EPC_C" } ,
+                    "epcRating": { "type": "uri" , "value": "C" } ,
                     "structureUnitType": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#House" }
                 }
             ]

@@ -229,11 +229,8 @@ def test_get_flagged_buildings(client, monkeypatch):
         "results": {
             "bindings": [
                 {
-                    "UPRN": {"value": "12345"},
-                    "TOID": {"value": "toid1"},
-                    "ParentTOID": {"value": "pto1"},
-                    "Flagged": {"value": "http://example.com/flag1"},
-                    "FlagDate": {"value": "2020-01-01T00:00:00"}
+                    "uprn": {"value": "http://ndtp.co.uk/data#UPRN_12345678"},
+                    "flag": {"value": "http://ndtp.co.uk/data#2fdfbb7c-0d2c-4b77-8cce-6a7054ab3459"}
                 }
             ]
         }
@@ -243,7 +240,7 @@ def test_get_flagged_buildings(client, monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
-    assert data[0]["UPRN"] == "12345"
+    assert data[0]["UPRN"] == "12345678"
 
 
 def test_post_flag_investigate(client, monkeypatch):

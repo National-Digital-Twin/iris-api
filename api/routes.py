@@ -16,6 +16,7 @@ from mappers import (
     map_bounded_buildings_response,
     map_detailed_bounded_buildings_response,
     map_epc_statistics_response,
+    map_flagged_buildings_response,
     map_single_building_response,
     map_structure_unit_flag_history_response
 )
@@ -23,6 +24,7 @@ from models.dto_models import (
     DetailedBuilding,
     EpcStatistics,
     FlagHistory,
+    FlaggedBuilding,
     SimpleBuilding,    
 )
 from models.ies_models import (
@@ -45,6 +47,7 @@ from query import (
     get_buildings_in_bounding_box_query,
     get_detailed_buildings_in_bounding_box_query,
     get_flag_history,
+    get_flagged_buildings,
     get_floor_for_building,
     get_roof_for_building,
     get_statistics_for_wards,
@@ -127,7 +130,7 @@ add_prefix("owl", "http://www.w3.org/2002/07/owl#")
 add_prefix("ies", ies)
 add_prefix("data", data_uri_stub)
 add_prefix("ndt_ont", ndt_ont)
-add_prefix("ndt", "http://nationaldigitaltwin.gov.uk/data#")
+add_prefix("ndt", "http://ndtp.co.uk/data#")
 add_prefix("gp", "https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#")
 add_prefix(
     "epc",
@@ -530,75 +533,14 @@ def get_building_flag_history(uprn: str, req: Request):
 
 
 @router.get(
-    "/flagged-buildings", description="Gets all buildings that have been flagged"
+    "/flagged-buildings", 
+    description="Gets all buildings that have been flagged",
+    response_model=list[FlaggedBuilding],
 )
-def get_flagged_buildings(req: Request):
-    query = """
-        PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
-        PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX gp: <https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#>
-
-        SELECT
-            (REPLACE(STR(?uprn), "http://nationaldigitaltwin.gov.uk/data#uprn_", "") as ?UPRN)
-            (?building_toid_id AS ?TOID)
-            (?parent_building_toid_id AS ?ParentTOID)
-            (?flag as ?Flagged)
-            (REPLACE(STR(?flag_date), "http://iso.org/iso8601#", "") as ?FlagDate)
-        WHERE {{
-            ?state ies:isStateOf ?building .
-
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue ?uprn_id .
-            ?uprn rdf:type gp:UniquePropertyReferenceNumber .
-
-            ?flag ies:interestedIn ?building .
-            FILTER NOT EXISTS {{ ?flag_assessment ies:assessed ?flag . }}
-
-            OPTIONAL {{
-                ?building ies:isIdentifiedBy ?building_toid .
-                ?building_toid rdf:type ies:TOID .
-                ?building_toid ies:representationValue ?building_toid_id .
-            }}
-
-            OPTIONAL {{
-                ?building ies:isPartOf ?parent_building .
-                ?parent_building ies:isIdentifiedBy ?parent_building_toid .
-                ?parent_building_toid ies:representationValue ?parent_building_toid_id .
-                ?parent_building_toid rdf:type ies:TOID .
-            }}
-
-            OPTIONAL {{
-                ?flag ies:inPeriod ?flag_date .
-            }}
-        }}
-        GROUP BY
-            ?flag
-            ?flag_date
-            ?building_toid_id
-            ?parent_building_toid_id
-            ?uprn
-    """
-
+def get_all_flagged_buildings(req: Request):
+    query = get_flagged_buildings()
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-
-    response_data = []
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            flag_data = {
-                "UPRN": result["UPRN"]["value"] if "UPRN" in result else None,
-                "TOID": result["TOID"]["value"] if "TOID" in result else None,
-                "ParentTOID": (
-                    result["ParentTOID"]["value"] if "ParentTOID" in result else None
-                ),
-                "Flagged": result["Flagged"]["value"],
-                "FlagDate": (
-                    result["FlagDate"]["value"] if "FlagDate" in result else None
-                ),
-            }
-            response_data.append(flag_data)
-
-    return response_data
+    return map_flagged_buildings_response(results)
 
 
 @router.post(

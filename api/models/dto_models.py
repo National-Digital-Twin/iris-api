@@ -56,6 +56,14 @@ class EpcStatistics(IesThing):
     g_rating: Optional[int] = 0
     no_rating: Optional[int] = 0
 
+class FlaggedBuilding(BaseModel):
+    uprn: Optional[str] = None
+    flagged: Optional[str] = None
+    
+    model_config = {
+        'alias_generator': to_camel,
+        'populate_by_name': True,
+    }
 
 class FlagHistory(BaseModel):
     uprn: Optional[str] = None

@@ -199,6 +199,24 @@ def get_statistics_for_wards() -> str:
         ORDER BY ?wardName 
     """
     
+def get_flagged_buildings() -> str:
+    return f"""
+        PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX ies: <http://informationexchangestandard.org/ont/ies#>
+        SELECT ?uprn ?flag ?point WHERE {{
+            ?flag a ?flagType;
+                ies:interestedIn ?structureUnitState .
+            ?structureUnitState a building:StructureUnitState ;
+                ies:isStateOf ?structureUnit .
+            ?structureUnit a building:StructureUnit ;
+                ies:isIdentifiedBy ?uprn .
+            
+            ?uprn a building:UPRN .
+        
+            FILTER NOT EXISTS {{ ?flag_assessment ies:assessed ?flag . }}
+        }}
+        """
+    
 def get_flag_history(uprn: str) -> str:
     return f"""
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

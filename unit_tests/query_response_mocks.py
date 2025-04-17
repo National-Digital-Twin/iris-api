@@ -121,7 +121,7 @@ def flag_history_response(active):
                 {
                     "uprn": {"value": "12345"},
                     "flag": {"value": "http://ndtp.co.uk/data#flag1"},
-                    "flagType": {"value": "http://nationaldigitaltwin.gov.uk/data#InterestedInInvestigating"},
+                    "flagType": {"value": "http://ndtp.co.uk/data#InterestedInInvestigating"},
                     "retrofitterName": {"value": "John Doe"},
                     "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"}
                 }
@@ -130,7 +130,7 @@ def flag_history_response(active):
     }
     if not active:
         result["results"]["bindings"][0]["assessmentDate"] = {"value": "http://iso.org/iso8601#2020-01-02T00:00:00"}
-        result["results"]["bindings"][0]["assessorGivenName"] = {"value": "Jane Smith"}
+        result["results"]["bindings"][0]["assessorName"] = {"value": "Jane Smith"}
         result["results"]["bindings"][0]["assessmentReason"] = {"value": "Reason1"}
     return result
 
@@ -141,21 +141,21 @@ def multiple_flag_history_response(active):
                 {
                     "uprn": {"value": "12345"},
                     "flag": {"value": "http://ndtp.co.uk/data#flag1"},
-                    "flagType": {"value": "http://nationaldigitaltwin.gov.uk/data#InterestedInInvestigating"},
+                    "flagType": {"value": "http://ndtp.co.uk/data#InterestedInInvestigating"},
                     "retrofitterName": {"value": "Simon Smith"},
                     "flagDate": {"value": "http://iso.org/iso8601#2020-01-03T00:00:00"},
                     "assessmentDate": {"value": ""},
-                    "assessorGivenName": {"value": ""},
+                    "assessorName": {"value": ""},
                     "assessmentReason": {"value": ""}
                 },
                 {
                     "uprn": {"value": "67890"},
                     "flag": {"value": "http://ndtp.co.uk/data#flag2"},
-                    "flagType": {"value": "http://nationaldigitaltwin.gov.uk/data#InterestedInInvestigating"},
+                    "flagType": {"value": "http://ndtp.co.uk/data#InterestedInInvestigating"},
                     "retrofitterName": {"value": "John Doe"},
                     "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"},
                     "assessmentDate": {"value": "http://iso.org/iso8601#2020-01-02T00:00:00"},
-                    "assessorGivenName": {"value": "Jane Smith"},
+                    "assessorName": {"value": "Jane Smith"},
                     "assessmentReason": {"value": "Reason1"}
                 }
             ]

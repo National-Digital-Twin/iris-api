@@ -29,7 +29,7 @@ class TestGetBuildingsInBoundingBox:
         mock_query = MagicMock(return_value=bounded_buildings_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings?minLong=-1.1835&maxLong=-1.1507&minLat=50.6445&maxLat=50.7261")
+        response = client.get("/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261")
         
         assert response.status_code == 200
         buildings = response.json()
@@ -52,7 +52,7 @@ class TestGetBuildingsInBoundingBox:
         mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings?minLong=-1.1835&maxLong=-1.1507&minLat=50.6445&maxLat=50.7261")
+        response = client.get("/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261")
         
         assert response.status_code == 200
         buildings = response.json()

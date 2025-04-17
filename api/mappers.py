@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from models.dto_models import DetailedBuilding, EpcStatistics, FlagHistory, SimpleBuilding
+from models.dto_models import DetailedBuilding, EpcStatistics, FlagHistory, FlaggedBuilding, SimpleBuilding
 from re import match
 
 def strip_uri(uri: str) -> str:
@@ -256,3 +256,23 @@ def map_structure_unit_flag_history_response(results: dict) -> list[FlagHistory]
             flag.assessment_reason = get_value_from_result(result, "assessmentReason")
             flags.append(flag)
     return flags
+
+def map_flagged_buildings_response(results: dict) -> list[FlaggedBuilding]:
+    """
+    Maps a `FlaggedBuilding` array response from a SPARQL query result.
+    
+    Args:
+        results (dict): A list of buildings which have flags.
+    
+    Returns:
+        list[FlaggedBuilding]: A list of `FlaggedBuilding` instances.
+    """
+    flags = []
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            flag = FlaggedBuilding()
+            flag.uprn = get_value_from_result(result, "uprn")
+            flag.flagged = get_uri_from_result(result, "flag")
+            flags.append(flag)
+    return flags
+    

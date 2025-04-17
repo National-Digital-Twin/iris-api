@@ -13,8 +13,8 @@ print(pydantic.VERSION)
 from .ies_models import IesThing
 
 def to_camel(string: str) -> str:
-    if string.lower() == 'uprn':
-        return 'UPRN'
+    if string.lower() == 'uprn' or string.lower() == 'toid':
+        return string.upper()
     parts = string.split('_')
     return ''.join(word.capitalize() for word in parts[0:])
 
@@ -57,6 +57,7 @@ class EpcStatistics(IesThing):
     no_rating: Optional[int] = 0
 
 class FlaggedBuilding(BaseModel):
+    toid: Optional[str] = None
     uprn: Optional[str] = None
     flagged: Optional[str] = None
     

@@ -203,15 +203,18 @@ def get_flagged_buildings() -> str:
     return f"""
         PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
         PREFIX ies: <http://informationexchangestandard.org/ont/ies#>
-        SELECT ?uprn ?flag ?point WHERE {{
+        SELECT ?toid ?flag WHERE {{
             ?flag a ?flagType;
                 ies:interestedIn ?structureUnitState .
             ?structureUnitState a building:StructureUnitState ;
                 ies:isStateOf ?structureUnit .
             ?structureUnit a building:StructureUnit ;
-                ies:isIdentifiedBy ?uprn .
+                ies:isIdentifiedBy ?uprn ;
+                ies:isIdentifiedBy ?_toid .
             
             ?uprn a building:UPRN .
+            ?_toid a ies:TOID ;
+                ies:representationValue ?toid .
         
             FILTER NOT EXISTS {{ ?flag_assessment ies:assessed ?flag . }}
         }}

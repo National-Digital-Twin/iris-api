@@ -272,6 +272,7 @@ def map_flagged_buildings_response(results: dict) -> list[FlaggedBuilding]:
         for result in results["results"]["bindings"]:
             flag = FlaggedBuilding()
             flag.uprn = get_value_from_result(result, "uprn")
+            flag.toid = get_value_from_result(result, "toid")
             flag.flagged = get_uri_from_result(result, "flag")
             flags.append(flag)
     return flags

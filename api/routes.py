@@ -14,14 +14,20 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request, Response
 from mappers import (
     map_bounded_buildings_response,
+    map_detailed_bounded_buildings_response,
     map_epc_statistics_response,
     map_single_building_response,
+    map_structure_unit_flag_history_response
 )
-from models import (
-    EDH,
-    ClassificationEmum,
+from models.dto_models import (
     DetailedBuilding,
     EpcStatistics,
+    FlagHistory,
+    SimpleBuilding,    
+)
+from models.ies_models import (
+    EDH,
+    ClassificationEmum,
     IesAccount,
     IesAssessment,
     IesAssessToBeFalse,
@@ -31,13 +37,14 @@ from models import (
     IesPerson,
     IesState,
     IesThing,
-    SimpleBuilding,
     ies,
 )
 from pydantic import BaseModel
 from query import (
     get_building,
     get_buildings_in_bounding_box_query,
+    get_detailed_buildings_in_bounding_box_query,
+    get_flag_history,
     get_floor_for_building,
     get_roof_for_building,
     get_statistics_for_wards,
@@ -59,7 +66,7 @@ ontoDataset = os.getenv("ONTO_DATASET", "ontology")
 dataset = os.getenv("KNOWLEDGE_DATASET", "knowledge")
 default_security_label = EDH(classification=ClassificationEmum.official)
 data_uri_stub = os.getenv(
-    "DATA_URI", "http://nationaldigitaltwin.gov.uk/data#"
+    "DATA_URI", "http://ndtp.co.uk/data#"
 )  # This can be overridden in use
 update_mode = os.getenv("UPDATE_MODE", "SCG")
 access_protocol = os.getenv("ACCESS_PROTOCOL", "http")
@@ -100,7 +107,7 @@ if dev_mode.lower() == "true":
 else:
     dev_mode = False
 # The URIs used in the ontologies
-ndt_ont = "http://nationaldigitaltwin.gov.uk/ontology#"
+ndt_ont = "http://ndtp.co.uk/ontology#"
 
 access_url = f"{access_protocol}://{access_host}:{access_port}{access_path}"
 jena_url = f"{jenaProtocol}://{jenaURL}:{jenaPort}"
@@ -288,6 +295,7 @@ def create_person_insert(user_id, username):
         <{uri}> a ies:Person .
         <{uri}> ies:hasName <{uri + "_NAME"}> .
         <{uri + "_NAME"}> a ies:PersonName .
+        <{uri + "_NAME"}> ies:representationValue "{names[0]} {names[1]}" .
         <{uri + "_SURNAME"}> a ies:Surname .
         <{uri + "_SURNAME"}> ies:inRepresentation <{uri + "_NAME"}> .
         <{uri + "_SURNAME"}> ies:representationValue "{names[1]}" .
@@ -403,6 +411,20 @@ def get_buildings_in_bounding_box(
 
 
 @router.get(
+    "/detailed-buildings",
+    response_model=List[DetailedBuilding],
+    description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
+)
+def get_detailed_buildings_in_bounding_box(
+    min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request
+):
+    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
+    query = get_detailed_buildings_in_bounding_box_query(polygon)
+    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    return map_detailed_bounded_buildings_response(results)
+
+
+@router.get(
     "/epc-statistics/wards",
     response_model=List[EpcStatistics],
     description="Gets the statistics for all wards",
@@ -498,116 +520,13 @@ def get_building_by_uprn(uprn: str, req: Request):
 
 @router.get(
     "/buildings/{uprn}/flag-history",
+    response_model=list[FlagHistory],
     description="Gets the flagging and assessment history for a specific building identified by its UPRN",
 )
 def get_building_flag_history(uprn: str, req: Request):
-    query = f"""
-        PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
-        PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        SELECT
-            (REPLACE(STR(?uprn), "http://nationaldigitaltwin.gov.uk/data#uprn_", "") as ?UPRN)
-            (?flag as ?Flagged)
-            (REPLACE(STR(?flag_type), "http://nationaldigitaltwin.gov.uk/data#", "") as ?FlagType)
-            (?given_name_literal AS ?FlaggedByGivenName)
-            (?surname_literal AS ?FlaggedBySurname)
-            (REPLACE(STR(?flag_date), "http://iso.org/iso8601#", "") as ?FlagDate)
-            (REPLACE(STR(?flag_ass_date), "http://iso.org/iso8601#", "") AS ?AssessmentDate)
-            (?assessor_given_name_literal AS ?AssessorGivenName)
-            (?assessor_surname_literal AS ?AssessorSurname)
-            (REPLACE(STR(?flag_assessment_type), "http://nationaldigitaltwin.gov.uk/ontology#", "") as ?AssessmentReason)
-        WHERE {{
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue "{uprn}" .
-            ?flag ies:interestedIn ?building .
-            OPTIONAL {{
-                ?flag ies:isStateOf ?flag_person .
-                ?flag_person ies:hasName ?flag_person_name .
-                ?surname a ies:Surname .
-                ?surname ies:inRepresentation ?flag_person_name .
-                ?surname ies:representationValue ?surname_literal .
-                ?given_name a ies:GivenName .
-                ?given_name ies:inRepresentation ?flag_person_name .
-                ?given_name ies:representationValue ?given_name_literal .
-                ?flag a ?flag_type .
-                ?flag ies:inPeriod ?flag_date .
-                OPTIONAL {{
-                    ?flag_assessment ies:assessed ?flag .
-                    ?flag_assessment ies:inPeriod ?flag_ass_date .
-                    ?flag_assessment ies:assessor ?flag_assessor .
-                    ?flag_assessor ies:hasName ?flag_assessor_name .
-                    ?surname ies:inRepresentation ?flag_assessor_name .
-                    ?surname ies:representationValue ?assessor_surname_literal .
-                    ?given_name ies:inRepresentation ?flag_assessor_name .
-                    ?given_name ies:representationValue ?assessor_given_name_literal .
-                    ?flag_assessment rdf:type ?flag_assessment_type .
-                }}
-            }}
-        }}
-        GROUP BY
-            ?flag
-            ?flag_type
-            ?flag_person
-            ?flag_assessment
-            ?flag_date
-            ?flag_ass_date
-            ?flag_assessor
-            ?flag_assessment_type
-            ?surname_literal
-            ?given_name_literal
-            ?assessor_given_name_literal
-            ?assessor_surname_literal
-            ?uprn
-    """
-
+    query = get_flag_history(uprn)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-
-    flag_history = []
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            history_item = {
-                "UPRN": result["UPRN"]["value"] if "UPRN" in result else uprn,
-                "Flagged": result["Flagged"]["value"] if "Flagged" in result else None,
-                "FlagType": (
-                    result["FlagType"]["value"] if "FlagType" in result else None
-                ),
-                "FlaggedByGivenName": (
-                    result["FlaggedByGivenName"]["value"]
-                    if "FlaggedByGivenName" in result
-                    else None
-                ),
-                "FlaggedBySurname": (
-                    result["FlaggedBySurname"]["value"]
-                    if "FlaggedBySurname" in result
-                    else None
-                ),
-                "FlagDate": (
-                    result["FlagDate"]["value"] if "FlagDate" in result else None
-                ),
-                "AssessmentDate": (
-                    result["AssessmentDate"]["value"]
-                    if "AssessmentDate" in result
-                    else None
-                ),
-                "AssessorGivenName": (
-                    result["AssessorGivenName"]["value"]
-                    if "AssessorGivenName" in result
-                    else None
-                ),
-                "AssessorSurname": (
-                    result["AssessorSurname"]["value"]
-                    if "AssessorSurname" in result
-                    else None
-                ),
-                "AssessmentReason": (
-                    result["AssessmentReason"]["value"]
-                    if "AssessmentReason" in result
-                    else None
-                ),
-            }
-            flag_history.append(history_item)
-
-    return flag_history
+    return map_structure_unit_flag_history_response(results)
 
 
 @router.get(

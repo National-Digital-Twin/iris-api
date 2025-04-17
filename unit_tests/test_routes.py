@@ -224,32 +224,6 @@ def test_invalidate_flag_bad_assessment_type(client, monkeypatch):
     response = client.post("/invalidate-flag", json=payload, headers={"dummy": "header"})
     assert response.status_code == 422
 
-def test_get_building_flag_history(client, monkeypatch):
-    dummy_result = {
-        "results": {
-            "bindings": [
-                {
-                    "UPRN": {"value": "12345"},
-                    "Flagged": {"value": "http://example.com/flag1"},
-                    "FlagType": {"value": "Type1"},
-                    "FlaggedByGivenName": {"value": "John"},
-                    "FlaggedBySurname": {"value": "Doe"},
-                    "FlagDate": {"value": "2020-01-01T00:00:00"},
-                    "AssessmentDate": {"value": "2020-01-02T00:00:00"},
-                    "AssessorGivenName": {"value": "Jane"},
-                    "AssessorSurname": {"value": "Smith"},
-                    "AssessmentReason": {"value": "Reason1"}
-                }
-            ]
-        }
-    }
-    monkeypatch.setattr(routes, "run_sparql_query", lambda q, h: dummy_result)
-    response = client.get("/buildings/uprn123/flag-history", headers={"dummy": "header"})
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 1
-    assert data[0]["UPRN"] == "12345"
-
 def test_get_flagged_buildings(client, monkeypatch):
     dummy_result = {
         "results": {

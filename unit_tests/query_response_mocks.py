@@ -85,7 +85,83 @@ def bounded_buildings_response():
             ]
         }
     }
-        
+    
+def bounded_detailed_buildings_response():
+    return {
+        "results": {
+            "bindings": [
+                { 
+                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_10003319738" } ,
+                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.172860902466188 50.6485359929191)" } ,
+                    "postcode": { "type": "literal" , "value": "PO36 9JA" } ,
+                    "windowGlazing": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#DoubleGlazingBefore2002" } ,
+                    "wallConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#CavityWall" } ,
+                    "wallInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#InsulatedWall" } ,
+                    "floorConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Suspended" } ,
+                    "floorInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#NoInsulationInFloor" }
+                } ,
+                { 
+                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_100060763759" } ,
+                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.1511959894263062 50.71876029182787)" } ,
+                    "postcode": { "type": "literal" , "value": "PO33 1DG" } ,
+                    "windowGlazing": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#DoubleGlazingAfter2002" } ,
+                    "wallConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#CavityWall" } ,
+                    "wallInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#InsulatedWall" } ,
+                    "floorConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Suspended" } ,
+                    "floorInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#NoInsulationInFloor" }
+                }
+            ]
+        }
+    }
+ 
+def flag_history_response(active):
+    result = {
+        "results": {
+            "bindings": [
+                {
+                    "uprn": {"value": "12345"},
+                    "flag": {"value": "http://ndtp.co.uk/data#flag1"},
+                    "flagType": {"value": "http://nationaldigitaltwin.gov.uk/data#InterestedInInvestigating"},
+                    "retrofitterName": {"value": "John Doe"},
+                    "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"}
+                }
+            ]
+        }
+    }
+    if not active:
+        result["results"]["bindings"][0]["assessmentDate"] = {"value": "http://iso.org/iso8601#2020-01-02T00:00:00"}
+        result["results"]["bindings"][0]["assessorGivenName"] = {"value": "Jane Smith"}
+        result["results"]["bindings"][0]["assessmentReason"] = {"value": "Reason1"}
+    return result
+
+def multiple_flag_history_response(active):
+    return {
+        "results": {
+            "bindings": [
+                {
+                    "uprn": {"value": "12345"},
+                    "flag": {"value": "http://ndtp.co.uk/data#flag1"},
+                    "flagType": {"value": "http://nationaldigitaltwin.gov.uk/data#InterestedInInvestigating"},
+                    "retrofitterName": {"value": "Simon Smith"},
+                    "flagDate": {"value": "http://iso.org/iso8601#2020-01-03T00:00:00"},
+                    "assessmentDate": {"value": ""},
+                    "assessorGivenName": {"value": ""},
+                    "assessmentReason": {"value": ""}
+                },
+                {
+                    "uprn": {"value": "67890"},
+                    "flag": {"value": "http://ndtp.co.uk/data#flag2"},
+                    "flagType": {"value": "http://nationaldigitaltwin.gov.uk/data#InterestedInInvestigating"},
+                    "retrofitterName": {"value": "John Doe"},
+                    "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"},
+                    "assessmentDate": {"value": "http://iso.org/iso8601#2020-01-02T00:00:00"},
+                    "assessorGivenName": {"value": "Jane Smith"},
+                    "assessmentReason": {"value": "Reason1"}
+                }
+            ]
+        }
+    }
+       
 def statistics_response():
     return {
         "results": {
@@ -128,4 +204,3 @@ def mock_known_building(query, headers):
         return wall_window_query_response(uprn)
     else:
         return "default response"
-    

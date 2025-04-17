@@ -8,8 +8,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.routes import router
-from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query
-from unit_tests.query_response_mocks import mock_known_building, empty_query_response, bounded_buildings_response
+from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query, get_detailed_buildings_in_bounding_box_query
+from unit_tests.query_response_mocks import mock_known_building, empty_query_response, bounded_buildings_response, bounded_detailed_buildings_response
 
 @pytest.fixture(autouse=True)
 def set_identity_api_url(monkeypatch):
@@ -66,6 +66,52 @@ class TestGetBuildingsInBoundingBox:
         call_args = mock_query.call_args[0]
         assert polygon in call_args[0]
         
+class TestGetDetailedBuildingsInBoundingBox:
+    def test_successful_get_buildings(self, client, monkeypatch):
+        """Test successful retrieval of detailed buildings in a bounding box"""
+        mock_query = MagicMock(return_value=bounded_detailed_buildings_response())
+        monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
+        
+        response = client.get("/detailed-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261")
+        
+        assert response.status_code == 200
+        buildings = response.json()
+        
+        assert len(buildings) == 2
+        building = buildings[0]
+        
+        assert building["uprn"] == "10003319738"
+        assert building["postcode"] == "PO36 9JA"
+        assert building["window_glazing"] == "DoubleGlazingBefore2002"
+        assert building["wall_construction"] == "CavityWall"
+        assert building["wall_insulation"] == "InsulatedWall"
+        assert building["floor_construction"] == "Suspended"
+        assert building["floor_insulation"] == "NoInsulationInFloor"
+        assert building["roof_construction"] == ""
+        assert building["roof_insulation_location"] == ""
+        assert building["roof_insulation_thickness"] == ""
+        
+        self.verify_query_run_with_correct_args(mock_query)
+    
+    def test_empty_results(self, client, monkeypatch):
+        """Test when no buildings are found"""
+        mock_query = MagicMock(return_value=empty_query_response())
+        monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
+        
+        response = client.get("/detailed-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261")
+        
+        assert response.status_code == 200
+        buildings = response.json()
+        assert len(buildings) == 0
+        
+        self.verify_query_run_with_correct_args(mock_query)
+        
+    def verify_query_run_with_correct_args(self, mock_query):
+        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
+        mock_query.assert_any_call(get_detailed_buildings_in_bounding_box_query(polygon), ANY)
+        call_args = mock_query.call_args[0]
+        assert polygon in call_args[0]
+    
 
 class TestGetBuildingByUprn:
     def test_successful_get_building(self, client, monkeypatch):

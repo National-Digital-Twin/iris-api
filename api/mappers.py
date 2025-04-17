@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from models import DetailedBuilding, EpcStatistics, SimpleBuilding
+from models.dto_models import DetailedBuilding, EpcStatistics, FlagHistory, SimpleBuilding
 from re import match
 
 def strip_uri(uri: str) -> str:
@@ -30,7 +30,16 @@ def strip_uri(uri: str) -> str:
         return ""
     
 def get_value_from_result(result: dict, field: str) -> str:
-    return strip_uri(result[field]["value"])
+    if field in result.keys():
+        return strip_uri(result[field]["value"])
+    else:
+        return ""
+    
+def get_uri_from_result(result: dict, field: str) -> str:
+    if field in result.keys():
+        return result[field]["value"]
+    else:
+        return ""
 
 def get_int_value_from_result(result: dict, field: str) -> int:
     return int(strip_uri(result[field]["value"]))
@@ -167,6 +176,36 @@ def map_bounded_buildings_response(results: dict) -> list[SimpleBuilding]:
             buildings.append(building)
     return buildings
 
+def map_detailed_bounded_buildings_response(results: dict) -> list[DetailedBuilding]:
+    """
+    Maps a `DetailedBuilding` array response from a SPARQL query result.
+    
+    Args:
+        results (dict): Detailed SPARQL data retrieved regarding the building e.g. the UPRN, window glazing, wall construction etc.
+    
+    Returns:
+        list[DetailedBuilding]: A list of `DetailedBuilding` instances.
+    """
+    buildings = []
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            building = DetailedBuilding()
+            building.uprn = get_value_from_result(result, "uprn")
+            building.lodgement_date = get_value_from_result(result, "lodgementDate")
+            building.postcode = get_value_from_result(result, "postcode")
+            building.window_glazing = get_value_from_result(result, "windowGlazing")
+            building.wall_construction = get_value_from_result(result, "wallConstruction")
+            building.wall_insulation = get_value_from_result(result, "wallInsulation")
+            building.floor_construction = get_value_from_result(result, "floorConstruction")
+            building.floor_insulation = get_value_from_result(result, "floorInsulation")
+            building.roof_construction = get_value_from_result(result, "roofConstruction")
+            building.roof_insulation_location = get_value_from_result(result, "roofInsulation")
+            building.roof_insulation_thickness = get_value_from_result(result, "roofInsulationThickness")
+            point = get_value_from_result(result, "point")
+            map_lat_long(building, point)
+            buildings.append(building)
+    return buildings
+
 def map_epc_statistics_response(results: dict) -> list[EpcStatistics]:
     """
     Maps a `EpcStatistics` array response from a SPARQL query result.
@@ -193,3 +232,27 @@ def map_epc_statistics_response(results: dict) -> list[EpcStatistics]:
             stats.append(stat)
     return stats
             
+def map_structure_unit_flag_history_response(results: dict) -> list[FlagHistory]:
+    """
+    Maps a `FlagHistory` array response from a SPARQL query result.
+    
+    Args:
+        results (dict): A list of flags which have been raised against a structure unit.
+    
+    Returns:
+        list[FlagHistory]: A list of `FlagHistory` instances.
+    """
+    flags = []
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            flag = FlagHistory()
+            flag.uprn = get_value_from_result(result, "uprn")
+            flag.flagged = get_uri_from_result(result, "flag")
+            flag.flag_type = get_value_from_result(result, "flagType")
+            flag.flagged_by_name = get_value_from_result(result, "retrofitterName")
+            flag.flag_date = get_value_from_result(result, "flagDate")
+            flag.assessment_date = get_value_from_result(result, "assessmentDate")
+            flag.assessor_name = get_value_from_result(result, "assessorName")
+            flag.assessment_reason = get_value_from_result(result, "assessmentReason")
+            flags.append(flag)
+    return flags

@@ -5,6 +5,17 @@
 from models.dto_models import DetailedBuilding, EpcStatistics, FlagHistory, FlaggedBuilding, SimpleBuilding
 from re import match
 
+
+structure_unit_type_hierarchy = {
+    "House": 1,
+    "Flat": 1,
+    "Park Home": 1,
+    "Maisonette": 2,
+    "Bungalow": 2
+}
+get_type_rank = structure_unit_type_hierarchy.get
+
+
 def strip_uri(uri: str) -> str:
     """
     Utility method to strip the relevant resource from the URI.
@@ -162,19 +173,23 @@ def map_bounded_buildings_response(results: dict) -> list[SimpleBuilding]:
     Returns:
         list[SimpleBuilding]: A list of `SimpleBuilding` instances.
     """
-    buildings = []
+    buildings = {}
     if results and results["results"] and results["results"]["bindings"]:
         for result in results["results"]["bindings"]:
-            building = SimpleBuilding()
-            building.uprn = get_value_from_result(result, "uprn")
-            building.first_line_of_address = get_value_from_result(result, "firstLineOfAddress")
-            building.toid = get_value_from_result(result, "toid")
-            building.energy_rating = get_value_from_result(result, "epcRating")
-            building.structure_unit_type = get_value_from_result(result, "structureUnitType")
-            point = get_value_from_result(result, "point")
-            map_lat_long(building, point)
-            buildings.append(building)
-    return buildings
+            uprn = get_value_from_result(result, "uprn")
+            structure_unit_type = get_value_from_result(result, "structureUnitType")
+            # Take the lowest rank of structure unit type, e.g. take "Maisonette" over "Flat"
+            if uprn not in buildings or get_type_rank(structure_unit_type, 0) > get_type_rank(buildings[uprn].structure_unit_type, 0):
+                building = SimpleBuilding()
+                building.uprn = uprn
+                building.first_line_of_address = get_value_from_result(result, "firstLineOfAddress")
+                building.toid = get_value_from_result(result, "toid")
+                building.energy_rating = get_value_from_result(result, "epcRating")
+                building.structure_unit_type = structure_unit_type
+                point = get_value_from_result(result, "point")
+                map_lat_long(building, point)
+                buildings[uprn] = building
+    return list(buildings.values())
 
 def map_detailed_bounded_buildings_response(results: dict) -> list[DetailedBuilding]:
     """

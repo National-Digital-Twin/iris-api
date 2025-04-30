@@ -63,28 +63,34 @@ def empty_query_response():
     }
     
 def bounded_buildings_response():
+    first = bounded_building_response(100060763456, "1 Apple Avenue", "osgb1000013062259", "POINT(-1.1834759844410794 50.72234886358317)", "C", "Bungalow")
+    second = bounded_building_response(100060768637, "2 Orange Road", "osgb1000013076936", "POINT(-1.178467890878929 50.725098060722736)", "C", "House")
     return {
         "results": {
-            "bindings": [
-                {
-                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_100060763456" } ,
-                    "firstLineOfAddress": { "type": "uri" , "value": "1 Apple Avenue" } ,
-                    "toid": { "type": "literal" , "value": "osgb1000013062259" } ,
-                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.1834759844410794 50.72234886358317)" } ,
-                    "epcRating": { "type": "uri" , "value": "C" } ,
-                    "structureUnitType": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Bungalow" }
-                } ,
-                { 
-                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_100060768637" } ,
-                    "firstLineOfAddress": { "type": "uri" , "value": "2 Orange Road" } ,
-                    "toid": { "type": "literal" , "value": "osgb1000013076936" } ,
-                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.178467890878929 50.725098060722736)" } ,
-                    "epcRating": { "type": "uri" , "value": "C" } ,
-                    "structureUnitType": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#House" }
-                }
-            ]
+            "bindings": [first, second]
         }
     }
+    
+def bounded_buildings_response_two_forms():
+    first = bounded_building_response(100060763456, "1 Apple Avenue", "osgb1000013062259", "POINT(-1.1834759844410794 50.72234886358317)", "C", "House")
+    second = bounded_building_response(100060768638, "3a Cherry Street", "osgb1000013076936", "POINT(-1.178467890878929 50.725098060722736)", "D", "Maisonette")
+    third = bounded_building_response(100060763456, "1 Apple Avenue", "osgb1000013062259", "POINT(-1.1834759844410794 50.72234886358317)", "C", "Bungalow")
+    fourth = bounded_building_response(100060768638, "3a Cherry Street", "osgb1000013076936", "POINT(-1.178467890878929 50.725098060722736)", "D", "Flat")
+    return {
+        "results": {
+            "bindings": [first, second, third, fourth]
+        }
+    }
+    
+def bounded_building_response(uprn, address, toid, point, epc_rating, structure_unit_type):
+    return {
+            "uprn": { "type": "uri" , "value": f"http://ndtp.co.uk/data#UPRN_{uprn}" } ,
+            "firstLineOfAddress": { "type": "uri" , "value": address } ,
+            "toid": { "type": "literal" , "value": toid } ,
+            "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": point } ,
+            "epcRating": { "type": "uri" , "value": epc_rating } ,
+            "structureUnitType": { "type": "uri" , "value": f"http://ies.data.gov.uk/ontology/ies-building1#{structure_unit_type}" }
+        }
     
 def bounded_detailed_buildings_response():
     return {

@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from models.dto_models import DetailedBuilding, EpcStatistics, FlagHistory, FlaggedBuilding, SimpleBuilding
+from models.dto_models import Building, DetailedBuilding, EpcStatistics, FlagHistory, FlaggedBuilding, SimpleBuilding
 from re import match
 
 
@@ -141,7 +141,7 @@ def map_single_building_response(uprn: str, building_results: dict, roof_results
     map_wall_window_results(building, wall_window_results)
     return building
 
-def map_lat_long(building: SimpleBuilding, point: str) -> None:
+def map_lat_long(building: Building, point: str) -> None:
     """
     Uses regex to extract the longitude and latitude from a POINT wkt literal and map to building attributes.
     

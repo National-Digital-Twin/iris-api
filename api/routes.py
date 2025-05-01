@@ -6,7 +6,7 @@ import configparser
 import os
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import requests
 from access import AccessClient
@@ -441,7 +441,7 @@ def get_epc_statistics_for_wards(req: Request):
 class InvalidateFlag(BaseModel):
     flagUri: str
     assessmentTypeOverride: str = prefix_dict["ndt_ont"] + "AssessToBeFalse"
-    securityLabel: EDH = None
+    securityLabel: EDH = default_security_label
 
 
 @router.post(

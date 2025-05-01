@@ -200,10 +200,10 @@ def get_statistics_for_wards() -> str:
     """
     
 def get_flagged_buildings() -> str:
-    return f"""
+    return """
         PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
         PREFIX ies: <http://informationexchangestandard.org/ont/ies#>
-        SELECT ?toid ?uprn ?flag WHERE {{
+        SELECT ?toid ?uprn ?flag WHERE {
             ?flag a ?flagType;
                 ies:interestedIn ?structureUnitState .
             ?structureUnitState a building:StructureUnitState ;
@@ -216,8 +216,8 @@ def get_flagged_buildings() -> str:
             ?_toid a ies:TOID ;
                 ies:representationValue ?toid .
         
-            FILTER NOT EXISTS {{ ?flag_assessment ies:assessed ?flag . }}
-        }}
+            FILTER NOT EXISTS { ?flag_assessment ies:assessed ?flag . }
+        }
         """
     
 def get_flag_history(uprn: str) -> str:

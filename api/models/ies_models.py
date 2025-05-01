@@ -23,7 +23,7 @@ class ClassificationEmum(str, Enum):
 class EDH(BaseModel):
     permitted_organisations: List[str] = []
     permitted_nationalities: List[str] = []
-    classification: ClassificationEmum = "O"
+    classification: ClassificationEmum = ClassificationEmum.official
 
     def to_string(self):
         builder = SecurityLabelBuilder()

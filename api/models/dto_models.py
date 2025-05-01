@@ -12,10 +12,10 @@ print(pydantic.VERSION)
 
 from .ies_models import IesThing
 
-def to_camel(string: str) -> str:
-    if string.lower() == 'uprn' or string.lower() == 'toid':
-        return string.upper()
-    parts = string.split('_')
+def to_camel(field: str) -> str:
+    if field.lower() == 'uprn' or field.lower() == 'toid':
+        return field.upper()
+    parts = field.split('_')
     return ''.join(word.capitalize() for word in parts[0:])
 
 class AccessUser(BaseModel):

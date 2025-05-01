@@ -416,7 +416,7 @@ def get_buildings_in_bounding_box(
 @router.get(
     "/detailed-buildings",
     response_model=List[DetailedBuilding],
-    description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
+    description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing",
 )
 def get_detailed_buildings_in_bounding_box(
     min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request

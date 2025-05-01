@@ -41,10 +41,7 @@ def strip_uri(uri: str) -> str:
         return ""
     
 def get_value_from_result(result: dict, field: str) -> str:
-    if field in result.keys():
-        return strip_uri(result[field]["value"])
-    else:
-        return ""
+    return strip_uri(get_uri_from_result(result, field))
     
 def get_uri_from_result(result: dict, field: str) -> str:
     if field in result.keys():

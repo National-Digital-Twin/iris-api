@@ -2,6 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
+
 def get_building(uprn: str) -> str:
     return f"""
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -13,26 +14,27 @@ def get_building(uprn: str) -> str:
         SELECT ?uprn ?lodgementDate ?builtForm ?structureUnitType WHERE {{
             ?uprn a building:UPRN .
             ?uprn ies:representationValue '{uprn}' .
-            
+
             ?structureUnit ies:isIdentifiedBy ?uprn .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
-            
+
             ?epc_result building:lodgementDate ?lodgementDate .
             ?epc_result ies:isParticipantIn ?epc_assessment .
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
-            
+
             ?_bf a ?builtForm .
             ?builtForm a building:BuiltForm .
             ?_bf ies:isStateOf ?structureUnit .
-            
+
             ?_sut a ?structureUnitType .
             ?structureUnitType a building:StructureUnitType .
             ?_sut ies:isStateOf ?structureUnit .
         }}
         LIMIT 1
     """
+
 
 def get_roof_for_building(uprn: str) -> str:
     return f"""
@@ -46,29 +48,30 @@ def get_roof_for_building(uprn: str) -> str:
         WHERE {{
             ?uprn a building:UPRN .
             ?uprn ies:representationValue '{uprn}' .
-            
+
             ?structureUnit ies:isIdentifiedBy ?uprn .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
-            
+
             ?_rc a ?roofConstruction .
             ?roofConstruction a building:RoofConstruction .
             ?_rc ies:isPartOf ?structureUnitState .
-            
+
             ?_ri a ?roofInsulation .
             ?roofInsulation a building:RoofInsulationLocation .
             ?_ri ies:isPartOf ?structureUnitState .
-            
+
             OPTIONAL {{
                 ?_rit a ?roofInsulationThickness .
                 ?roofInsulationThickness a building:RoofInsulationThickness .
                 ?_rit ies:isPartOf ?structureUnitState .
-            }}        
+            }}
         }}
         LIMIT 1
     """
-    
+
+
 def get_floor_for_building(uprn: str) -> str:
     return f"""
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -80,23 +83,24 @@ def get_floor_for_building(uprn: str) -> str:
         SELECT ?uprn ?floorConstruction ?floorInsulation WHERE {{
         ?uprn a building:UPRN .
         ?uprn ies:representationValue '{uprn}' .
-        
+
         ?structureUnit ies:isIdentifiedBy ?uprn .
         ?structureUnit a building:StructureUnit .
         ?structureUnitState a building:StructureUnitState .
         ?structureUnitState ies:isStateOf ?structureUnit .
-        
+
         ?_fc a ?floorConstruction .
         ?floorConstruction a building:FloorConstruction .
         ?_fc ies:isPartOf ?structureUnitState .
-        
+
         ?_fi a ?floorInsulation .
         ?floorInsulation a building:FloorInsulation .
         ?_fi ies:isPartOf ?structureUnitState .
-        
+
         }}
         LIMIT 1
     """
+
 
 def get_walls_and_windows_for_building(uprn: str) -> str:
     return f"""
@@ -109,47 +113,36 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
         SELECT ?uprn ?wallConstruction ?wallInsulation ?windowGlazing WHERE {{
             ?uprn a building:UPRN .
             ?uprn ies:representationValue '{uprn}' .
-            
+
             ?structureUnit ies:isIdentifiedBy ?uprn .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
-            
+
             ?_wc a ?wallConstruction .
             ?wallConstruction a building:WallConstruction .
             ?_wc ies:isPartOf ?structureUnitState .
-            
+
             ?_wi a ?wallInsulation .
             ?wallInsulation a building:WallInsulation .
             ?_wi ies:isPartOf ?structureUnitState .
-            
+
             ?_wg a ?windowGlazing .
             ?windowGlazing a building:GlazingType .
             ?_wg ies:isPartOf ?structureUnitState .
-            
+
         }}
         LIMIT 1
     """
-    
-def get_buildings_in_bounding_box_query(polygon: str) -> str:
-    return f"""
-    PREFIX data: <http://ndtp.co.uk/data#>
-    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-    PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
 
-    SELECT ?uprn ?firstLineOfAddress ?toid ?point ?epcRating ?structureUnitType
-    WHERE {{
-        GRAPH <http://ndtp.co.uk/building-geo-mapping> {{ 
-            ?uprn geo:asWKT ?point .
-            ?uprn data:hasFirstLineOfAddress ?firstLineOfAddress .
-            ?uprn data:hasToid ?toid .
-            ?uprn data:hasEPCRating ?epcRating .
-            ?uprn data:hasStructureUnitType ?structureUnitType .
-            
-            FILTER(geof:sfIntersects(?point, "{polygon}"^^geo:wktLiteral))
-        }}
-    }}
+
+def get_buildings_in_bounding_box_query() -> str:
+    return """
+        SELECT uprn, first_line_of_address, toid, point, epc_rating, structure_unit_type
+        FROM iris.building_geo_mapping
+        WHERE ST_INTERSECTS(point, ST_GeomFromText(:polygon, :srid));
     """
+
 
 def get_detailed_buildings_in_bounding_box_query(polygon: str) -> str:
     return f"""
@@ -158,7 +151,7 @@ def get_detailed_buildings_in_bounding_box_query(polygon: str) -> str:
         PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
 
         SELECT ?uprn ?point ?postcode ?windowGlazing ?wallConstruction ?wallInsulation ?floorConstruction ?floorInsulation ?roofConstruction ?roofInsulation ?roofInsulationThickness
-        WHERE {{ 
+        WHERE {{
             GRAPH <http://ndtp.co.uk/detailed-building-geo-mapping> {{
                 ?uprn geo:asWKT ?point ;
                     data:hasPostcode ?postcode ;
@@ -176,7 +169,8 @@ def get_detailed_buildings_in_bounding_box_query(polygon: str) -> str:
             }}
         }}
     """
-    
+
+
 def get_statistics_for_wards() -> str:
     return """
         PREFIX stats: <http://ndtp.co.uk/stats#> 
@@ -198,7 +192,8 @@ def get_statistics_for_wards() -> str:
         } 
         ORDER BY ?wardName 
     """
-    
+
+
 def get_flagged_buildings() -> str:
     return """
         PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
@@ -211,15 +206,16 @@ def get_flagged_buildings() -> str:
             ?structureUnit a building:StructureUnit ;
                 ies:isIdentifiedBy ?uprn ;
                 ies:isIdentifiedBy ?_toid .
-            
+
             ?uprn a building:UPRN .
             ?_toid a ies:TOID ;
                 ies:representationValue ?toid .
-        
+
             FILTER NOT EXISTS { ?flag_assessment ies:assessed ?flag . }
         }
         """
-    
+
+
 def get_flag_history(uprn: str) -> str:
     return f"""
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -232,19 +228,19 @@ def get_flag_history(uprn: str) -> str:
         WHERE {{
             ?uprn a building:UPRN .
             ?uprn ies:representationValue '{uprn}' .
-            
+
             ?structureUnit ies:isIdentifiedBy ?uprn;
                 a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState ;
                 ies:isStateOf ?structureUnit .
-            
+
             ?flag a ?flagType;
                 ies:interestedIn ?structureUnitState ;
                 ies:inPeriod ?flagDate ;
                 ies:isStateOf ?retrofitter .
             ?retrofitter ies:hasName ?_retrofitterName .
             ?_retrofitterName ies:representationValue ?retrofitterName .
-  
+
                 OPTIONAL {{
                     ?assessment a ?assessmentReason ;
                         ies:assessed ?flag ;

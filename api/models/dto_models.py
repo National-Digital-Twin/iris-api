@@ -1,22 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
-
-from enum import Enum
-from ianode_labels import IANodeSecurityLabelsV2, SecurityLabelBuilder
-from pydantic import BaseModel
 from typing import List, Optional
-import pydantic
 
-print(pydantic.VERSION)
+import pydantic
+from geoalchemy2 import WKBElement
+from geoalchemy2.shape import to_shape
+from pydantic import BaseModel
 
 from .ies_models import IesThing
 
+print(pydantic.VERSION)
+
+
 def to_camel(field: str) -> str:
-    if field.lower() == 'uprn' or field.lower() == 'toid':
+    if field.lower() == "uprn" or field.lower() == "toid":
         return field.upper()
-    parts = field.split('_')
-    return ''.join(word.capitalize() for word in parts[0:])
+    parts = field.split("_")
+    return "".join(word.capitalize() for word in parts[0:])
+
 
 class AccessUser(BaseModel):
     username: str
@@ -26,11 +28,13 @@ class AccessUser(BaseModel):
     attributes: dict[str, str]
     groups: List[str]
 
+
 class Building(IesThing):
     uprn: Optional[str] = None
     longitude: Optional[str] = None
     latitude: Optional[str] = None
     structure_unit_type: Optional[str] = None
+
 
 class DetailedBuilding(Building):
     postcode: Optional[str] = None
@@ -57,15 +61,17 @@ class EpcStatistics(IesThing):
     g_rating: Optional[int] = 0
     no_rating: Optional[int] = 0
 
+
 class FlaggedBuilding(BaseModel):
     toid: Optional[str] = None
     uprn: Optional[str] = None
     flagged: Optional[str] = None
-    
+
     model_config = {
-        'alias_generator': to_camel,
-        'populate_by_name': True,
+        "alias_generator": to_camel,
+        "populate_by_name": True,
     }
+
 
 class FlagHistory(BaseModel):
     uprn: Optional[str] = None
@@ -76,10 +82,10 @@ class FlagHistory(BaseModel):
     assessment_date: Optional[str] = None
     assessor_name: Optional[str] = None
     assessment_reason: Optional[str] = None
-    
+
     model_config = {
-        'alias_generator': to_camel,
-        'populate_by_name': True,
+        "alias_generator": to_camel,
+        "populate_by_name": True,
     }
 
 
@@ -87,3 +93,28 @@ class SimpleBuilding(Building):
     first_line_of_address: Optional[str] = None
     energy_rating: Optional[str] = None
     toid: Optional[str] = None
+
+
+class BuildingGeoMappingSchema(BaseModel):
+    uprn: str
+    first_line_of_address: str
+    toid: str
+    lattitude: float
+    longitude: float
+    epc_rating: str
+    structure_unit_type: str
+
+    @classmethod
+    def from_orm(cls, obj):
+        wkb_point = WKBElement(obj.point)
+        # convert geometry to WKT format
+        shape_obj = to_shape(wkb_point)
+        return cls(
+            uprn=obj.uprn,
+            first_line_of_address=obj.first_line_of_address,
+            toid=obj.toid,
+            longitude=shape_obj.x,
+            lattitude=shape_obj.y,
+            epc_rating=obj.epc_rating,
+            structure_unit_type=obj.structure_unit_type,
+        )

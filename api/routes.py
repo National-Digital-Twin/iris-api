@@ -6,26 +6,28 @@ import configparser
 import os
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 import requests
 from access import AccessClient
+from db import get_db
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (
     map_bounded_buildings_response,
     map_detailed_bounded_buildings_response,
     map_epc_statistics_response,
     map_flagged_buildings_response,
     map_single_building_response,
-    map_structure_unit_flag_history_response
+    map_structure_unit_flag_history_response,
 )
 from models.dto_models import (
+    BuildingGeoMappingSchema,
     DetailedBuilding,
     EpcStatistics,
-    FlagHistory,
     FlaggedBuilding,
-    SimpleBuilding,    
+    FlagHistory,
+    SimpleBuilding,
 )
 from models.ies_models import (
     EDH,
@@ -55,6 +57,8 @@ from query import (
 )
 from rdflib import Graph
 from requests import codes, exceptions
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_headers as get_forwarding_headers
 
 load_dotenv()
@@ -404,12 +408,22 @@ def generate_wkt_polygon(x_min, y_min, x_max, y_max):
     response_model=List[SimpleBuilding],
     description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_bounding_box(
-    min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request
+async def get_buildings_in_bounding_box(
+    min_long: str,
+    max_long: str,
+    min_lat: str,
+    max_lat: str,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
 ):
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
-    query = get_buildings_in_bounding_box_query(polygon)
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    building_geo_mapping_results = await db.execute(
+        text(get_buildings_in_bounding_box_query()), {"polygon": polygon, "srid": 4326}
+    )
+    results = [
+        BuildingGeoMappingSchema.from_orm(result)
+        for result in building_geo_mapping_results
+    ]
     return map_bounded_buildings_response(results)
 
 
@@ -533,7 +547,7 @@ def get_building_flag_history(uprn: str, req: Request):
 
 
 @router.get(
-    "/flagged-buildings", 
+    "/flagged-buildings",
     description="Gets all buildings that have been flagged",
     response_model=list[FlaggedBuilding],
 )

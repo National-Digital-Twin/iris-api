@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+import datetime
 from typing import List, Optional
 
 import pydantic
@@ -40,6 +41,22 @@ class DetailedBuilding(Building):
     postcode: Optional[str] = None
     lodgement_date: Optional[str] = None
     built_form: Optional[str] = None
+    floor_construction: Optional[str] = None
+    floor_insulation: Optional[str] = None
+    roof_construction: Optional[str] = None
+    roof_insulation_location: Optional[str] = None
+    roof_insulation_thickness: Optional[str] = None
+    wall_construction: Optional[str] = None
+    wall_insulation: Optional[str] = None
+    window_glazing: Optional[str] = None
+
+
+class FilterableBuilding(BaseModel):
+    uprn: Optional[str] = None
+    postcode: Optional[str] = None
+    lodgement_date: Optional[str] = None
+    built_form: Optional[str] = None
+    fuel_type: Optional[str] = None
     floor_construction: Optional[str] = None
     floor_insulation: Optional[str] = None
     roof_construction: Optional[str] = None
@@ -95,14 +112,14 @@ class SimpleBuilding(Building):
     toid: Optional[str] = None
 
 
-class BuildingGeoMappingSchema(BaseModel):
+class EpcAndOsBuildingSchema(BaseModel):
     uprn: str
     first_line_of_address: str
     toid: str
     lattitude: float
     longitude: float
-    epc_rating: str
-    structure_unit_type: str
+    epc_rating: Optional[str]
+    structure_unit_type: Optional[str]
 
     @classmethod
     def from_orm(cls, obj):
@@ -118,3 +135,53 @@ class BuildingGeoMappingSchema(BaseModel):
             epc_rating=obj.epc_rating,
             structure_unit_type=obj.structure_unit_type,
         )
+
+
+class FilterableBuildingSchema(BaseModel):
+    uprn: str
+    post_code: str
+    built_form: Optional[str]
+    lodgement_date: datetime.date
+    fuel_type: Optional[str]
+    window_glazing: Optional[str]
+    wall_construction: Optional[str]
+    wall_insulation: Optional[str]
+    floor_construction: Optional[str]
+    floor_insulation: Optional[str]
+    roof_construction: Optional[str]
+    roof_insulation: Optional[str]
+    roof_insulation_thickness: Optional[str]
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            uprn=obj.uprn,
+            post_code=obj.post_code,
+            built_form=obj.built_form,
+            lodgement_date=obj.lodgement_date,
+            fuel_type=obj.fuel_type,
+            window_glazing=obj.window_glazing,
+            wall_construction=obj.wall_construction,
+            wall_insulation=obj.wall_insulation,
+            floor_construction=obj.floor_construction,
+            floor_insulation=obj.floor_insulation,
+            roof_construction=obj.roof_construction,
+            roof_insulation=obj.roof_insulation,
+            roof_insulation_thickness=obj.roof_insulation_thickness,
+        )
+
+
+class FilterSummary(BaseModel):
+    postcode: set[str] = set()
+    built_form: set[str] = set()
+    inspection_year: set[str] = set()
+    energy_rating: set[str] = set(["EPC In Date", "EPC Expired"])
+    fuel_type: set[str] = set()
+    window_glazing: set[str] = set()
+    wall_construction: set[str] = set()
+    wall_insulation: set[str] = set()
+    floor_construction: set[str] = set()
+    floor_insulation: set[str] = set()
+    roof_construction: set[str] = set()
+    roof_insulation_location: set[str] = set()
+    roof_insulation_thickness: set[str] = set()

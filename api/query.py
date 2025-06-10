@@ -138,36 +138,27 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
 
 def get_buildings_in_bounding_box_query() -> str:
     return """
-        SELECT uprn, first_line_of_address, toid, point, epc_rating, structure_unit_type
-        FROM iris.building_geo_mapping
-        WHERE ST_INTERSECTS(point, ST_GeomFromText(:polygon, :srid));
+        SELECT building.uprn, first_line_of_address, toid, point, epc_assessment.epc_rating, structure_unit.type AS structure_unit_type
+        FROM iris.building building
+        JOIN iris.epc_assessment epc_assessment on building.uprn = epc_assessment.uprn
+        JOIN iris.structure_unit structure_unit on epc_assessment.id = structure_unit.epc_assessment_id
+        WHERE ST_INTERSECTS(building.point, ST_GeomFromText(:polygon, :srid));
     """
 
 
-def get_detailed_buildings_in_bounding_box_query(polygon: str) -> str:
-    return f"""
-        PREFIX data: <http://ndtp.co.uk/data#>
-        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-        PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
-
-        SELECT ?uprn ?point ?postcode ?windowGlazing ?wallConstruction ?wallInsulation ?floorConstruction ?floorInsulation ?roofConstruction ?roofInsulation ?roofInsulationThickness
-        WHERE {{
-            GRAPH <http://ndtp.co.uk/detailed-building-geo-mapping> {{
-                ?uprn geo:asWKT ?point ;
-                    data:hasPostcode ?postcode ;
-                    data:hasWindowGlazing ?windowGlazing ;
-                    data:hasWallConstruction ?wallConstruction ;
-                    data:hasWallInsulation ?wallInsulation ;
-                    data:hasFloorConstruction ?floorConstruction ;
-                    data:hasFloorInsulation ?floorInsulation .
-                OPTIONAL {{
-                    ?uprn data:hasRoofConstruction ?roofConstruction ;
-                        data:hasRoofInsulation ?roofInsulation ;
-                        data:hasRoofInsulationThickness ?roofInsulationThickness .
-                }}
-                FILTER(geof:sfIntersects(?point, "{polygon}"^^geo:wktLiteral))
-            }}
-        }}
+def get_filterable_buildings_in_bounding_box_query() -> str:
+    return """
+        SELECT building.uprn, building.toid, building.post_code,
+            structure_unit.built_form, structure_unit.fuel_type,
+            epc_assessment.lodgement_date, structure_unit.window_glazing,
+            structure_unit.wall_construction, structure_unit.wall_insulation,
+            structure_unit.floor_construction, structure_unit.floor_insulation,
+            structure_unit.roof_construction, structure_unit.roof_insulation,
+            structure_unit.roof_insulation_thickness
+        FROM iris.epc_assessment epc_assessment
+        JOIN iris.building building on epc_assessment.uprn = building.uprn
+        JOIN iris.structure_unit structure_unit ON epc_assessment.id = structure_unit.epc_assessment_id
+        WHERE ST_INTERSECTS(building.point, ST_GeomFromText(:polygon, :srid))
     """
 
 

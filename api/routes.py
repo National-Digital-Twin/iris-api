@@ -15,16 +15,19 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (
     map_bounded_buildings_response,
-    map_detailed_bounded_buildings_response,
+    map_bounded_filterable_buildings_response,
     map_epc_statistics_response,
+    map_filter_summary_response,
     map_flagged_buildings_response,
     map_single_building_response,
     map_structure_unit_flag_history_response,
 )
 from models.dto_models import (
-    BuildingGeoMappingSchema,
-    DetailedBuilding,
+    EpcAndOsBuildingSchema,
     EpcStatistics,
+    FilterableBuilding,
+    FilterableBuildingSchema,
+    FilterSummary,
     FlaggedBuilding,
     FlagHistory,
     SimpleBuilding,
@@ -47,7 +50,7 @@ from pydantic import BaseModel
 from query import (
     get_building,
     get_buildings_in_bounding_box_query,
-    get_detailed_buildings_in_bounding_box_query,
+    get_filterable_buildings_in_bounding_box_query,
     get_flag_history,
     get_flagged_buildings,
     get_floor_for_building,
@@ -90,6 +93,7 @@ fpTopic = os.getenv("IES_TOPIC", "knowledge")
 ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
 IDENTITY_API_CALL_ERROR = "Error calling Identity API, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
+
 
 if update_mode == "KAFKA":
     from ia_map_lib import Adapter, Record, RecordUtils
@@ -417,28 +421,64 @@ async def get_buildings_in_bounding_box(
     db: AsyncSession = Depends(get_db),
 ):
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
-    building_geo_mapping_results = await db.execute(
+    buildings_in_bounding_box_results = await db.execute(
         text(get_buildings_in_bounding_box_query()), {"polygon": polygon, "srid": 4326}
     )
     results = [
-        BuildingGeoMappingSchema.from_orm(result)
-        for result in building_geo_mapping_results
+        EpcAndOsBuildingSchema.from_orm(result)
+        for result in buildings_in_bounding_box_results
     ]
     return map_bounded_buildings_response(results)
 
 
 @router.get(
-    "/detailed-buildings",
-    response_model=List[DetailedBuilding],
-    description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing",
+    "/filter-summary",
+    response_model=FilterSummary,
+    description="Get all the filters available inside a bounding box",
 )
-def get_detailed_buildings_in_bounding_box(
-    min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request
+async def get_filter_summary(
+    min_long: str,
+    max_long: str,
+    min_lat: str,
+    max_lat: str,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
 ):
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
-    query = get_detailed_buildings_in_bounding_box_query(polygon)
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    return map_detailed_bounded_buildings_response(results)
+    detailed_buildings_in_bounding_box_results = await db.execute(
+        text(get_filterable_buildings_in_bounding_box_query()),
+        {"polygon": polygon, "srid": 4326},
+    )
+    results = [
+        FilterableBuildingSchema.from_orm(result)
+        for result in detailed_buildings_in_bounding_box_results
+    ]
+    return map_filter_summary_response(results)
+
+
+@router.get(
+    "/filterable-buildings",
+    response_model=List[FilterableBuilding],
+    description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing that can be used for filtering",
+)
+async def get_filterable_buildings_in_bounding_box(
+    min_long: str,
+    max_long: str,
+    min_lat: str,
+    max_lat: str,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
+    filterable_buildings_in_bounding_box_results = await db.execute(
+        text(get_filterable_buildings_in_bounding_box_query()),
+        {"polygon": polygon, "srid": 4326},
+    )
+    results = [
+        FilterableBuildingSchema.from_orm(result)
+        for result in filterable_buildings_in_bounding_box_results
+    ]
+    return map_bounded_filterable_buildings_response(results)
 
 
 @router.get(
@@ -504,7 +544,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
 
 @router.get(
     "/buildings/{uprn}",
-    response_model=DetailedBuilding,
+    response_model=FilterableBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
 def get_building_by_uprn(uprn: str, req: Request):

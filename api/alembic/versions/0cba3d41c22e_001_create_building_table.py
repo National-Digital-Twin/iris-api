@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-"""001_create_building_geo_mapping_table
+"""001_create_building_table
 
 Revision ID: 0cba3d41c22e
 Revises: 447db7945a72
@@ -25,13 +25,12 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
         """
-        CREATE TABLE iris.building_geo_mapping (
-            uprn TEXT,
-            first_line_of_address TEXT,
+        CREATE TABLE iris.building (
+            uprn TEXT PRIMARY KEY,
             toid TEXT,
-            point GEOMETRY(Point, 4326),
-            epc_rating CHAR(1),
-            structure_unit_type TEXT
+            first_line_of_address TEXT,
+            post_code VARCHAR(8),
+            point GEOMETRY(POINT, 4326)
         );
     """
     )
@@ -39,7 +38,7 @@ def upgrade() -> None:
     op.execute(
         """
         CREATE INDEX point_ix
-        ON iris.building_geo_mapping
+        ON iris.building
         USING GIST (point);
     """
     )
@@ -49,12 +48,12 @@ def downgrade() -> None:
     """Downgrade schema."""
     op.execute(
         """
-        DROP INDEX point_ix ON iris.building_geo_mapping;
+        DROP INDEX point_ix ON iris.building;
     """
     )
 
     op.execute(
         """
-        DROP TABLE iris.building_geo_mapping;
+        DROP TABLE iris.building;
                """
     )

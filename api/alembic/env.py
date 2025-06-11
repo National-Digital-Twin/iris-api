@@ -2,22 +2,16 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-import os
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
+from config import get_settings
 from sqlalchemy import engine_from_config, pool
-
-load_dotenv()
-
-DB_USERNAME = os.getenv("DB_USERNAME")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST", "localhost")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+settings = get_settings()
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -36,7 +30,7 @@ target_metadata = None
 # ... etc.
 config.set_main_option(
     "sqlalchemy.url",
-    f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:5432/iris",
+    settings.get_db_connection_string(),
 )
 
 

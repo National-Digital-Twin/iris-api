@@ -19,3 +19,5 @@ geoalchemy2
 asyncpg
 geoalchemy2[shapely]
 pytest-asyncio
+pydantic_settings
+aiosqlite

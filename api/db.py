@@ -3,26 +3,28 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 
-import os
+from typing import Annotated
 
-from dotenv import load_dotenv
+from config import Settings, get_settings
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-load_dotenv()
 
-db_username = os.getenv("DB_USERNAME")
-db_password = os.getenv("DB_PASSWORD")
-db_host = os.getenv("DB_HOST", "localhost")
+async def get_db(settings: Annotated[Settings, Depends(get_settings)]):
+    db_connection_string = settings.get_db_connection_string()
 
-DB_CONNECTION_STRING = (
-    f"postgresql+asyncpg://{db_username}:{db_password}@{db_host}:5432/iris"
-)
+    if db_connection_string.startswith("postgres"):
+        engine = create_async_engine(
+            db_connection_string, connect_args={}, pool_pre_ping=True
+        )
+    elif db_connection_string.startswith("sqlite"):
+        engine = create_async_engine(
+            db_connection_string, connect_args={"check_same_thread": False}
+        )
+    async_session_maker = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
-engine = create_async_engine(DB_CONNECTION_STRING)
-async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-async def get_db():
     async with async_session_maker() as session:
         yield session

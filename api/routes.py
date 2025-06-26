@@ -401,9 +401,9 @@ async def get_buildings_in_bounding_box(
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     buildings_in_bounding_box_results = await db.execute(
-        text(get_buildings_in_bounding_box_query()), {"polygon": polygon, "srid": 4326}
+        text(get_buildings_in_bounding_box_query()),
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326}
     )
     results = [
         EpcAndOsBuildingSchema.from_orm(result)
@@ -425,10 +425,9 @@ async def get_filter_summary(
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     detailed_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
-        {"polygon": polygon, "srid": 4326},
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
     )
     results = [
         FilterableBuildingSchema.from_orm(result)
@@ -453,7 +452,7 @@ async def get_filterable_buildings_in_bounding_box(
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     filterable_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
-        {"polygon": polygon, "srid": 4326},
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
     )
     results = [
         FilterableBuildingSchema.from_orm(result)

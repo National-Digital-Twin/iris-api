@@ -12,52 +12,27 @@ from access import AccessClient
 from config import get_settings
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from mappers import (
-    map_bounded_buildings_response,
-    map_bounded_filterable_buildings_response,
-    map_epc_statistics_response,
-    map_filter_summary_response,
-    map_flagged_buildings_response,
-    map_single_building_response,
-    map_structure_unit_flag_history_response,
-)
-from models.dto_models import (
-    DetailedBuilding,
-    EpcAndOsBuildingSchema,
-    EpcStatistics,
-    FilterableBuilding,
-    FilterableBuildingSchema,
-    FilterSummary,
-    FlaggedBuilding,
-    FlagHistory,
-    SimpleBuilding,
-)
-from models.ies_models import (
-    EDH,
-    ClassificationEmum,
-    IesAccount,
-    IesAssessment,
-    IesAssessToBeFalse,
-    IesAssessToBeTrue,
-    IesClass,
-    IesEntity,
-    IesPerson,
-    IesState,
-    IesThing,
-    ies,
-)
+from mappers import (map_bounded_buildings_response,
+                     map_bounded_filterable_buildings_response,
+                     map_epc_statistics_response, map_filter_summary_response,
+                     map_flagged_buildings_response,
+                     map_single_building_response,
+                     map_structure_unit_flag_history_response)
+from models.dto_models import (DetailedBuilding, EpcAndOsBuildingSchema,
+                               EpcStatistics, FilterableBuilding,
+                               FilterableBuildingSchema, FilterSummary,
+                               FlaggedBuilding, FlagHistory, SimpleBuilding)
+from models.ies_models import (EDH, ClassificationEmum, IesAccount,
+                               IesAssessment, IesAssessToBeFalse,
+                               IesAssessToBeTrue, IesClass, IesEntity,
+                               IesPerson, IesState, IesThing, ies)
 from pydantic import BaseModel
-from query import (
-    get_building,
-    get_buildings_in_bounding_box_query,
-    get_filterable_buildings_in_bounding_box_query,
-    get_flag_history,
-    get_flagged_buildings,
-    get_floor_for_building,
-    get_roof_for_building,
-    get_statistics_for_wards,
-    get_walls_and_windows_for_building,
-)
+from query import (get_building, get_buildings_in_bounding_box_query,
+                   get_filterable_buildings_in_bounding_box_query,
+                   get_flag_history, get_flagged_buildings,
+                   get_floor_for_building, get_roof_for_building,
+                   get_statistics_for_wards,
+                   get_walls_and_windows_for_building)
 from rdflib import Graph
 from requests import codes, exceptions
 from sqlalchemy import text
@@ -394,10 +369,10 @@ def generate_wkt_polygon(x_min, y_min, x_max, y_max):
     description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
 async def get_buildings_in_bounding_box(
-    min_long: str,
-    max_long: str,
-    min_lat: str,
-    max_lat: str,
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
@@ -418,10 +393,10 @@ async def get_buildings_in_bounding_box(
     description="Get all the filters available inside a bounding box",
 )
 async def get_filter_summary(
-    min_long: str,
-    max_long: str,
-    min_lat: str,
-    max_lat: str,
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
@@ -442,10 +417,10 @@ async def get_filter_summary(
     description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing that can be used for filtering",
 )
 async def get_filterable_buildings_in_bounding_box(
-    min_long: str,
-    max_long: str,
-    min_lat: str,
-    max_lat: str,
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):

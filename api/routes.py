@@ -350,19 +350,6 @@ def post_person(per: IesPerson):
     return per.uri
 
 
-def generate_wkt_polygon(x_min, y_min, x_max, y_max):
-    """
-    Generates a WKT POLYGON string for a bounding box given min/max coordinates.
-
-    :param x_min: Minimum longitude (west)
-    :param y_min: Minimum latitude (south)
-    :param x_max: Maximum longitude (east)
-    :param y_max: Maximum latitude (north)
-    :return: WKT POLYGON string
-    """
-    return f"POLYGON(({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))"
-
-
 @router.get(
     "/buildings",
     response_model=List[SimpleBuilding],
@@ -424,7 +411,6 @@ async def get_filterable_buildings_in_bounding_box(
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     filterable_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
         {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},

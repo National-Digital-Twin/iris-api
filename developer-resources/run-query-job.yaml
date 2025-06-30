@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
         - name: postgres-import-data-clearer
-          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:latest
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0
           env:
             - name: DB_HOST
               value: REPLACE_ME

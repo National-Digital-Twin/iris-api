@@ -9,7 +9,7 @@ spec:
       serviceAccountName: s3-csv-postgres-importer-sa
       containers:
         - name: csv-postgres-importer
-          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:latest
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0
           env:
             - name: AWS_ROLE_ARN
               value: arn:aws:iam::537124944113:role/s3-csv-postgres-importer-role

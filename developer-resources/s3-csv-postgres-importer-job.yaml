@@ -10,6 +10,12 @@ spec:
       containers:
         - name: csv-postgres-importer
           image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0
+          resources:
+            limits:
+              memory: 2GiB
+            requests:
+              memory: 2GiB
+              cpu: 2
           env:
             - name: AWS_ROLE_ARN
               value: arn:aws:iam::537124944113:role/s3-csv-postgres-importer-role

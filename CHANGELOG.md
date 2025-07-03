@@ -15,13 +15,24 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
  ---
 
- ## Unreleased
+ ## [0.91.0] - 2025-07-03
 
  - Updated dependencies (2025-04-10)
  - The `/buildings` endpoint has been updated to expect viewport coordinates (e.g. a minimum and maximum longitude and latitude) rather than a geohash. It then generates a polygon from these coordinates, which is then used to run a GeoSPARQL query on a named graph.
- - The `/building/{uprn}` endpoint has been updated to run building-specific queries which fetch metadata about the roof, floors, walls etc. of the building. 
+ - The `/buildings/{uprn}` endpoint has been updated to run building-specific queries which fetch metadata about the roof, floors, walls etc. of the building. 
  - A new endpoint - `/epc-statistics/wards` - has been introduced, which queries a named graph to fetch the aggregated EPC statistics for the wards. 
  - A new `mappers.py` file has been introduced which exposes a set of functions mapping the responses received from the Secure Agent Graph to models.
+ - Added alembic with SQL migration scripts to enable PostGIS and create the IRIS schema
+ - Updated the bounding box query to fetch data from postgres
+ - Added a new filterable buildings endpoint to fetch data for filterable building in the user view port to power the filter functionality on the IRIS visualizer
+- Added a filter summary endpoint to fetch a list of filters available in the users viewport to power the advanced filter panel functionality of the IRIS visualizer
+ - Added async support for alembic
+ - Added vault secrets for integration with RDS
+ - Optimized bounding box queries
+ - Added indices for EPC assessment and structure unit tables
+ - Added dev scripts to migrate data in CSVs on an s3 bucket to a postgres instance
+ - Fixed bug with the filter summary endpoint due to a missing none check on the postcode match
+ - Removed 404 response from the buildings/{uprn} endpoint to allow returning partial building data
 
  ## [0.90.1] – 2025-03-28
 

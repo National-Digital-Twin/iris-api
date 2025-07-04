@@ -56,6 +56,7 @@ jobs:
   api-ci:
     needs: [versioning]
     uses: ./.github/workflows/api-ci-pr.yml
+    secrets: inherit
 
   api-push-to-ECR:
     needs: [api-ci, versioning]

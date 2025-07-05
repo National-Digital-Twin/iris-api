@@ -34,68 +34,78 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - Added dev scripts to migrate data in CSVs on an s3 bucket to a postgres instance
 - Fixed bug with the filter summary endpoint due to a missing none check on the postcode match
 - Removed 404 response from the buildings/{uprn} endpoint to allow returning partial building data
+<<<<<<< HEAD
 - Fixed bug setting DEV_MODE to false in higher environments - affecting sign out and username display
+=======
 
- ## [0.90.1] – 2025-03-28
+## [0.90.1] – 2025-03-28
 
- ### Documentation
+### Documentation
+>>>>>>> 5565b34... DEV_MODE to true in Staging/Prod
 
- - Updated NOTICE.md with correct formatting
- - Added endpoint to fetch user details
- - Added endpoint to fetch sign out links
+- Updated NOTICE.md with correct formatting
+- Added endpoint to fetch user details
+- Added endpoint to fetch sign out links
 
- ---
-
- ## [0.90.0] – 2025-03-28
-
- ### Initial Public Release (Pre-Stable)
-
- This is the first public release of this repository under NDTP's open-source governance model.
- Since this release is **pre-1.0.0**, changes may still occur that are **not fully backward-compatible**.
-
-
- #### Initial Features
- - View a choropleth map, summarising average EPC ratings per ward
- - Search for a property via address
- - Filter properties based on EPC rating, building type, postcode, drawn area and flagged status
- - Filter properties based on further attributes (roof type, insulation type etc)
- - View details (roof type, EPC rating, insulation type etc) of properties
- - Download details of properties
- - Flag a property to signal it's under investigation
- - Unflagging a property with a rationale
- - Viewing the reason why a property was unflagged
-
- #### Known Limitations
- - Some components are subject to change before `1.0.0`.
- - APIs may evolve based on partner feedback and internal testing.
-
- ---
-
- ## Future Roadmap to `1.0.0`
-
- The `0.90.x` series is part of NDTP’s **pre-stable development cycle**, meaning:
- - **Minor versions (`0.91.0`, `0.92.0`...) introduce features and improvements** leading to a stable `1.0.0`.
- - **Patch versions (`0.90.1`, `0.90.2`...) contain only bug fixes and security updates**.
- - **Backward compatibility is NOT guaranteed until `1.0.0`**, though NDTP aims to minimise breaking changes.
-
- Once `1.0.0` is reached, future versions will follow **strict SemVer rules**.
-
- ## Versioning Policy  
-1. **MAJOR updates (`X.0.0`)** – Typically introduce breaking changes that require users to modify their code or configurations.  
-   - **Breaking changes (default rule)**: Any backward-incompatible modifications require a major version bump.  
-   - **Non-breaking major updates (exceptional cases)**: A major version may also be incremented if the update represents a significant milestone, such as a shift in governance, a long-term stability commitment, or substantial new functionality that redefines the project’s scope.   
-2. **MINOR updates (`0.X.0`)** – New functionality that is backward-compatible.  
-3. **PATCH updates (`0.0.X`)** – Bug fixes, performance improvements, or security patches.  
-4. **Dependency updates** – A **major dependency upgrade** that introduces breaking changes should trigger a **MAJOR** version bump (once at `1.0.0`).  
 ---
-## How to Update This Changelog  
-1. When making changes, update this file under the **Unreleased** section.  
-2. Before a new release, move changes from **Unreleased** to a new dated section with a version number.  
-3. Follow **Semantic Versioning** rules to categorise changes correctly.  
-4. If pre-release versions are used, clearly mark them as `-alpha`, `-beta`, or `-rc.X`.  
+
+## [0.90.0] – 2025-03-28
+
+### Initial Public Release (Pre-Stable)
+
+This is the first public release of this repository under NDTP's open-source governance model.
+Since this release is **pre-1.0.0**, changes may still occur that are **not fully backward-compatible**.
+
+#### Initial Features
+
+- View a choropleth map, summarising average EPC ratings per ward
+- Search for a property via address
+- Filter properties based on EPC rating, building type, postcode, drawn area and flagged status
+- Filter properties based on further attributes (roof type, insulation type etc)
+- View details (roof type, EPC rating, insulation type etc) of properties
+- Download details of properties
+- Flag a property to signal it's under investigation
+- Unflagging a property with a rationale
+- Viewing the reason why a property was unflagged
+
+#### Known Limitations
+
+- Some components are subject to change before `1.0.0`.
+- APIs may evolve based on partner feedback and internal testing.
+
 ---
+
+## Future Roadmap to `1.0.0`
+
+The `0.90.x` series is part of NDTP’s **pre-stable development cycle**, meaning:
+
+- **Minor versions (`0.91.0`, `0.92.0`...) introduce features and improvements** leading to a stable `1.0.0`.
+- **Patch versions (`0.90.1`, `0.90.2`...) contain only bug fixes and security updates**.
+- **Backward compatibility is NOT guaranteed until `1.0.0`**, though NDTP aims to minimise breaking changes.
+
+Once `1.0.0` is reached, future versions will follow **strict SemVer rules**.
+
+## Versioning Policy
+
+1. **MAJOR updates (`X.0.0`)** – Typically introduce breaking changes that require users to modify their code or configurations.
+   - **Breaking changes (default rule)**: Any backward-incompatible modifications require a major version bump.
+   - **Non-breaking major updates (exceptional cases)**: A major version may also be incremented if the update represents a significant milestone, such as a shift in governance, a long-term stability commitment, or substantial new functionality that redefines the project’s scope.
+2. **MINOR updates (`0.X.0`)** – New functionality that is backward-compatible.
+3. **PATCH updates (`0.0.X`)** – Bug fixes, performance improvements, or security patches.
+4. **Dependency updates** – A **major dependency upgrade** that introduces breaking changes should trigger a **MAJOR** version bump (once at `1.0.0`).
+
+---
+
+## How to Update This Changelog
+
+1. When making changes, update this file under the **Unreleased** section.
+2. Before a new release, move changes from **Unreleased** to a new dated section with a version number.
+3. Follow **Semantic Versioning** rules to categorise changes correctly.
+4. If pre-release versions are used, clearly mark them as `-alpha`, `-beta`, or `-rc.X`.
+
+---
+
 **Maintained by the National Digital Twin Programme (NDTP).**  
 © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.  
 Licensed under the Open Government Licence v3.0.  
 For full licensing terms, see [OGL_LICENSE.md](OGL_LICENSE.md).
-

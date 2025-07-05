@@ -16,10 +16,6 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
-## [0.91.1] - 2025-07-05
-
-- Fixed bug setting DEV_MODE to false in higher environments - affecting sign out and username display
-
 ## [0.91.0] - 2025-07-03
 
 - Updated dependencies (2025-04-10)
@@ -38,6 +34,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - Added dev scripts to migrate data in CSVs on an s3 bucket to a postgres instance
 - Fixed bug with the filter summary endpoint due to a missing none check on the postcode match
 - Removed 404 response from the buildings/{uprn} endpoint to allow returning partial building data
+- Fixed bug setting DEV_MODE to false in higher environments - affecting sign out and username display
 
 ## [0.90.1] – 2025-03-28
 

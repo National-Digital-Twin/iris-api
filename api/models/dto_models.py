@@ -141,7 +141,7 @@ class FilterableBuildingSchema(BaseModel):
     uprn: str
     post_code: str
     built_form: Optional[str]
-    lodgement_date: datetime.date
+    lodgement_date: Optional[datetime.date]
     fuel_type: Optional[str]
     window_glazing: Optional[str]
     wall_construction: Optional[str]

@@ -137,8 +137,8 @@ def get_fueltype_for_building(uprn: str) -> str:
             ?structureUnitState ies:isStateOf ?structureUnit .
 
             GRAPH <http://ndtp.com/graph/heating-v1> {{
-                ?structureUnitState building:isServicedBy   ?heatingSystem .
-                ?heatingSystem      building:isOperableWithFuel ?fuelType .
+                ?structureUnitState building:isServicedBy ?heatingSystem .
+                ?heatingSystem building:isOperableWithFuel ?fuelType .
             }}
         }}
     """

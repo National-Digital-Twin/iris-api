@@ -29,7 +29,7 @@ export GITHUB_ACCESS_TOKEN=<your-pat-token>
 Please ensure the dependencies are installed using the command below:
 
 ```sh
-pip install -f requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Running the server

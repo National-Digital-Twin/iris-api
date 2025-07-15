@@ -16,6 +16,11 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## [0.91.1] - 2025-07-15
+
+- Fixed issue with grey buildings not being returned in the data
+- Fixed issue with data discrepancy
+
 ## [0.91.0] - 2025-07-03
 
 - Updated dependencies (2025-04-10)

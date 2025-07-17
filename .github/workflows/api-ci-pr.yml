@@ -1,10 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+# © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+
 name: Frontend CI on PR
 
 on:
   workflow_call:
   pull_request:
     branches:
-      - 'develop'
+      - "develop"
     paths:
       - "api/**"
       - "requirements.txt"
@@ -43,7 +46,7 @@ jobs:
     needs: security-scanning
     timeout-minutes: 20
     env:
-      GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_ACCESS_TOKEN: ${{ secrets.GH_PACKAGES_PAT }}
     environment: development
     steps:
       - name: Checkout repository
@@ -51,7 +54,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t iris/api:latest -f Dockerfile .
+          docker build --secret id=pat_token,env=GITHUB_ACCESS_TOKEN -t iris/api:latest -f Dockerfile .
 
       - name: Run Trivy Scan on Docker Image
         uses: aquasecurity/trivy-action@0.28.0

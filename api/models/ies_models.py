@@ -2,13 +2,15 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from telicent_labels import SecurityLabelBuilder, TelicentSecurityLabelsV2
+from datetime import date, datetime
 from enum import Enum
-from pydantic import BaseModel
-from datetime import datetime, date
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
-ies = "http://ies.data.gov.uk/ontology/ies4#"
+from ianode_labels import IANodeSecurityLabelsV2, SecurityLabelBuilder
+from pydantic import BaseModel
+
+
+ies = "http://informationexchangestandard.org/ont/ies#"
 
 
 class ClassificationEmum(str, Enum):
@@ -21,23 +23,23 @@ class ClassificationEmum(str, Enum):
 class EDH(BaseModel):
     permitted_organisations: List[str] = []
     permitted_nationalities: List[str] = []
-    classification: ClassificationEmum = "O"
+    classification: ClassificationEmum = ClassificationEmum.official
 
     def to_string(self):
         builder = SecurityLabelBuilder()
         if len(self.permitted_organisations) > 0:
             builder.add_multiple(
-                TelicentSecurityLabelsV2.PERMITTED_ORGANISATIONS.value,
+                IANodeSecurityLabelsV2.PERMITTED_ORGANISATIONS.value,
                 *self.permitted_organisations,
             )
         if len(self.permitted_nationalities) > 0:
             builder.add_multiple(
-                TelicentSecurityLabelsV2.PERMITTED_NATIONALITIES.value,
+                IANodeSecurityLabelsV2.PERMITTED_NATIONALITIES.value,
                 *self.permitted_nationalities,
             )
         if self.classification:
             builder.add(
-                TelicentSecurityLabelsV2.CLASSIFICATION.value, self.classification.value
+                IANodeSecurityLabelsV2.CLASSIFICATION.value, self.classification.value
             )
         return builder.build()
 
@@ -124,27 +126,8 @@ class IesPerson(IesThing):
 
     surname: str
     givenName: str
-
-
-class Building(IesThing):
-    uprn: Optional[str] = None
-    currentEnergyRating: Optional[str] = None
-    types: List[str] = []
-    parentBuildingTOID: Optional[str] = None
-    buildingTOID: Optional[str] = None
-    parentBuilding: Optional[str] = None
-    flags: Dict = {}
-
+    
 
 class IesEntityAndStates(BaseModel):
     entity: IesEntity
     states: List[IesState]
-
-
-class AccessUser(BaseModel):
-    username: str
-    user_id: str
-    active: Optional[bool] = None
-    email: Optional[str] = None
-    attributes: dict[str, str]
-    groups: List[str]

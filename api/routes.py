@@ -2,70 +2,62 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from pydantic import BaseModel
+import configparser
+import uuid
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Request, Response, HTTPException
-import os
 import requests
-from dotenv import load_dotenv
-from requests import exceptions
-import uuid
 from access import AccessClient
-import configparser
-from utils import get_headers as get_forwarding_headers
-from models import (
-    ies,
-    ClassificationEmum,
-    EDH,
-    IesThing,
-    IesClass,
-    IesState,
-    IesEntity,
-    IesPerson,
-    IesAssessment,
-    IesAssessToBeTrue,
-    Building,
-    IesEntityAndStates,
-    IesAssessToBeFalse,
-    IesAccount,
-)
-
+from config import get_settings
+from db import get_db
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from mappers import (map_bounded_buildings_response,
+                     map_bounded_filterable_buildings_response,
+                     map_epc_statistics_response, map_filter_summary_response,
+                     map_flagged_buildings_response,
+                     map_single_building_response,
+                     map_structure_unit_flag_history_response)
+from models.dto_models import (DetailedBuilding, EpcAndOsBuildingSchema,
+                               EpcStatistics, FilterableBuilding,
+                               FilterableBuildingSchema, FilterSummary,
+                               FlaggedBuilding, FlagHistory, SimpleBuilding)
+from models.ies_models import (EDH, ClassificationEmum, IesAccount,
+                               IesAssessment, IesAssessToBeFalse,
+                               IesAssessToBeTrue, IesClass, IesEntity,
+                               IesPerson, IesState, IesThing, ies)
+from pydantic import BaseModel
+from query import (get_building, get_buildings_in_bounding_box_query,
+                   get_filterable_buildings_in_bounding_box_query,
+                   get_flag_history, get_flagged_buildings,
+                   get_floor_for_building, get_roof_for_building,
+                   get_statistics_for_wards,
+                   get_walls_and_windows_for_building)
 from rdflib import Graph
-
-load_dotenv()
+from requests import codes, exceptions
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from utils import get_headers as get_forwarding_headers
 
 router = APIRouter()
 
-# If you're running this yourself, and the Jena instance you're using is not local, you can used environment variables to override
-jenaURL = os.getenv("JENA_URL", "localhost")
-jenaPort = os.getenv("JENA_PORT", "3030")
-jenaProtocol = os.getenv("JENA_PROTOCOL", "http")
-ontoDataset = os.getenv("ONTO_DATASET", "ontology")
-dataset = os.getenv("KNOWLEDGE_DATASET", "knowledge")
-default_security_label = EDH(classification=ClassificationEmum.official)
-data_uri_stub = os.getenv(
-    "DATA_URI", "http://nationaldigitaltwin.gov.uk/data#"
-)  # This can be overridden in use
-update_mode = os.getenv("UPDATE_MODE", "SCG")
-access_protocol = os.getenv("ACCESS_PROTOCOL", "http")
-access_host = os.getenv("ACCESS_URL", "localhost")
-access_port = os.getenv("ACCESS_PORT", "8091")
-dev_mode = os.getenv("DEV", "False")
-access_path = os.getenv("ACCESS_PATH", "/")
+config_settings = get_settings()
 
-broker = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
-fpTopic = os.getenv("IES_TOPIC", "knowledge")
+default_security_label = EDH(classification=ClassificationEmum.official)
+data_uri_stub = config_settings.DATA_URI  # This can be overridden in use
 
 ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
+IDENTITY_API_CALL_ERROR = "Error calling Identity API, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
 
-if update_mode == "KAFKA":
-    from telicent_lib.sinks import KafkaSink
-    from telicent_lib import Adapter, Record, RecordUtils
 
-    knowledgeSink = KafkaSink(topic=fpTopic, broker=broker)
+if config_settings.UPDATE_MODE == "KAFKA":
+    from ia_map_lib import Adapter, Record, RecordUtils
+    from ia_map_lib.sinks import KafkaSink
+
+    knowledgeSink = KafkaSink(
+        topic=config_settings.IES_TOPIC, broker=config_settings.BOOTSTRAP_SERVERS
+    )
     knowledgeAdapter = Adapter(
         knowledgeSink, name="IoW Write-Back API", source_name="local data"
     )
@@ -79,22 +71,18 @@ def get_headers(security_labels):
 
 config = configparser.ConfigParser()
 config.read("setup.cfg")
-if dev_mode.lower() == "true":
-    dev_mode = True
-else:
-    dev_mode = False
 # The URIs used in the ontologies
-ndt_ont = "http://nationaldigitaltwin.gov.uk/ontology#"
+ndt_ont = "http://ndtp.co.uk/ontology#"
 
-access_url = f"{access_protocol}://{access_host}:{access_port}{access_path}"
-jena_url = f"{jenaProtocol}://{jenaURL}:{jenaPort}"
+access_url = f"{config_settings.ACCESS_PROTOCOL}://{config_settings.ACCESS_HOST}:{config_settings.ACCESS_PORT}{config_settings.ACCESS_PATH}"
+jena_url = f"{config_settings.JENA_PROTOCOL}://{config_settings.JENA_URL}:{config_settings.JENA_PORT}"
 
 
 def add_prefix(prefix, uri):
     prefix_dict[prefix] = uri
 
 
-access_client = AccessClient(access_url, dev_mode)
+access_client = AccessClient(access_url, config_settings.DEV_MODE)
 prefix_dict = {}
 add_prefix("xsd", "http://www.w3.org/2001/XMLSchema#")
 add_prefix("dc", "http://purl.org/dc/elements/1.1/")
@@ -104,7 +92,7 @@ add_prefix("owl", "http://www.w3.org/2002/07/owl#")
 add_prefix("ies", ies)
 add_prefix("data", data_uri_stub)
 add_prefix("ndt_ont", ndt_ont)
-add_prefix("ndt", "http://nationaldigitaltwin.gov.uk/data#")
+add_prefix("ndt", "http://ndtp.co.uk/data#")
 add_prefix("gp", "https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#")
 add_prefix(
     "epc",
@@ -154,7 +142,9 @@ assessment_classes = {}
 building_state_classes = {}
 
 
-def run_sparql_query(query: str, headers: dict[str, str], query_dataset=dataset):
+def run_sparql_query(
+    query: str, headers: dict[str, str], query_dataset=config_settings.DATASET
+):
     global jena_url
     get_uri = jena_url + "/" + query_dataset + "/query"
     try:
@@ -175,8 +165,8 @@ def run_sparql_update(
 
     if sec_label is None:
         sec_label = default_security_label
-    if update_mode == "SCG":
-        post_uri = jena_url + "/" + dataset + "/update"
+    if config_settings.UPDATE_MODE == "SCG":
+        post_uri = jena_url + "/" + config_settings.DATASET + "/update"
         headers = {
             "Accept": "*/*",
             "Security-Label": sec_label.to_string(),
@@ -187,7 +177,7 @@ def run_sparql_update(
             requests.post(post_uri, headers=headers, data=prefixes + query)
         except exceptions.HTTPError as e:
             raise HTTPException(e.response.status_code)
-    elif update_mode == "KAFKA":
+    elif config_settings.UPDATE_MODE == "KAFKA":
         g = Graph()
         g.update(query)
         out_data = g.serialize(format="nt")
@@ -198,7 +188,7 @@ def run_sparql_update(
             print(e)
             raise e
     else:
-        raise ValueError("unknown update mode: " + update_mode)
+        raise ValueError("unknown update mode: " + config_settings.UPDATE_MODE)
 
 
 def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
@@ -220,7 +210,7 @@ def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
                 {filter_clause}
             }}""",
         headers,
-        query_dataset=ontoDataset,
+        query_dataset=config_settings.ONTO_DATASET,
     )
 
     if results and results["results"] and results["results"]["bindings"]:
@@ -268,17 +258,18 @@ def create_person_insert(user_id, username):
     uri = data_uri_stub + user_id
     return (
         uri,
-        f'''
+        f"""
         <{uri}> a ies:Person .
         <{uri}> ies:hasName <{uri + "_NAME"}> .
         <{uri + "_NAME"}> a ies:PersonName .
+        <{uri + "_NAME"}> ies:representationValue "{names[0]} {names[1]}" .
         <{uri + "_SURNAME"}> a ies:Surname .
         <{uri + "_SURNAME"}> ies:inRepresentation <{uri + "_NAME"}> .
         <{uri + "_SURNAME"}> ies:representationValue "{names[1]}" .
         <{uri + "_GIVENNAME"}> a ies:GivenName .
         <{uri + "_GIVENNAME"}> ies:inRepresentation <{uri + "_NAME"}> .
         <{uri + "_GIVENNAME"}> ies:representationValue "{names[0]}" .
-    ''',
+    """,
     )
 
 
@@ -341,7 +332,7 @@ def get_building_state_classes(req: Request):
 # @app.post("/people",description="Creates a new Person")
 def post_person(per: IesPerson):
     mint_uri(per)
-    query = f'''
+    query = f"""
     {format_prefixes()}
     INSERT DATA
             {{
@@ -354,135 +345,98 @@ def post_person(per: IesPerson):
                 <{per.uri + "_GIVENNAME"}> a ies:GivenName .
                 <{per.uri + "_GIVENNAME"}> ies:inRepresentation <{per.uri + "_NAME"}> .
                 <{per.uri + "_GIVENNAME"}> ies:representationValue "{per.givenName}" .
-            }}'''
+            }}"""
     run_sparql_update(query=query, securityLabel=per.securityLabel)
     return per.uri
 
 
 @router.get(
     "/buildings",
-    response_model=List[Building],
-    description="Gets all the buildings inside a geohash (min 5 digits) along with their types, TOIDs, UPRNs, and current energy ratings",
+    response_model=List[SimpleBuilding],
+    description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_geohash(geohash: str, req: Request):
-    if len(geohash) < 5:
-        raise HTTPException(
-            422, detail="Lat Lon range too wide, please provide at least five digits"
-        )
-    gh = "http://geohash.org/" + geohash
+async def get_buildings_in_bounding_box(
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    buildings_in_bounding_box_results = await db.execute(
+        text(get_buildings_in_bounding_box_query()),
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326}
+    )
+    results = [
+        EpcAndOsBuildingSchema.from_orm(result)
+        for result in buildings_in_bounding_box_results
+    ]
+    return map_bounded_buildings_response(results)
 
-    query = f"""
-        {format_prefixes()}
-        SELECT
-            ?building
-            ?uprn_id
-            ?building_toid_id
-            ?parent_building_toid_id
-            ?current_energy_rating
-            ?parent_building
-            ?type
-            ?flag
-            ?flag_type
-            ?flag_person
-            ?flag_date
-            ?flag_assessment
-            ?flag_ass_date
-            ?flag_assessor
-        WHERE {{
-            ?building ies:inLocation ?geopoint .
-            BIND(str(?geopoint) as ?gh) .
-            FILTER (STRSTARTS(?gh,"{gh}") )
-            ?building a ?type .
 
-            ?state ies:isStateOf ?building .
-            ?state a ?energy_rating .
-            BIND(REPLACE(str(?energy_rating),"http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOf","","i") as ?current_energy_rating)
+@router.get(
+    "/filter-summary",
+    response_model=FilterSummary,
+    description="Get all the filters available inside a bounding box",
+)
+async def get_filter_summary(
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    detailed_buildings_in_bounding_box_results = await db.execute(
+        text(get_filterable_buildings_in_bounding_box_query()),
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
+    )
+    results = [
+        FilterableBuildingSchema.from_orm(result)
+        for result in detailed_buildings_in_bounding_box_results
+    ]
+    return map_filter_summary_response(results)
 
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue ?uprn_id .
-            ?uprn rdf:type gp:UniquePropertyReferenceNumber .
 
-            OPTIONAL {{
-                ?flag ies:interestedIn ?building .
-                ?flag ies:isStateOf ?flag_person .
-                ?flag a ?flag_type .
-                ?flag ies:inPeriod ?flag_date .
-                OPTIONAL {{
-                    ?flag_assessment ies:assessed ?flag .
-                    ?flag_assessment ies:inPeriod ?flag_ass_date .
-                    ?flag_assessment ies:assessor ?flag_assessor .
-                }}
-            }}
+@router.get(
+    "/filterable-buildings",
+    response_model=List[FilterableBuilding],
+    description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing that can be used for filtering",
+)
+async def get_filterable_buildings_in_bounding_box(
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    filterable_buildings_in_bounding_box_results = await db.execute(
+        text(get_filterable_buildings_in_bounding_box_query()),
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
+    )
+    results = [
+        FilterableBuildingSchema.from_orm(result)
+        for result in filterable_buildings_in_bounding_box_results
+    ]
+    return map_bounded_filterable_buildings_response(results)
 
-            OPTIONAL {{
-                ?building ies:isIdentifiedBy ?building_toid .
-                ?building_toid rdf:type ies:TOID .
-                ?building_toid ies:representationValue ?building_toid_id .
-            }}
-            OPTIONAL {{
-                ?building ies:isPartOf ?parent_building .
-                ?parent_building ies:isIdentifiedBy ?parent_building_toid .
-                ?parent_building_toid ies:representationValue ?parent_building_toid_id .
-                ?parent_building_toid rdf:type ies:TOID .
-            }}
 
-        }}
-    """
-
-    out = {}
-    out_array = []
+@router.get(
+    "/epc-statistics/wards",
+    response_model=List[EpcStatistics],
+    description="Gets the statistics for all wards",
+)
+def get_epc_statistics_for_wards(req: Request):
+    query = get_statistics_for_wards()
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            building = shorten(result["building"]["value"])
-            typ = shorten(result["type"]["value"])
-            if building in out:
-                building_obj = out[building]
-                if typ not in building_obj["types"]:
-                    building_obj["types"].append(typ)
-            else:
-                energy_rating = result["current_energy_rating"]["value"]
-                building_obj = {
-                    "uri": building,
-                    "uprn": result["uprn_id"]["value"],
-                    "currentEnergyRating": energy_rating,
-                    "types": [typ],
-                    "flags": {},
-                    "invalidatedFlags": [],
-                }
-                out[building] = building_obj
-                out_array.append(building_obj)
-
-            if "flag" in result:
-                flag = shorten(result["flag"]["value"])
-                if flag not in building_obj["flags"]:
-                    flag_obj = {
-                        "flagType": shorten(result["flag_type"]["value"]),
-                        "flaggedBy": result["flag_person"]["value"],
-                        "date": result["flag_date"]["value"],
-                    }
-                    building_obj["flags"][flag] = flag_obj
-                else:
-                    flag_obj = building_obj["flags"][flag]
-                if "flag_assessment" in result:
-                    flag_obj["invalidated"] = result["flag_ass_date"]["value"]
-                    flag_obj["invalidatedBy"] = result["flag_assessor"]["value"]
-
-            if "building_toid_id" in result:
-                building_obj["buildingTOID"] = result["building_toid_id"]["value"]
-            elif "parent_building_toid_id" in result:
-                building_obj["parentBuildingTOID"] = result["parent_building_toid_id"][
-                    "value"
-                ]
-
-    return out_array
+    return map_epc_statistics_response(results)
 
 
 class InvalidateFlag(BaseModel):
     flagUri: str
     assessmentTypeOverride: str = prefix_dict["ndt_ont"] + "AssessToBeFalse"
-    securityLabel: EDH = None
+    securityLabel: EDH = default_security_label
 
 
 @router.post(
@@ -531,241 +485,47 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
 
 @router.get(
     "/buildings/{uprn}",
-    response_model=IesEntityAndStates,
+    response_model=DetailedBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
 def get_building_by_uprn(uprn: str, req: Request):
-    query = f'''SELECT ?building ?buildingType ?state ?stateType WHERE
-                {{
-                    ?building ies:isIdentifiedBy ?uprnID .
-                    ?building rdf:type ?buildingType .
-                    ?uprnID ies:representationValue "{uprn}" .
-                    OPTIONAL {{
-                        ?state ies:isStateOf ?building .
-                        ?state rdf:type ?stateType .
-                    }}
-                }}
-            '''
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    building = {
-        "uri": "",
-        "types": [],
-    }
-    states = {}
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            building["uri"] = result["building"]["value"]
-            if result["buildingType"]["value"] not in building["types"]:
-                building["types"].append(result["buildingType"]["value"])
-            if result["state"]["value"]:
-                state = result["state"]["value"]
-                state_type = result["stateType"]["value"]
-                if state not in states:
-                    states[state] = {
-                        "uri": state,
-                        "types": [],
-                        "stateOf": building["uri"],
-                    }
-                if state_type not in states[state]["types"]:
-                    states[state]["types"].append(state_type)
-    out = {"entity": building, "states": []}
-    for state in states:
-        out["states"].append(states[state])
-    return out
+    building_results = run_sparql_query(
+        get_building(uprn), get_forwarding_headers(req.headers)
+    )
+    roof_results = run_sparql_query(
+        get_roof_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    floor_results = run_sparql_query(
+        get_floor_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    wall_window_results = run_sparql_query(
+        get_walls_and_windows_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    return map_single_building_response(
+        uprn, building_results, roof_results, floor_results, wall_window_results
+    )
 
 
 @router.get(
     "/buildings/{uprn}/flag-history",
-    description="Gets the flagging and assessment history for a specific building identified by its UPRN"
+    response_model=list[FlagHistory],
+    description="Gets the flagging and assessment history for a specific building identified by its UPRN",
 )
 def get_building_flag_history(uprn: str, req: Request):
-    query = f"""
-        PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
-        PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        SELECT
-            (REPLACE(STR(?uprn), "http://nationaldigitaltwin.gov.uk/data#uprn_", "") as ?UPRN)
-            (?flag as ?Flagged)
-            (REPLACE(STR(?flag_type), "http://nationaldigitaltwin.gov.uk/data#", "") as ?FlagType)
-            (?given_name_literal AS ?FlaggedByGivenName)
-            (?surname_literal AS ?FlaggedBySurname)
-            (REPLACE(STR(?flag_date), "http://iso.org/iso8601#", "") as ?FlagDate)
-            (REPLACE(STR(?flag_ass_date), "http://iso.org/iso8601#", "") AS ?AssessmentDate)
-            (?assessor_given_name_literal AS ?AssessorGivenName)
-            (?assessor_surname_literal AS ?AssessorSurname)
-            (REPLACE(STR(?flag_assessment_type), "http://nationaldigitaltwin.gov.uk/ontology#", "") as ?AssessmentReason)
-        WHERE {{
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue "{uprn}" .
-            ?flag ies:interestedIn ?building .
-            OPTIONAL {{
-                ?flag ies:isStateOf ?flag_person .
-                ?flag_person ies:hasName ?flag_person_name .
-                ?surname a ies:Surname .
-                ?surname ies:inRepresentation ?flag_person_name .
-                ?surname ies:representationValue ?surname_literal .
-                ?given_name a ies:GivenName .
-                ?given_name ies:inRepresentation ?flag_person_name .
-                ?given_name ies:representationValue ?given_name_literal .
-                ?flag a ?flag_type .
-                ?flag ies:inPeriod ?flag_date .
-                OPTIONAL {{
-                    ?flag_assessment ies:assessed ?flag .
-                    ?flag_assessment ies:inPeriod ?flag_ass_date .
-                    ?flag_assessment ies:assessor ?flag_assessor .
-                    ?flag_assessor ies:hasName ?flag_assessor_name .
-                    ?surname ies:inRepresentation ?flag_assessor_name .
-                    ?surname ies:representationValue ?assessor_surname_literal .
-                    ?given_name ies:inRepresentation ?flag_assessor_name .
-                    ?given_name ies:representationValue ?assessor_given_name_literal .
-                    ?flag_assessment rdf:type ?flag_assessment_type .
-                }}
-            }}
-        }}
-        GROUP BY
-            ?flag
-            ?flag_type
-            ?flag_person
-            ?flag_assessment
-            ?flag_date
-            ?flag_ass_date
-            ?flag_assessor
-            ?flag_assessment_type
-            ?surname_literal
-            ?given_name_literal
-            ?assessor_given_name_literal
-            ?assessor_surname_literal
-            ?uprn
-    """
-
+    query = get_flag_history(uprn)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    
-    flag_history = []
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            history_item = {
-                "UPRN": result["UPRN"]["value"] if "UPRN" in result else uprn,
-                "Flagged": result["Flagged"]["value"] if "Flagged" in result else None,
-                "FlagType": result["FlagType"]["value"] if "FlagType" in result else None,
-                "FlaggedByGivenName": result["FlaggedByGivenName"]["value"] if "FlaggedByGivenName" in result else None,
-                "FlaggedBySurname": result["FlaggedBySurname"]["value"] if "FlaggedBySurname" in result else None,
-                "FlagDate": result["FlagDate"]["value"] if "FlagDate" in result else None,
-                "AssessmentDate": result["AssessmentDate"]["value"] if "AssessmentDate" in result else None,
-                "AssessorGivenName": result["AssessorGivenName"]["value"] if "AssessorGivenName" in result else None,
-                "AssessorSurname": result["AssessorSurname"]["value"] if "AssessorSurname" in result else None,
-                "AssessmentReason": result["AssessmentReason"]["value"] if "AssessmentReason" in result else None
-            }
-            flag_history.append(history_item)
-
-    return flag_history
+    return map_structure_unit_flag_history_response(results)
 
 
 @router.get(
     "/flagged-buildings",
-    description="Gets all buildings that have been flagged"
+    description="Gets all buildings that have been flagged",
+    response_model=list[FlaggedBuilding],
 )
-def get_flagged_buildings(req: Request):
-    query = """
-        PREFIX data: <http://nationaldigitaltwin.gov.uk/data#>
-        PREFIX ies: <http://ies.data.gov.uk/ontology/ies4#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX gp: <https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#>
-
-        SELECT
-            (REPLACE(STR(?uprn), "http://nationaldigitaltwin.gov.uk/data#uprn_", "") as ?UPRN)
-            (?building_toid_id AS ?TOID)
-            (?parent_building_toid_id AS ?ParentTOID)
-            (?flag as ?Flagged)
-            (REPLACE(STR(?flag_date), "http://iso.org/iso8601#", "") as ?FlagDate)
-        WHERE {{
-            ?state ies:isStateOf ?building .
-
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue ?uprn_id .
-            ?uprn rdf:type gp:UniquePropertyReferenceNumber .
-
-            ?flag ies:interestedIn ?building .
-            FILTER NOT EXISTS {{ ?flag_assessment ies:assessed ?flag . }}
-
-            OPTIONAL {{
-                ?building ies:isIdentifiedBy ?building_toid .
-                ?building_toid rdf:type ies:TOID .
-                ?building_toid ies:representationValue ?building_toid_id .
-            }}
-
-            OPTIONAL {{
-                ?building ies:isPartOf ?parent_building .
-                ?parent_building ies:isIdentifiedBy ?parent_building_toid .
-                ?parent_building_toid ies:representationValue ?parent_building_toid_id .
-                ?parent_building_toid rdf:type ies:TOID .
-            }}
-
-            OPTIONAL {{
-                ?flag ies:inPeriod ?flag_date .
-            }}
-        }}
-        GROUP BY
-            ?flag
-            ?flag_date
-            ?building_toid_id
-            ?parent_building_toid_id
-            ?uprn
-    """
-
+def get_all_flagged_buildings(req: Request):
+    query = get_flagged_buildings()
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    
-    response_data = []
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            flag_data = {
-                "UPRN": result["UPRN"]["value"] if "UPRN" in result else None,
-                "TOID": result["TOID"]["value"] if "TOID" in result else None,
-                "ParentTOID": result["ParentTOID"]["value"] if "ParentTOID" in result else None,
-                "Flagged": result["Flagged"]["value"],
-                "FlagDate": result["FlagDate"]["value"] if "FlagDate" in result else None
-            }
-            response_data.append(flag_data)
-
-    return response_data
-
-
-@router.post(
-    "/flag-to-visit",
-    description="Add a flag to an Entity instance as being worth visiting - URI of Entity must be provided",
-    response_model=str,
-)
-def post_flag_visit(request: Request, visited: IesEntity):
-    if not visited or not visited.uri:
-        raise HTTPException(422, "URI of flagged entity must be provided")
-    try:
-        user = access_client.get_user_details(request.headers)
-    except exceptions.RequestException as e:
-        if e.response is not None:
-            raise HTTPException(
-                e.response.status_code, f"Error calling Access:{e.response.reason}"
-            )
-        else:
-            raise HTTPException(500, ACCESS_API_CALL_ERROR)
-    flagger, person = create_person_insert(user["user_id"], user["username"])
-
-    flag_time = ISO_8601_URL + datetime.now().isoformat()
-    flag_state = data_uri_stub + str(uuid.uuid4())
-    query = f"""
-        {format_prefixes()}
-        INSERT DATA {{
-            <{flag_state}> ies:interestedIn <{lengthen(visited.uri)}> .
-            <{flag_state}> ies:isStateOf <{flagger}> .
-            {person}
-            <{flag_state}> ies:inPeriod <{flag_time}> .
-            <{flag_state}> a ndt:InterestedInVisiting .
-        }}
-    """
-    run_sparql_update(
-        query=query,
-        forwarding_headers=get_forwarding_headers(request.headers),
-        securityLabel=visited.securityLabel,
-    )
-    return flag_state
+    return map_flagged_buildings_response(results)
 
 
 @router.post(
@@ -800,7 +560,6 @@ def post_flag_investigate(request: Request, visited: IesEntity):
             <{flag_state}> a ndt:InterestedInInvestigating .
         }}
     """
-    print(query)
     run_sparql_update(
         query=query,
         forwarding_headers=get_forwarding_headers(request.headers),
@@ -820,9 +579,7 @@ def post_building_state(bs: IesState):
             )
     mint_uri(bs)
     if bs.startDateTime:
-        start_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(
-            " ", "T"
-        )
+        start_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(" ", "T")
         start_sparql = f"""
                 <{bs.uri}_start> a ies:BoundingState .
                 <{bs.uri}_start> ies:isStartOf <{bs.uri}> .
@@ -832,9 +589,7 @@ def post_building_state(bs: IesState):
         start_sparql = """"""
 
     if bs.endDateTime:
-        end_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(
-            " ", "T"
-        )
+        end_date = ISO_8601_URL + bs.startDateTime.isoformat().replace(" ", "T")
         end_sparql = f"""
                 <{bs.uri}_end> a ies:BoundingState .
                 <{bs.uri}_end> ies:isEndOf <{bs.uri}> .
@@ -876,7 +631,7 @@ def post_account(acc: IesAccount):
     else:
         name_sparql = """"""
 
-    query = f'''INSERT DATA
+    query = f"""INSERT DATA
         {{
             <{acc.uri}> a ies:Account .
             <{acc.uri + "ID"}> a ies:AccountNumber .
@@ -884,7 +639,7 @@ def post_account(acc: IesAccount):
             <{acc.uri}> ies:isIdentifiedBy <{acc.uri + "ID"}> .
             {email_sparql}
             {name_sparql}
-        }}'''
+        }}"""
     run_sparql_update(query=query, securityLabel=acc.securityLabel)
     return acc.uri
 
@@ -899,13 +654,13 @@ def assess(ass: IesAssessment):
     type_str = ""
     for typ in ass.types:
         type_str = type_str + f"<{ass.uri}> a <{typ}> . "
-    query = f'''INSERT DATA
+    query = f"""INSERT DATA
             {{
                 {type_str}
                 <{ass.uri}> ies:assessed <{ass.assessedItem}> .
                 <{ass.uri}> ies:assessor <{ass.assessor}> .
                 <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}'''
+            }}"""
     run_sparql_update(query=query, securityLabel=ass.securityLabel)
 
     return ass.uri
@@ -913,40 +668,12 @@ def assess(ass: IesAssessment):
 
 # @app.post("/assessments/assess-to-be-true")
 def post_assess_to_be_true(ass: IesAssessToBeTrue):
-    mint_uri(ass)
-    if ass.inPeriod is None:
-        ass.inPeriod = datetime.datetime.now().isoformat()
-    if ass.assessor is None:
-        ass.assessor = test_person_uri
-    query = f'''INSERT DATA
-            {{
-                <{ass.uri}> a <{ass.types[0]}> .
-                <{ass.uri}> ies:assessed <{ass.assessedItem}> .
-                <{ass.uri}> ies:assessor <{ass.assessor}> .
-                <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}'''
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-    return ass.uri
+    return assess(ass)
 
 
 # @app.post("/assessments/assess-to-be-false")
 def post_assess_to_be_false(ass: IesAssessToBeFalse):
-    mint_uri(ass)
-    if ass.inPeriod is None:
-        ass.inPeriod = datetime.datetime.now().isoformat()
-    if ass.assessor is None:
-        ass.assessor = test_person_uri
-    query = f'''INSERT DATA
-            {{
-                <{ass.uri}> a <{ass.types[0]}> .
-                <{ass.uri}> ies:assessed <{ass.assessedItem}> .
-                <{ass.uri}> ies:assessor <{ass.assessor}> .
-                <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
-            }}'''
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-    return ass.uri
+    return assess(ass)
 
 
 @router.post(
@@ -957,6 +684,7 @@ def post_assess_to_be_false(ass: IesAssessToBeFalse):
 def post_uri_stub(uri: str):
     data_uri_stub = uri  # noqa: F841
     return data_uri_stub
+
 
 @router.get(
     "/uri-stub",
@@ -1009,12 +737,8 @@ def post_assessment(ass: IesAssessment):
             else:
                 user = data_uri_stub + "JaneDoe"  # DON'T KNOW HOW TO GET THE USER ID
 
-            start_date = ISO_8601_URL + ass.startDate.isoformat().replace(
-                " ", "T"
-            )
-            end_date = ISO_8601_URL + ass.endDate.isoformat().replace(
-                " ", "T"
-            )
+            start_date = ISO_8601_URL + ass.startDate.isoformat().replace(" ", "T")
+            end_date = ISO_8601_URL + ass.endDate.isoformat().replace(" ", "T")
             query = f"""INSERT DATA
             {{
                 <{state_uri}> a <{state_type}> .
@@ -1033,3 +757,40 @@ def post_assessment(ass: IesAssessment):
 
             return ass.uri
     raise HTTPException(status_code=400, detail="Could not create assessment")
+
+
+@router.get("/user-details")
+def get_user_details(request: Request):
+    try:
+        return access_client.get_user_details(request.headers)
+    except exceptions.RequestException as e:
+        if e.response is not None:
+            raise HTTPException(
+                e.response.status_code,
+                f"Error calling Access client:{e.response.reason}",
+            )
+        else:
+            raise HTTPException(codes.internal_server_error, ACCESS_API_CALL_ERROR)
+
+
+@router.get("/signout-links")
+def get_signout_links():
+    try:
+        signout_links_response = requests.get(
+            f"{config_settings.IDENTITY_API_URL}/api/v1/links/sign-out"
+        )
+        if signout_links_response.status_code == codes.ok:
+            return {
+                "oauth2SignoutUrl": f"{config_settings.LANDING_PAGE_URL}/oauth2/sign_out",
+                "redirectUrl": signout_links_response.json(),
+            }
+        else:
+            return f"Error {signout_links_response.status_code}: {signout_links_response.reason}"
+    except exceptions.RequestException as e:
+        if e.response is not None:
+            raise HTTPException(
+                e.response.status_code,
+                f"Error calling the identity api: {e.response.reason}",
+            )
+        else:
+            raise HTTPException(codes.internal_server_error, IDENTITY_API_CALL_ERROR)

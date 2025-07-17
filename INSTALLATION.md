@@ -16,6 +16,14 @@ Once Apache Jena Fuseki is installed please follow the steps below:
   - Load the ontology ttl files in this repo into the ontology dataset (again, use the Fuseki UI) - this will provide the API with access to the ontologies.
   - Add your test data (e.g. buildings.ttl) to the knowledge dataset.
 
+## Create PAT token
+
+Create a personal access token (classic) on GitHub. Once this has been created please set it as an environment variable using the following command.
+
+```sh
+export GITHUB_ACCESS_TOKEN=<your-pat-token>
+```
+
 ## Install dependencies
 
 Please ensure the dependencies are installed using the command below:

@@ -15,6 +15,13 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
+## [0.92.1] - 2025-07-22
+
+- Updated changelog with note for release 0.92.0
+
+## [0.92.0] - 2025-07-18
+
+- Added query, mapper and route to the API to be able to query the main fuel type for a given dwelling
 
 ## [0.91.1] - 2025-07-15
 

@@ -1,0 +1,12 @@
+resources:
+  - service-account.yaml
+  - deployment.yaml
+  - service.yaml
+  - vault/vaultAuth.yaml
+  - vault/vaultStaticSecret.yaml
+
+labels:
+  - pairs:
+      app: iris-dbms
+      env: ENV_PLACEHOLDER
+      app.kubernetes.io/name: iris-dbms

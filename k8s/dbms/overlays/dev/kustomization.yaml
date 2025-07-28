@@ -1,0 +1,23 @@
+resources:
+  - ../../base
+
+namespace: iris
+
+configMapGenerator:
+  - name: iris-dbms-configs
+    envs:
+      - params.env
+
+patches:
+  - path: patches/service-account.yaml
+    target:
+      kind: ServiceAccount
+
+labels:
+  - pairs:
+      env: dev
+
+images:
+  - name: iris-dbms-image:template
+    newName: dpage/pgadmin4
+    newTag: latest

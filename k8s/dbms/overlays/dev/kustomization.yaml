@@ -20,4 +20,4 @@ labels:
 images:
   - name: iris-dbms-image:template
     newName: dpage/pgadmin4
-    newTag: latest
+    newTag: 9.6

@@ -57,7 +57,8 @@ def run_ogr2ogr(gpkg_path: Path):
         str(gpkg_path),
         "-nln", f"{TARGET_SCHEMA}.{TARGET_TABLE}",
         "-lco", "SCHEMA=" + TARGET_SCHEMA,
-        "-append"
+        "-append",
+        "-t_srs", "EPSG:4326"
     ]
     # Redact password in the connection string for logging
     redacted_cmd = " ".join(cmd.copy())

@@ -54,7 +54,7 @@ def upgrade() -> None:
             wdr_40_upper double precision,
             x_coord double precision,
             y_coord double precision,
-            shape geometry(MultiPolygon,3857),
+            shape geometry(MultiPolygon,4326),
             CONSTRAINT wind_driven_rain_projections__pkey PRIMARY KEY (objectid)
         )
     """

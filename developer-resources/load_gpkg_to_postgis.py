@@ -59,7 +59,12 @@ def run_ogr2ogr(gpkg_path: Path):
         "-lco", "SCHEMA=" + TARGET_SCHEMA,
         "-append"
     ]
-    print("Running:", " ".join(cmd))
+    # Redact password in the connection string for logging
+    redacted_cmd = " ".join(cmd.copy())
+    if "password=" in redacted_cmd:
+        import re
+        redacted_cmd = re.sub(r'password=[^ ]+', 'password=****', redacted_cmd)
+    print("Running:", redacted_cmd)
     subprocess.run(cmd, check=True)
     print("ogr2ogr import complete.")
 
@@ -67,7 +72,7 @@ def run_ogr2ogr(gpkg_path: Path):
 def refresh_materialized_view():
     print(f"Refreshing materialized view {MATERIALIZED_VIEW}")
     run_db_command(f"REFRESH MATERIALIZED VIEW {MATERIALIZED_VIEW};")
-    print(f"Materialized view refresh complete.")
+    print("Materialized view refresh complete.")
 
 
 def main():

@@ -11,7 +11,8 @@ test:
 	python -m pytest
 
 load-met-office-data:
-	GPKG_SOURCE=https://services.arcgis.com/Lq3V5RFuTBC9I7kv/arcgis/rest/services/Annual_Index_of_Wind_Driven_Rain_Projections_5km/FeatureServer/replicafilescache/Annual_Index_of_Wind_Driven_Rain_Projections_5km_-6134910210859057092.gpkg python developer-resources/load_gpkg_to_postgis.py
+	MATERIALIZED_VIEW=iris.wind_driven_rain_projections_geojson TARGET_TABLE=wind_driven_rain_projections GPKG_SOURCE=https://services.arcgis.com/Lq3V5RFuTBC9I7kv/arcgis/rest/services/Annual_Index_of_Wind_Driven_Rain_Projections_5km/FeatureServer/replicafilescache/Annual_Index_of_Wind_Driven_Rain_Projections_5km_-6134910210859057092.gpkg python developer-resources/load_gpkg_to_postgis.py
+	MATERIALIZED_VIEW=iris.icing_days_geojson TARGET_TABLE=annual_count_of_icing_days_1991_2020 GPKG_SOURCE=https://services.arcgis.com/Lq3V5RFuTBC9I7kv/arcgis/rest/services/Annual_Count_of_Icing_Days_1991_2020/FeatureServer/replicafilescache/Annual_Count_of_Icing_Days_1991_2020_5977951113111576455.gpkg python developer-resources/load_gpkg_to_postgis.py
 
 migrate:
 	alembic upgrade head

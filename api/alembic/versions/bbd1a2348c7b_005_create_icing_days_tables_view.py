@@ -83,15 +83,6 @@ def upgrade() -> None:
             WITH DATA;
     """
     )
-    
-    
-    """ Alter materialized view ownership."""
-    op.execute(
-        """
-        ALTER TABLE IF EXISTS iris.icing_days_geojson
-            OWNER TO postgres;
-    """
-    )
 
 
 def downgrade() -> None:

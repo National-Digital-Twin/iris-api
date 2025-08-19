@@ -2,7 +2,7 @@ docker-image:
 	docker build --secret id=pat_token,env=GITHUB_ACCESS_TOKEN -t iris/write-api:latest .
 
 docker-run:
-	docker run -d --rm --name iris-write-api --network developer-resources_iris -e PORT=3010 -e DEV=True -e JENA_PROTOCOL=http -e JENA_URL=127.0.0.1 -e JENA_PORT:3030 -e DB_HOST=postgis -p 3010:3010 iris/write-api:latest
+	docker run -d --name iris-write-api --network developer-resources_iris -e PORT=3010 -e DEV=True -e JENA_PROTOCOL=http -e JENA_URL=127.0.0.1 -e JENA_PORT:3030 -e DB_HOST=postgis -p 3010:3010 iris/write-api:latest
 
 run-api:
 	python api/main.py

@@ -2,7 +2,7 @@ docker-image:
 	docker build --secret id=pat_token,env=GITHUB_ACCESS_TOKEN -t iris/write-api:latest .
 
 docker-run:
-	docker run -d --rm --name iris-write-api --network developer-resources_iris -e PORT=3010 -e DEV=True -e JENA_PROTOCOL=http -e JENA_URL=127.0.0.1 -e JENA_PORT:3030 -e DB_HOST=postgis -p 3010:3010 iris/write-api:latest
+	docker run -d --name iris-write-api --network developer-resources_iris -e PORT=3010 -e DEV=True -e JENA_PROTOCOL=http -e JENA_URL=127.0.0.1 -e JENA_PORT:3030 -e DB_HOST=postgis -p 3010:3010 iris/write-api:latest
 
 run-api:
 	python api/main.py
@@ -14,7 +14,8 @@ load-met-office-data:
 	MATERIALIZED_VIEW=iris.hot_summer_days_geojson TARGET_TABLE=annual_count_of_hot_summer_days_projections_12km GPKG_SOURCE=https://services.arcgis.com/Lq3V5RFuTBC9I7kv/arcgis/rest/services/Annual_Count_of_Hot_Days___Projections__12km_grid_/FeatureServer/replicafilescache/Annual_Count_of_Hot_Days___Projections__12km_grid__5151054028377652076.gpkg python developer-resources/load_gpkg_to_postgis.py
 	JOIN_VIEW=iris.uk_ward DATA_VIEW=iris.uk_ward_epc_data MATERIALIZED_VIEW=iris.uk_ward_epc TARGET_TABLE=district_borough_unitary_ward GPKG_SOURCE=https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect GPKG_TABLE=district_borough_unitary_ward python developer-resources/load_gpkg_to_postgis.py
 	JOIN_VIEW=iris.uk_ward DATA_VIEW=iris.uk_ward_epc_data MATERIALIZED_VIEW=iris.uk_ward_epc TARGET_TABLE=unitary_electoral_division GPKG_SOURCE=https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect GPKG_TABLE=unitary_electoral_division python developer-resources/load_gpkg_to_postgis.py
-
+	JOIN_VIEW=iris.uk_region DATA_VIEW=iris.uk_region_epc_data MATERIALIZED_VIEW=iris.uk_region_epc TARGET_TABLE=scotland_and_wales_region GPKG_SOURCE=https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect GPKG_TABLE=scotland_and_wales_region python developer-resources/load_gpkg_to_postgis.py		
+	JOIN_VIEW=iris.uk_region DATA_VIEW=iris.uk_region_epc_data MATERIALIZED_VIEW=iris.uk_region_epc TARGET_TABLE=english_region GPKG_SOURCE=https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect GPKG_TABLE=english_region python developer-resources/load_gpkg_to_postgis.py
 migrate:
 	alembic upgrade head
 	

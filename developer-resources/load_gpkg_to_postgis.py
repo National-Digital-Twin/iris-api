@@ -136,8 +136,7 @@ def refresh_data_view():
     print(f"Refreshing materialized view {DATA_VIEW}")
     run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
     print("Materialized view refresh complete.")    
-
-
+    
 def main():
     with tempfile.TemporaryDirectory() as tmpdir:
         if GPKG_SOURCE.endswith('.gpkg'):
@@ -163,6 +162,7 @@ def main():
                     refresh_join_view()
                     refresh_data_view()
             refresh_materialized_view()
+
 
 
 if __name__ == "__main__":

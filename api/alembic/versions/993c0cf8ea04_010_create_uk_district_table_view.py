@@ -99,7 +99,7 @@ def upgrade() -> None:
             TABLESPACE pg_default
             AS
             SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(geometry)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
-            FROM iris.uk_region_epc_data t
+            FROM iris.district_borough_unitary_epc_data t
             WITH DATA;
     """
     )

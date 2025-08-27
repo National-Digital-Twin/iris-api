@@ -158,6 +158,7 @@ def main():
                 run_ogr2ogr_table(gpkg_file)
                 if JOIN_VIEW == "none":
                     print("no Join")
+                    refresh_data_view()
                 else:
                     refresh_join_view()
                     refresh_data_view()

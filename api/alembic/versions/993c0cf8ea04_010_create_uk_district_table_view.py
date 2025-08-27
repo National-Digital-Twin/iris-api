@@ -1,4 +1,4 @@
-SPDX-License-Identifier: Apache-2.0
+#SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
@@ -85,7 +85,7 @@ def upgrade() -> None:
             FROM iris.building a
             LEFT JOIN iris.epc_assessment b
             ON a.uprn =b.uprn
-            JOIN iris.district_borough_unitary
+            JOIN iris.district_borough_unitary c
             ON ST_Intersects(c.geometry, a.point)
             WHERE c.global_polygon_id IS NOT NULL
             GROUP BY b.epc_rating, c.name, c,geometry;

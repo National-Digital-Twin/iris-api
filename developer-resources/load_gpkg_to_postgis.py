@@ -142,35 +142,42 @@ def refresh_join_view():
 def refresh_data_view():
     print(f"Refreshing materialized view {DATA_VIEW}")
     run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
-    print("Materialized view refresh complete.")    
+    print("Materialized view refresh complete.")
+
+
+def handle_geopackage(tmpdir):
+    gpkg_file = Path(tmpdir) / "data.gpkg"
+    download_file(GPKG_SOURCE, gpkg_file)
+    if GPKG_TABLE == "none":
+        run_ogr2ogr(gpkg_file)
+    else:
+        run_ogr2ogr_table(gpkg_file)
+    
+
+def handle_zip(tmpdir):
+    zip_file = Path(tmpdir)
+    gpkg_file = Path(tmpdir) / "data.gpkg"
+    download_file(GPKG_SOURCE, zip_file)
+    if GPKG_TABLE == "none":
+        run_ogr2ogr(gpkg_file)
+    else:
+        run_ogr2ogr_table(gpkg_file)
+        if JOIN_VIEW == "none":
+            print("no Join")
+        else:
+            refresh_join_view()
+            refresh_data_view()
+    
 
 
 def main():
     if not is_table_populated():
         with tempfile.TemporaryDirectory() as tmpdir:
             if GPKG_SOURCE.endswith('.gpkg'):
-                gpkg_file = Path(tmpdir) / "data.gpkg"
-                download_file(GPKG_SOURCE, gpkg_file)
-                if GPKG_TABLE == "none":
-                    run_ogr2ogr(gpkg_file)
-                else:
-                    run_ogr2ogr_table(gpkg_file)
-                refresh_materialized_view()          
+                handle_geopackage(tmpdir)       
             else:
-                zip_file = Path(tmpdir)
-                gpkg_file = Path(tmpdir) / "data.gpkg"
-                download_file(GPKG_SOURCE, zip_file)
-                if GPKG_TABLE == "none":
-                    run_ogr2ogr(gpkg_file)
-                    
-                else:
-                    run_ogr2ogr_table(gpkg_file)
-                    if JOIN_VIEW == "none":
-                        print("no Join")
-                    else:
-                        refresh_join_view()
-                        refresh_data_view()
-                refresh_materialized_view()
+                handle_zip(tmpdir)
+            refresh_materialized_view()
     else:
         print(f"Table {TARGET_SCHEMA}.{TARGET_TABLE} already populated. Skipping data load.")
             

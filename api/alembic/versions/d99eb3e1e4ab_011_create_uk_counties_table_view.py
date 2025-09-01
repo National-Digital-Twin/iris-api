@@ -83,14 +83,22 @@ def upgrade() -> None:
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.boundary_line_ceremonial_counties_epc_data
             AS
-            SELECT b.epc_rating, count (a.point),c.name, c.geometry 
-            FROM iris.building a
-            LEFT JOIN iris.epc_assessment b
-            ON a.uprn =b.uprn
-            JOIN iris.boundary_line_ceremonial_counties c
-            ON ST_Intersects(c.geometry, a.point)
-            WHERE c.name IS NOT NULL
-            GROUP BY b.epc_rating, c.name, c,geometry;
+            SELECT
+                b.name,
+                COUNT (a.point) AS total,
+                COUNT(CASE WHEN a.epc_rating = 'A' THEN 1 END) AS epc_a,
+                COUNT(CASE WHEN a.epc_rating = 'B' THEN 1 END) AS epc_b,
+                COUNT(CASE WHEN a.epc_rating = 'C' THEN 1 END) AS epc_c,
+                COUNT(CASE WHEN a.epc_rating = 'D' THEN 1 END) AS epc_d,
+                COUNT(CASE WHEN a.epc_rating = 'E' THEN 1 END) AS epc_e,
+                COUNT(CASE WHEN a.epc_rating = 'F' THEN 1 END) AS epc_f,
+                COUNT(CASE WHEN a.epc_rating = 'G' THEN 1 END) AS epc_g,
+                COUNT(CASE WHEN a.epc_rating IS NULL THEN 1 END) AS epc_null,
+                b.geometry
+            FROM iris.building_epc a
+            LEFT JOIN iris.uk_ward b
+            ON ST_Intersects(b.geometry, a.point)
+            GROUP BY b.name, b.geometry;
     """
     )
     
@@ -100,7 +108,7 @@ def upgrade() -> None:
         CREATE MATERIALIZED VIEW IF NOT EXISTS boundary_line_ceremonial_counties_epc
             TABLESPACE pg_default
             AS
-            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(geometry)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
             FROM iris.boundary_line_ceremonial_counties_epc_data t
             WITH DATA;
     """

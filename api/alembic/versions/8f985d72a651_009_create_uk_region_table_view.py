@@ -153,7 +153,7 @@ def upgrade() -> None:
                 COUNT(CASE WHEN a.epc_rating IS NULL THEN 1 END) AS epc_null,
                 b.geometry
             FROM iris.building_epc a
-            LEFT JOIN iris.uk_ward b
+            LEFT JOIN iris.uk_region b
             ON ST_Intersects(b.geometry, a.point)
             GROUP BY b.name, b.geometry;
     """

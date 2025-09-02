@@ -24,7 +24,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
         """
-        CREATE TABLE iris.structure_unit(
+        CREATE TABLE IF NOT EXISTS iris.structure_unit(
             epc_assessment_id UUID,
             type VARCHAR(20),
             built_form VARCHAR(25),
@@ -44,13 +44,13 @@ def upgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.structure_unit
-        ADD CONSTRAINT fk_epc_assessment_id FOREIGN KEY (epc_assessment_id) REFERENCES iris.epc_assessment(id) ON DELETE CASCADE;
+        ADD CONSTRAINT IF NOT EXISTS fk_epc_assessment_id FOREIGN KEY (epc_assessment_id) REFERENCES iris.epc_assessment(id) ON DELETE CASCADE;
     """
     )
 
     op.execute(
         """
-        CREATE INDEX idx_structure_unit_epc ON iris.structure_unit(epc_assessment_id);
+        CREATE INDEX IF NOT EXISTS idx_structure_unit_epc ON iris.structure_unit(epc_assessment_id);
     """
     )
 

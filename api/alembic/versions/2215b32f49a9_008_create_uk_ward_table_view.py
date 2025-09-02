@@ -133,6 +133,15 @@ def upgrade() -> None:
             SELECT * FROM iris.unitary_electoral_division;
     """
     )
+        """ Create geo index for uk_ward"""
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS uk_ward__geometry_geom_idx
+            ON iris.uk_ward USING gist
+            (geometry)
+            TABLESPACE pg_default;
+    """
+    )
     
     
     op.execute(

@@ -103,7 +103,7 @@ def upgrade() -> None:
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
-        CREATE MATERIALIZED VIEW IF NOT EXISTS district_borough_unitary_epc
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.district_borough_unitary_epc
             TABLESPACE pg_default
             AS
             SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson

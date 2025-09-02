@@ -57,7 +57,7 @@ def upgrade() -> None:
         """
         CREATE TABLE IF NOT EXISTS iris.boundary_line_ceremonial_counties
             ( 
-                fid integer NOT NULL DEFAULT nextval('iris.district_borough_unitary_fid_seq1'::regclass),
+                fid integer NOT NULL DEFAULT nextval('iris.boundary_line_ceremonial_counties_fid_seq1'::regclass),
                 name character varying,
                 Area_description character varying,              
                 geometry geometry(MultiPolygon,4326),

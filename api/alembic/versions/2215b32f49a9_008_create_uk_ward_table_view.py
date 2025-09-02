@@ -33,7 +33,7 @@ def upgrade() -> None:
     )
     op.execute(
         """
-   	CREATE TABLE iris.building_epc AS
+   	CREATE TABLE IF NOT EXISTS iris.building_epc AS
         SELECT a.uprn, b.epc_rating, a.point
         FROM iris.building a
         LEFT JOIN iris.epc_assessment b
@@ -43,7 +43,7 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX idx_building_epc_geom
+        CREATE INDEX IF NOT EXISTS idx_building_epc_geom
         ON iris.building_epc
         USING GIST (point);
     """

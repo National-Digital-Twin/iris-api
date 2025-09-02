@@ -42,7 +42,7 @@ def upgrade() -> None:
     """ Create id for iris.boundary_line_ceremonial_counties"""
     op.execute(
         """
-        CREATE SEQUENCE IF NOT EXISTS iris.district_borough_unitary_fid_seq1
+        CREATE SEQUENCE IF NOT EXISTS iris.boundary_line_ceremonial_counties_fid_seq1
             INCREMENT 1
             START 1
             MINVALUE 1

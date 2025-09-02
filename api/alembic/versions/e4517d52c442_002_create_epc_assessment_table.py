@@ -24,7 +24,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.epc_assessment(
+        CREATE TABLE iris.epc_assessment(
             id UUID PRIMARY KEY,
             uprn TEXT,
             epc_rating CHAR(1),
@@ -42,7 +42,7 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_epc_uprn ON iris.epc_assessment(uprn);
+        CREATE INDEX idx_epc_uprn ON iris.epc_assessment(uprn);
     """
     )
 

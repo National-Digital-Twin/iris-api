@@ -24,7 +24,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.structure_unit(
+        CREATE TABLE iris.structure_unit(
             epc_assessment_id UUID,
             type VARCHAR(20),
             built_form VARCHAR(25),
@@ -50,7 +50,7 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_structure_unit_epc ON iris.structure_unit(epc_assessment_id);
+        CREATE INDEX idx_structure_unit_epc ON iris.structure_unit(epc_assessment_id);
     """
     )
 

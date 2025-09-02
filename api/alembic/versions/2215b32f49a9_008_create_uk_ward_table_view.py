@@ -33,7 +33,7 @@ def upgrade() -> None:
     )
     op.execute(
         """
-   	CREATE TABLE IF NOT EXISTS iris.building_epc AS
+   	CREATE MATERIALIZED VIEW IF NOT EXISTS iris.building_epc AS
         SELECT a.uprn, b.epc_rating, a.point
         FROM iris.building a
         LEFT JOIN iris.epc_assessment b

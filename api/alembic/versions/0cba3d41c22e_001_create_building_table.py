@@ -25,7 +25,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.building (
+        CREATE TABLE iris.building (
             uprn TEXT PRIMARY KEY,
             toid TEXT,
             first_line_of_address TEXT,
@@ -37,7 +37,7 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS point_ix
+        CREATE INDEX point_ix
         ON iris.building
         USING GIST (point);
     """

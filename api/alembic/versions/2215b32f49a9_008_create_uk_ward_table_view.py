@@ -24,6 +24,30 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+
+    """ Create lookup table building_epc"""
+    op.execute(
+        """   
+   	CREATE INDEX IF NOT EXISTS idx_building_uprn ON iris.building(uprn);
+    """
+    )
+    op.execute(
+        """
+   	CREATE TABLE iris.building_epc AS
+        SELECT a.uprn, b.epc_rating, a.point
+        FROM iris.building a
+        LEFT JOIN iris.epc_assessment b
+        ON a.uprn = b.uprn;
+    """
+    )        
+
+    op.execute(
+        """
+        CREATE INDEX idx_building_epc_geom
+        ON iris.building_epc
+        USING GIST (point);
+    """
+    )  
     """ Create id for iris.district_borough_unitary_ward"""
     op.execute(
         """
@@ -133,7 +157,7 @@ def upgrade() -> None:
             SELECT * FROM iris.unitary_electoral_division;
     """
     )
-        """ Create geo index for uk_ward"""
+    """ Create geo index for uk_ward"""
     op.execute(
         """
         CREATE INDEX IF NOT EXISTS uk_ward__geometry_geom_idx
@@ -171,9 +195,8 @@ def upgrade() -> None:
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc
-            TABLESPACE pg_default
             AS
-            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
             FROM iris.uk_ward_epc_data t
             WITH DATA;
     """

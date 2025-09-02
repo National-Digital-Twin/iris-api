@@ -108,7 +108,7 @@ def upgrade() -> None:
         CREATE MATERIALIZED VIEW IF NOT EXISTS boundary_line_ceremonial_counties_epc
             TABLESPACE pg_default
             AS
-            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
             FROM iris.boundary_line_ceremonial_counties_epc_data t
             WITH DATA;
     """

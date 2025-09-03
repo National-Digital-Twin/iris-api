@@ -10,6 +10,8 @@ from typing import List
 import requests
 from access import AccessClient
 from config import get_settings
+from services.climate_service import fetch_geojson_for_hot_summer_days, fetch_geojson_for_icing_days, fetch_geojson_for_wind_driven_rain
+from services.energy_performance_service import fetch_geojson_for_energy_performance_by_wards
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (map_bounded_buildings_response,
@@ -54,6 +56,7 @@ data_uri_stub = config_settings.DATA_URI  # This can be overridden in use
 ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
 IDENTITY_API_CALL_ERROR = "Error calling Identity API, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
+APPLICATION_JSON = "application/json"
 
 
 if config_settings.UPDATE_MODE == "KAFKA":
@@ -596,6 +599,21 @@ def post_flag_investigate(request: Request, visited: IesEntity):
     )
     return flag_state
 
+@router.get("/data/climate/wind-driven-rain")
+async def get_wind_driven_rain_data(geojson = Depends(fetch_geojson_for_wind_driven_rain)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/climate/icing-days")
+async def get_icing_days_data(geojson = Depends(fetch_geojson_for_icing_days)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/climate/hot-summer-days")
+async def get_hot_summer_days_data(geojson = Depends(fetch_geojson_for_hot_summer_days)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/energy-performance/wards")
+async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_wards)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
 
 # @app.post("/buildings/states",description="Add a new state to a building")
 def post_building_state(bs: IesState):

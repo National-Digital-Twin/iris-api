@@ -15,7 +15,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
-## [0.92.2]
+## [UNRELEASED]
 
 - Added OS NGD Buildings queries to `/buildings/{uprn}` to return building-level attributes derived from Ordnance Survey NGD Buildings data:
   - Roof material

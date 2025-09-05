@@ -15,6 +15,15 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
+## [UNRELEASED]
+
+- Added OS NGD Buildings queries to `/buildings/{uprn}` to return building-level attributes derived from Ordnance Survey NGD Buildings data:
+  - Roof material
+  - Solar panel presence
+  - Roof shape
+  - Roof aspect areas (N, NE, E, SE, S, SW, W, NW, Indeterminable)
+- Extended response model and mappers to include the above fields without breaking existing consumers.
+
 ## [0.92.1] - 2025-07-22
 
 - Updated changelog with note for release 0.92.0

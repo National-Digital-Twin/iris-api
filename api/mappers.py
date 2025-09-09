@@ -3,9 +3,11 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import re
+from utils import has_bindings
 
 from models.dto_models import (
     DetailedBuilding,
+    DetailedBuildingPostgres,
     EpcAndOsBuildingSchema,
     EpcStatistics,
     FilterableBuilding,
@@ -167,10 +169,13 @@ def map_fueltype_results(building: DetailedBuilding, results:dict) -> None:
 
 
 def map_ngd_roof_material_results(building: DetailedBuilding, results: dict) -> None:
-    if results and results.get("results") and results["results"].get("bindings"):
+
+    if has_bindings(results):       # check if results come from Fuseki or from PostGIS
+        print(results)
         for result in results["results"]["bindings"]:
             building.roof_material = get_value_from_result(result, "roofMaterial")
-
+    else:
+        building.roof_material = results['roof_material'].replace(' ', '') if results['roof_material'] else results['roof_material']
 
 def map_ngd_solar_panel_presence_results(
     building: DetailedBuilding, results: dict
@@ -180,8 +185,9 @@ def map_ngd_solar_panel_presence_results(
             building.solar_panel_presence = get_value_from_result(
                 result, "solarPanelPresence"
             )
-
-
+    else:
+        building.solar_panel_presence = results['solar_panel_presence']
+            
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
         for result in results["results"]["bindings"]:
@@ -209,6 +215,10 @@ def map_ngd_roof_aspect_areas_results(
             field = direction_to_field.get(direction)
             if field:
                 setattr(building, field, m2)
+    else:
+        for field, m2 in results.items():
+            setattr(building, field, m2)
+    
 
 def map_single_building_response(
     uprn: str,
@@ -242,16 +252,13 @@ def map_single_building_response(
     map_floor_results(building, floor_results)
     map_wall_window_results(building, wall_window_results)
     map_fueltype_results(building, fueltype_results)
-    if ngd_roof_material_results is not None:
-        map_ngd_roof_material_results(building, ngd_roof_material_results)
-    if ngd_solar_panel_presence_results is not None:
-        map_ngd_solar_panel_presence_results(
-            building, ngd_solar_panel_presence_results
-        )
-    if ngd_roof_shape_results is not None:
-        map_ngd_roof_shape_results(building, ngd_roof_shape_results)
-    if ngd_roof_aspect_areas_results is not None:
-        map_ngd_roof_aspect_areas_results(building, ngd_roof_aspect_areas_results)
+
+    # check if roof material exists
+    map_ngd_roof_material_results(building, ngd_roof_material_results)
+    map_ngd_solar_panel_presence_results(building, ngd_solar_panel_presence_results)
+    map_ngd_roof_shape_results(building, ngd_roof_shape_results)
+    map_ngd_roof_aspect_areas_results(building, ngd_roof_aspect_areas_results)
+
     return building
 
 

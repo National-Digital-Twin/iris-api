@@ -49,18 +49,38 @@ class DetailedBuilding(Building):
     fueltype: Optional[str] = None
     # OS NGD Buildings attributes
     roof_material: Optional[str] = None
-    solar_panel_presence: Optional[str] = None
+    solar_panel_presence: Optional[bool] = None
     roof_shape: Optional[str] = None
     # Roof aspect areas (square meters) by direction; values returned as strings
-    roof_aspect_area_north: Optional[str] = None
-    roof_aspect_area_northeast: Optional[str] = None
-    roof_aspect_area_east: Optional[str] = None
-    roof_aspect_area_southeast: Optional[str] = None
-    roof_aspect_area_south: Optional[str] = None
-    roof_aspect_area_southwest: Optional[str] = None
-    roof_aspect_area_west: Optional[str] = None
-    roof_aspect_area_northwest: Optional[str] = None
-    roof_aspect_area_indeterminable: Optional[str] = None
+    roof_aspect_area_facing_north_m2: Optional[float] = None
+    roof_aspect_area_facing_north_east_m2: Optional[float] = None
+    roof_aspect_area_facing_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_m2: Optional[float] = None
+    roof_aspect_area_facing_south_west_m2: Optional[float] = None
+    roof_aspect_area_facing_west_m2: Optional[float] = None
+    roof_aspect_area_facing_north_west_m2: Optional[float] = None
+    roof_aspect_area_indeterminable_m2: Optional[float] = None
+    
+
+class DetailedBuildingPostgres(DetailedBuilding):
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            solar_panel_presence=obj.has_roof_solar_panels,
+            roof_material=obj.roof_material,
+            # roofShape=obj.roof_shape
+            roof_aspect_area_facing_north_m2=obj.roof_aspect_area_facing_north_m2,
+            roof_aspect_area_facing_north_east_m2=obj.roof_aspect_area_facing_north_east_m2,
+            roof_aspect_area_facing_east_m2=obj.roof_aspect_area_facing_east_m2,
+            roof_aspect_area_facing_south_east_m2=obj.roof_aspect_area_facing_south_east_m2,
+            roof_aspect_area_facing_south_m2=obj.roof_aspect_area_facing_south_m2,
+            roof_aspect_area_facing_south_west_m2=obj.roof_aspect_area_facing_south_west_m2,
+            roof_aspect_area_facing_west_m2=obj.roof_aspect_area_facing_west_m2,
+            roof_aspect_area_facing_north_west_m2=obj.roof_aspect_area_facing_north_west_m2,
+            roof_aspect_area_indeterminable_m2=obj.roof_aspect_area_indeterminable_m2
+        )
 
 
 class FilterableBuilding(BaseModel):

@@ -425,96 +425,100 @@ def map_flagged_buildings_response(results: dict) -> list[FlaggedBuilding]:
     return flags
 
 
-def _add_postcode_filter(filterSummary: FilterSummary, post_code: str):
+def _add_postcode_filter(filter_summary: FilterSummary, post_code: str):
     post_code_matches = re.search(r"^[0-9A-Z]{3,4}", post_code)
     if post_code_matches:
         transformed_post_code = post_code_matches.group()
-        filterSummary.postcode.add(transformed_post_code)
+        filter_summary.postcode.add(transformed_post_code)
 
 
-def _add_built_form_filter(filterSummary: FilterSummary, built_form: str):
+def _add_built_form_filter(filter_summary: FilterSummary, built_form: str):
     if built_form and len(built_form) > 0:
-        filterSummary.built_form.add(built_form)
+        filter_summary.built_form.add(built_form)
 
 
 def _add_lodgment_date_filter(
-    filterSummary: FilterSummary, lodgement_date: datetime.date
+    filter_summary: FilterSummary, lodgement_date: datetime.date
 ):
     if lodgement_date:
         inspection_year = str(lodgement_date.year)
-        filterSummary.inspection_year.add(inspection_year)
+        filter_summary.inspection_year.add(inspection_year)
 
 
-def _add_fuel_type_filter(filterSummary: FilterSummary, fuel_type: str):
+def _add_fuel_type_filter(filter_summary: FilterSummary, fuel_type: str):
     if fuel_type and len(fuel_type) > 0:
-        filterSummary.fuel_type.add(fuel_type)
+        filter_summary.fuel_type.add(fuel_type)
 
 
-def _add_window_glazing_filter(filterSummary: FilterSummary, window_glazing: str):
+def _add_window_glazing_filter(filter_summary: FilterSummary, window_glazing: str):
     if window_glazing and len(window_glazing) > 0:
-        filterSummary.window_glazing.add(window_glazing)
+        filter_summary.window_glazing.add(window_glazing)
 
 
-def _add_wall_construction_filter(filterSummary: FilterSummary, wall_construction: str):
+def _add_wall_construction_filter(
+    filter_summary: FilterSummary, wall_construction: str
+):
     if wall_construction and len(wall_construction) > 0:
-        filterSummary.wall_construction.add(wall_construction)
+        filter_summary.wall_construction.add(wall_construction)
 
 
-def _add_wall_insulation_filter(filterSummary: FilterSummary, wall_insulation: str):
+def _add_wall_insulation_filter(filter_summary: FilterSummary, wall_insulation: str):
     if wall_insulation and len(wall_insulation) > 0:
-        filterSummary.wall_insulation.add(wall_insulation)
+        filter_summary.wall_insulation.add(wall_insulation)
 
 
 def _add_floor_construction_filter(
-    filterSummary: FilterSummary, floor_construction: str
+    filter_summary: FilterSummary, floor_construction: str
 ):
     if floor_construction and len(floor_construction) > 0:
-        filterSummary.floor_construction.add(floor_construction)
+        filter_summary.floor_construction.add(floor_construction)
 
 
-def _add_floor_insulation_filter(filterSummary: FilterSummary, floor_insulation: str):
+def _add_floor_insulation_filter(filter_summary: FilterSummary, floor_insulation: str):
     if floor_insulation and len(floor_insulation) > 0:
-        filterSummary.floor_insulation.add(floor_insulation)
+        filter_summary.floor_insulation.add(floor_insulation)
 
 
-def _add_roof_construction_filter(filterSummary: FilterSummary, roof_construction: str):
+def _add_roof_construction_filter(
+    filter_summary: FilterSummary, roof_construction: str
+):
     if roof_construction and len(roof_construction) > 0:
-        filterSummary.roof_construction.add(roof_construction)
+        filter_summary.roof_construction.add(roof_construction)
 
 
 def _add_roof_insulation_location_filter(
-    filterSummary: FilterSummary, roof_insulation_location: str
+    filter_summary: FilterSummary, roof_insulation_location: str
 ):
     if roof_insulation_location and len(roof_insulation_location) > 0:
-        filterSummary.roof_insulation_location.add(roof_insulation_location)
+        filter_summary.roof_insulation_location.add(roof_insulation_location)
 
 
 def _add_roof_insulation_thickness_filter(
-    filterSummary: FilterSummary, roof_insulation_thickness: str
+    filter_summary: FilterSummary, roof_insulation_thickness: str
 ):
     if roof_insulation_thickness and len(roof_insulation_thickness) > 0:
-        filterSummary.roof_insulation_thickness.add(roof_insulation_thickness)
+        filter_summary.roof_insulation_thickness.add(roof_insulation_thickness)
 
 
 def _add_has_roof_solar_panels_filter(
-    filterSummary: FilterSummary, has_roof_solar_panels: bool
+    filter_summary: FilterSummary, has_roof_solar_panels: bool
 ):
     if (
         has_roof_solar_panels is not None
-        and len(filterSummary.has_roof_solar_panels) < 2
+        and len(filter_summary.has_roof_solar_panels) < 2
     ):
-        filterSummary.has_roof_solar_panels.add(
+        filter_summary.has_roof_solar_panels.add(
             "HasSolarPanels" if has_roof_solar_panels else "NoSolarPanels"
         )
 
 
-def _add_roof_material_filter(filterSummary: FilterSummary, roof_material: str):
+def _add_roof_material_filter(filter_summary: FilterSummary, roof_material: str):
     if roof_material and len(roof_material) > 0:
-        filterSummary.roof_material.add(roof_material.replace(" ", ""))
+        filter_summary.roof_material.add(roof_material.replace(" ", ""))
 
 
 def _add_roof_aspect_area_direction_filter(
-    filterSummary: FilterSummary,
+    filter_summary: FilterSummary,
     roof_aspect_area_facing_north_m2: float,
     roof_aspect_area_facing_north_east_m2: float,
     roof_aspect_area_facing_east_m2: float,
@@ -525,40 +529,45 @@ def _add_roof_aspect_area_direction_filter(
     roof_aspect_area_facing_north_west_m2: float,
 ):
     if (
-        roof_aspect_area_facing_north_east_m2
-        and "NorthEast" not in filterSummary.roof_aspect_area_direction
+        roof_aspect_area_facing_north_m2
+        and "North" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("NorthEast")
+        filter_summary.roof_aspect_area_direction.add("North")
+    if (
+        roof_aspect_area_facing_north_east_m2
+        and "NorthEast" not in filter_summary.roof_aspect_area_direction
+    ):
+        filter_summary.roof_aspect_area_direction.add("NorthEast")
     if (
         roof_aspect_area_facing_north_west_m2
-        and "NorthWest" not in filterSummary.roof_aspect_area_direction
+        and "NorthWest" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("NorthWest")
+        filter_summary.roof_aspect_area_direction.add("NorthWest")
     if (
         roof_aspect_area_facing_south_m2
-        and "South" not in filterSummary.roof_aspect_area_direction
+        and "South" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("South")
+        filter_summary.roof_aspect_area_direction.add("South")
     if (
         roof_aspect_area_facing_south_east_m2
-        and "SouthEast" not in filterSummary.roof_aspect_area_direction
+        and "SouthEast" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("SouthEast")
+        filter_summary.roof_aspect_area_direction.add("SouthEast")
     if (
         roof_aspect_area_facing_south_west_m2
-        and "SouthWest" not in filterSummary.roof_aspect_area_direction
+        and "SouthWest" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("SouthWest")
+        filter_summary.roof_aspect_area_direction.add("SouthWest")
     if (
         roof_aspect_area_facing_east_m2
-        and "East" not in filterSummary.roof_aspect_area_direction
+        and "East" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("East")
+        filter_summary.roof_aspect_area_direction.add("East")
     if (
         roof_aspect_area_facing_west_m2
-        and "West" not in filterSummary.roof_aspect_area_direction
+        and "West" not in filter_summary.roof_aspect_area_direction
     ):
-        filterSummary.roof_aspect_area_direction.add("West")
+        filter_summary.roof_aspect_area_direction.add("West")
 
 
 def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSummary:

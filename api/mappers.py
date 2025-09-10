@@ -209,18 +209,22 @@ def map_ngd_roof_aspect_area_facings_results(
         "NorthWestFacingRoofSectionSum": "roof_aspect_area_facing_north_west_m2",
         "AreaIndeterminableRoofSectionSum": "roof_aspect_area_indeterminable_m2",
     }
-    if results and results.get("results") and results["results"].get("bindings"):
+
+    def assign(field: str | None, m2) -> None:
+        if field and m2:
+            setattr(building, field, int(m2))
+
+    if has_bindings(results):
         for result in results["results"]["bindings"]:
-            direction = get_value_from_result(result, "direction")
-            m2 = get_value_from_result(result, "m2")
-            field = direction_to_field.get(direction)
-            if field:
-                setattr(building, field, int(m2))
-    else:
-        if 'roof_aspect_area_facing_north_m2' in results.keys():
-            for field, m2 in results.items():
-                if m2:
-                    setattr(building, field, int(m2))
+            assign(
+                direction_to_field.get(get_value_from_result(result, "direction")),
+                get_value_from_result(result, "m2"),
+            )
+        return
+
+    if "roof_aspect_area_facing_north_m2" in results:
+        for field, m2 in results.items():
+            assign(field, m2)
     
 
 
@@ -261,7 +265,7 @@ def map_single_building_response(
     map_ngd_roof_material_results(building, ngd_roof_material_results)
     map_ngd_solar_panel_presence_results(building, ngd_solar_panel_presence_results)
     map_ngd_roof_shape_results(building, ngd_roof_shape_results)
-    map_ngd_roof_aspect_area_facings_results(building, map_ngd_roof_aspect_area_facings_results)
+    map_ngd_roof_aspect_area_facings_results(building, ngd_roof_aspect_area_facings_results)
 
     return building
 

@@ -530,6 +530,7 @@ async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depen
     fallback_required = (
         not has_bindings(ngd_roof_material_results)
         or not has_bindings(ngd_solar_panel_presence_results)
+        or not has_bindings(ngd_roof_shape_results)
         or not has_bindings(ngd_roof_aspect_areas_results)
     )
     if fallback_required:
@@ -548,6 +549,9 @@ async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depen
             
             if not has_bindings(ngd_solar_panel_presence_results):
                 ngd_solar_panel_presence_results = {'solar_panel_presence': results[0].solar_panel_presence}
+                
+            if not has_bindings(ngd_roof_shape_results):
+                ngd_roof_shape_results = {'roof_shape': results[0].roof_shape}
 
             if not has_bindings(ngd_roof_aspect_areas_results):
                 ngd_roof_aspect_areas_results = {

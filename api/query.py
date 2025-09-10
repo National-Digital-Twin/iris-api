@@ -158,9 +158,8 @@ def get_all_ngd_attributes_pg() -> str:
             su.roof_aspect_area_facing_west_m2,
             su.roof_aspect_area_facing_north_west_m2,
             su.roof_aspect_area_indeterminable_m2
-        FROM iris.epc_assessment ea
-        JOIN iris.structure_unit su ON su.epc_assessment_id = ea.id
-        WHERE ea.uprn = :uprn
+        FROM iris.structure_unit su
+        WHERE su.uprn = :uprn
         LIMIT 1;
     """
 

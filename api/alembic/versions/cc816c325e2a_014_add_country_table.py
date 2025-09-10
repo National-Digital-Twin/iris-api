@@ -59,7 +59,7 @@ def upgrade() -> None:
             area_type_description character varying(25)NOT NULL,
             non_area_type_code character varying(3),
             non_area_type_description character varying(36),
-            geometry geometry(MultiPolygon,27700) NOT NULL,
+            geometry geometry(MultiPolygon,4326) NOT NULL,
             CONSTRAINT country_region_pkey PRIMARY KEY (fid)
         )
     """

@@ -38,7 +38,7 @@ def upgrade() -> None:
     )
     
     
-    """ Create table for hot summer days."""
+    """ Create table for country_region."""
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS iris.country_region
@@ -75,7 +75,7 @@ def upgrade() -> None:
     )
     
     
-    """ Create index for hot summer days table."""
+    """ Create index for country_region table."""
     op.execute(
         """
         CREATE INDEX IF NOT EXISTS country_region_geometry_geom_idx

@@ -23,6 +23,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
   - Roof shape
   - Roof aspect areas (N, NE, E, SE, S, SW, W, NW, Indeterminable)
 - Extended response model and mappers to include the above fields without breaking existing consumers.
+- Added os roof data to advanced filters
 
 ## [0.92.1] - 2025-07-22
 

@@ -49,18 +49,18 @@ class DetailedBuilding(Building):
     fueltype: Optional[str] = None
     # OS NGD Buildings attributes
     roof_material: Optional[str] = None
-    solar_panel_presence: Optional[bool] = None
+    solar_panel_presence: Optional[str] = None
     roof_shape: Optional[str] = None
     # Roof aspect areas (square meters) by direction
-    roof_aspect_area_facing_north_m2: Optional[int] = None
-    roof_aspect_area_facing_north_east_m2: Optional[int] = None
-    roof_aspect_area_facing_east_m2: Optional[int] = None
-    roof_aspect_area_facing_south_east_m2: Optional[int] = None
-    roof_aspect_area_facing_south_m2: Optional[int] = None
-    roof_aspect_area_facing_south_west_m2: Optional[int] = None
-    roof_aspect_area_facing_west_m2: Optional[int] = None
-    roof_aspect_area_facing_north_west_m2: Optional[int] = None
-    roof_aspect_area_indeterminable_m2: Optional[int] = None
+    roof_aspect_area_facing_north_m2: Optional[float] = None
+    roof_aspect_area_facing_north_east_m2: Optional[float] = None
+    roof_aspect_area_facing_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_m2: Optional[float] = None
+    roof_aspect_area_facing_south_west_m2: Optional[float] = None
+    roof_aspect_area_facing_west_m2: Optional[float] = None
+    roof_aspect_area_facing_north_west_m2: Optional[float] = None
+    roof_aspect_area_indeterminable_m2: Optional[float] = None
     
 
 class DetailedBuildingSchema(DetailedBuilding):
@@ -68,17 +68,17 @@ class DetailedBuildingSchema(DetailedBuilding):
     @classmethod
     def from_orm(cls, obj):
         return cls(
-            solar_panel_presence=obj.has_roof_solar_panels,
+            solar_panel_presence=str(obj.has_roof_solar_panels),
             roof_material=obj.roof_material,
-            roof_aspect_area_facing_north_m2=int(obj.roof_aspect_area_facing_north_m2),
-            roof_aspect_area_facing_north_east_m2=int(obj.roof_aspect_area_facing_north_east_m2),
-            roof_aspect_area_facing_east_m2=int(obj.roof_aspect_area_facing_east_m2),
-            roof_aspect_area_facing_south_east_m2=int(obj.roof_aspect_area_facing_south_east_m2),
-            roof_aspect_area_facing_south_m2=int(obj.roof_aspect_area_facing_south_m2),
-            roof_aspect_area_facing_south_west_m2=int(obj.roof_aspect_area_facing_south_west_m2),
-            roof_aspect_area_facing_west_m2=int(obj.roof_aspect_area_facing_west_m2),
-            roof_aspect_area_facing_north_west_m2=int(obj.roof_aspect_area_facing_north_west_m2),
-            roof_aspect_area_indeterminable_m2=int(obj.roof_aspect_area_indeterminable_m2)
+            roof_aspect_area_facing_north_m2=float(obj.roof_aspect_area_facing_north_m2),
+            roof_aspect_area_facing_north_east_m2=float(obj.roof_aspect_area_facing_north_east_m2),
+            roof_aspect_area_facing_east_m2=float(obj.roof_aspect_area_facing_east_m2),
+            roof_aspect_area_facing_south_east_m2=float(obj.roof_aspect_area_facing_south_east_m2),
+            roof_aspect_area_facing_south_m2=float(obj.roof_aspect_area_facing_south_m2),
+            roof_aspect_area_facing_south_west_m2=float(obj.roof_aspect_area_facing_south_west_m2),
+            roof_aspect_area_facing_west_m2=float(obj.roof_aspect_area_facing_west_m2),
+            roof_aspect_area_facing_north_west_m2=float(obj.roof_aspect_area_facing_north_west_m2),
+            roof_aspect_area_indeterminable_m2=float(obj.roof_aspect_area_indeterminable_m2)
         )
 
 

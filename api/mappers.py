@@ -170,7 +170,7 @@ def map_fueltype_results(building: DetailedBuilding, results: dict) -> None:
 
 def map_ngd_roof_material_results(building: DetailedBuilding, results: dict) -> None:
 
-    if has_bindings(results):       # check if results come from Fuseki or from PostGIS
+    if results and results.get("results") and results["results"].get("bindings"):       # check if results come from Fuseki or from PostGIS
         for result in results["results"]["bindings"]:
             building.roof_material = get_value_from_result(result, "roofMaterial")
     else:
@@ -187,7 +187,7 @@ def map_ngd_solar_panel_presence_results(
             )
     else:
         if 'solar_panel_presence' in results.keys():
-            building.solar_panel_presence = results['solar_panel_presence']
+            building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']==True else 'Unknown'
             
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
@@ -212,9 +212,9 @@ def map_ngd_roof_aspect_area_facings_results(
 
     def assign(field: str | None, m2) -> None:
         if field and m2:
-            setattr(building, field, int(m2))
+            setattr(building, field, float(m2))
 
-    if has_bindings(results):
+    if results and results.get("results") and results["results"].get("bindings"):
         for result in results["results"]["bindings"]:
             assign(
                 direction_to_field.get(get_value_from_result(result, "direction")),

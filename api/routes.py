@@ -20,7 +20,7 @@ from mappers import (map_bounded_buildings_response,
                      map_flagged_buildings_response,
                      map_single_building_response,
                      map_structure_unit_flag_history_response)
-from models.dto_models import (DetailedBuilding, DetailedBuildingPostgres, EpcAndOsBuildingSchema,
+from models.dto_models import (DetailedBuilding, DetailedBuildingSchema, EpcAndOsBuildingSchema,
                                EpcStatistics, FilterableBuilding,
                                FilterableBuildingSchema, FilterSummary,
                                FlaggedBuilding, FlagHistory, SimpleBuilding)
@@ -527,20 +527,19 @@ async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depen
     )
 
     # OS NGD Buildings PG fallback: synthesize SPARQL-like dicts from PG if missing
-    need_pg = (
+    fallback_required = (
         not has_bindings(ngd_roof_material_results)
         or not has_bindings(ngd_solar_panel_presence_results)
         or not has_bindings(ngd_roof_aspect_areas_results)
     )
-    if need_pg:
+    if fallback_required:
 
         # get OS Roof data for dwelling from PostGIS
-        pg_data = await db.execute(text(get_all_ngd_attributes_pg()), {"uprn": uprn})
+        data = await db.execute(text(get_all_ngd_attributes_pg()), {"uprn": uprn})
 
         # extract data using Pydantic class
-        results = [DetailedBuildingPostgres.from_orm(row) for row in pg_data]
-        print(results)
-
+        results = [DetailedBuildingSchema.from_orm(row) for row in data]
+        
         # check if list has single element
         if len(results) == 1:
             # check if roof material exists from Fuseki server

@@ -15,15 +15,13 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
-## [UNRELEASED]
+## [0.93.0] - 2025-09-11
 
-- Added OS NGD Buildings queries to `/buildings/{uprn}` to return building-level attributes derived from Ordnance Survey NGD Buildings data:
-  - Roof material
-  - Solar panel presence
-  - Roof shape
-  - Roof aspect areas (N, NE, E, SE, S, SW, W, NW, Indeterminable)
-- Extended response model and mappers to include the above fields without breaking existing consumers.
-- Added os roof data to advanced filters
+- Added OS NGD Buildings attributes to `/buildings/{uprn}`: roof material, solar panel presence, roof shape, and roof aspect areas (N, NE, E, SE, S, SW, W, NW, indeterminable).
+- Added PostGIS fallback for NGD attributes when graph data is missing; extended mappers/DTOs accordingly.
+- Included OS roof data in filterable buildings and filter summary; only include aspect directions with area > 0.
+- New climate GeoJSON endpoints: `/data/climate/hot-summer-days`, `/data/climate/icing-days`, `/data/climate/wind-driven-rain`.
+- Added underlying geometry data for Wales.
 
 ## [0.92.1] - 2025-07-22
 

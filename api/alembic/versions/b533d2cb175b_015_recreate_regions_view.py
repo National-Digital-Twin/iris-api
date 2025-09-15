@@ -90,10 +90,29 @@ def upgrade() -> None:
         WITH NO DATA;
     """
     )
+    
+    """ Create materialized view containing GeoJSON."""
+    op.execute(
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc
+            TABLESPACE pg_default
+            AS
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
+            FROM iris.uk_region_epc_data t
+            WITH NO DATA;
+    """
+    )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    
+    """ Recreate materialised views for regions"""
+    op.execute(
+        """
+        DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc;
+    """
+    )
     
     op.execute(
         """
@@ -103,7 +122,7 @@ def downgrade() -> None:
     
     op.execute(
         """
-        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc_data
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc_data
             AS
             SELECT
                 b.name,
@@ -118,10 +137,22 @@ def downgrade() -> None:
                 COUNT(CASE WHEN a.epc_rating IS NULL THEN 1 END) AS epc_null,
                 b.geometry
             FROM iris.building_epc a
-            LEFT JOIN iris.uk_ward b
+            LEFT JOIN iris.english_region b
             ON ST_Intersects(b.geometry, a.point)
-            GROUP BY b.name, b.geometry 
+            GROUP BY b.name, b.geometry
         WITH NO DATA;
+    """
+    )
+    
+    """ Create materialized view containing GeoJSON."""
+    op.execute(
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc
+            TABLESPACE pg_default
+            AS
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
+            FROM iris.uk_region_epc_data t
+            WITH NO DATA;
     """
     )
     

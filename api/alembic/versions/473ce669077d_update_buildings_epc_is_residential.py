@@ -256,12 +256,6 @@ def upgrade() -> None:
         """
     )
 
-    for mv in DATA_MATERIALIZED_VIEWS:
-        op.execute(sa.text(f"REFRESH MATERIALIZED VIEW {mv};"))
-
-    for mv in GEOJSON_MATERIALIZED_VIEWS:
-        op.execute(sa.text(f"REFRESH MATERIALIZED VIEW {mv};"))
-
 
 def downgrade() -> None:
     """Downgrade schema."""
@@ -469,9 +463,3 @@ def downgrade() -> None:
         WITH NO DATA;
         """
     )
-
-    for mv in DATA_MATERIALIZED_VIEWS:
-        op.execute(sa.text(f"REFRESH MATERIALIZED VIEW {mv};"))
-
-    for mv in GEOJSON_MATERIALIZED_VIEWS:
-        op.execute(sa.text(f"REFRESH MATERIALIZED VIEW {mv};"))

@@ -27,6 +27,14 @@ def upgrade() -> None:
     
     op.execute(
         """
+        CREATE INDEX idx_structure_unit_uprn_not_null
+            ON iris.structure_unit (uprn)
+            WHERE uprn IS NOT NULL;
+        """
+    )
+    
+    op.execute(
+        """
         ALTER TABLE iris.building ADD COLUMN "is_residential" BOOLEAN not null DEFAULT false;
         """
     )
@@ -34,16 +42,22 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE iris.building AS b
-        SET is_residential =
-              EXISTS (
-                  SELECT 1
-                  FROM iris.epc_assessment AS ea
+        SET is_residential = TRUE
+              WHERE EXISTS (
+                  SELECT 1 FROM iris.epc_assessment AS ea
                   WHERE ea.uprn = b.uprn
-              )
-           OR EXISTS (
+              );
+        """
+    )
+        
+    op.execute(
+        """
+           UPDATE iris.building AS b
+           SET is_residential = TRUE
+           WHERE is_residential = FALSE AND EXISTS (
                   SELECT 1
-                  FROM iris.structure_unit AS su2
-                  WHERE su2.uprn = b.uprn
+                  FROM iris.structure_unit AS su
+                  WHERE su.uprn = b.uprn
               );
         """
     )
@@ -55,6 +69,12 @@ def downgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.building DROP COLUMN "is_residential";
+        """
+    )
+    
+    op.execute(
+        """
+        DROP INDEX IF EXISTS iris.idx_structure_unit_uprn_not_null;
         """
     )
     

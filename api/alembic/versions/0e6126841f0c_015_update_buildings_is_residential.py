@@ -36,28 +36,6 @@ def upgrade() -> None:
         """
     )
 
-    op.execute(
-        """
-        UPDATE iris.building AS b
-        SET is_residential = TRUE
-              WHERE EXISTS (
-                  SELECT 1 FROM iris.epc_assessment AS ea
-                  WHERE ea.uprn = b.uprn);
-    """
-    )
-    
-    op.execute(
-        """
-           UPDATE iris.building AS b
-           SET is_residential = TRUE
-           WHERE is_residential = FALSE AND EXISTS (
-                  SELECT 1
-                  FROM iris.structure_unit AS su
-                  WHERE su.uprn = b.uprn
-              );
-        """
-    )
-
 
 def downgrade() -> None:
     """Downgrade schema."""

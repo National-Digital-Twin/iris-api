@@ -26,8 +26,6 @@ def upgrade() -> None:
     """Upgrade schema."""
     
     op.execute(sa.text("SET LOCAL application_name = 'alembic_015_is_residential';"))
-    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
-    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
 
     
     op.execute(
@@ -41,9 +39,6 @@ def downgrade() -> None:
     """Downgrade schema."""
     
     op.execute(sa.text("SET LOCAL application_name = 'alembic_015_is_residential';"))
-    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
-    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
-
     
     op.execute(
         """

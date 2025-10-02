@@ -24,12 +24,13 @@ TARGET_TABLE = os.getenv("TARGET_TABLE")
 MATERIALIZED_VIEW = os.getenv("MATERIALIZED_VIEW")
 JOIN_VIEW = os.getenv("JOIN_VIEW")
 DATA_VIEW = os.getenv("DATA_VIEW")
+GPKG_EXTENSION = ".gpkg"
 
 
 def download_file(url: str, dest: Path):
     """Download a file from URL to destination."""
     print(f"Downloading {url} → {dest}")
-    if url.endswith(".gpkg"):
+    if url.endswith(GPKG_EXTENSION):
         with urllib.request.urlopen(url) as response, open(dest, "wb") as out_file:
             out_file.write(response.read())
         print("Download complete.")
@@ -43,10 +44,10 @@ def download_file(url: str, dest: Path):
             print(f"Extracted to : {unzip_file}")
             for root, dirs, files in os.walk(unzip_file):
                 for file in files:
-                    if file.endswith(".gpkg"):
+                    if file.endswith(GPKG_EXTENSION):
                         file_gpkg = os.path.join(root, file)
                         print(f"GeoPackage available: {file_gpkg}")
-                        shutil.copyfile(file_gpkg, f"{dest}/data.gpkg")
+                        shutil.copyfile(file_gpkg, f"{dest}/data{GPKG_EXTENSION}")
                         outfile = f"{dest}/data.gpkg"
                         print(f"Download complete: {outfile}")
                     else:
@@ -171,7 +172,7 @@ def refresh_data_view():
 
 
 def handle_geopackage(tmpdir):
-    gpkg_file = Path(tmpdir) / "data.gpkg"
+    gpkg_file = Path(tmpdir) / f"data{GPKG_EXTENSION}"
     download_file(GPKG_SOURCE, gpkg_file)
     if GPKG_TABLE == "none":
         run_ogr2ogr(gpkg_file)
@@ -181,7 +182,7 @@ def handle_geopackage(tmpdir):
 
 def handle_zip(tmpdir):
     zip_file = Path(tmpdir)
-    gpkg_file = Path(tmpdir) / "data.gpkg"
+    gpkg_file = Path(tmpdir) / f"data{GPKG_EXTENSION}"
     download_file(GPKG_SOURCE, zip_file)
     if GPKG_TABLE == "none":
         run_ogr2ogr(gpkg_file)
@@ -194,7 +195,7 @@ def handle_zip(tmpdir):
 def main():
     if not is_table_populated():
         with tempfile.TemporaryDirectory() as tmpdir:
-            if GPKG_SOURCE.endswith(".gpkg"):
+            if GPKG_SOURCE.endswith(GPKG_EXTENSION):
                 handle_geopackage(tmpdir)
             else:
                 handle_zip(tmpdir)

@@ -24,6 +24,21 @@ load-epc-data:
 load-country:
 	TARGET_TABLE=country_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=country_region python developer-resources/load_gpkg_to_postgis.py
 
+load-districts:
+	TARGET_TABLE=district_borough_unitary GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=district_borough_unitary python developer-resources/load_gpkg_to_postgis.py
+	python developer-resources/sync_region_name_dbu.py
+
+load-english-region:
+	TARGET_TABLE=english_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=english_region python developer-resources/load_gpkg_to_postgis.py
+
+load-scotland-and-wales-region:
+	TARGET_TABLE=scotland_and_wales_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=scotland_and_wales_region python developer-resources/load_gpkg_to_postgis.py
+
 migrate:
 	alembic upgrade head
-	
+
+iris-api-resources-up:
+	docker compose -f developer-resources/docker-compose.yml up -d
+
+iris-api-resources-down:
+	docker compose -f developer-resources/docker-compose.yml down

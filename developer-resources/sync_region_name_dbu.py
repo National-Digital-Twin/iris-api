@@ -10,17 +10,24 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
 
 CHECK_SCRIPT = """
     SELECT COUNT(*) FROM iris.district_borough_unitary
-    WHERE region_name IS NULL;
+    WHERE english_region_fid IS NULL AND scotland_and_wales_region_fid IS NULL;
 """
 
-UPDATE_SCRIPT = """
+ENGLISH_REGION_UPDATE_SCRIPT = """
     UPDATE iris.district_borough_unitary dbu
-    SET region_name = r.name
+    SET english_region_fid = r.fid
     FROM (
-        SELECT name, geometry
+        SELECT fid, geometry
         FROM iris.english_region
-        UNION
-        SELECT name, geometry
+    ) r
+    WHERE ST_INTERSECTS(r.geometry, dbu.geometry);
+"""
+
+SCOTLAND_WALES_REGION_UPDATE_SCRIPT = """
+    UPDATE iris.district_borough_unitary dbu
+    SET scotland_and_wales_region_fid = r.fid
+    FROM (
+        SELECT fid, geometry
         FROM iris.scotland_and_wales_region
     ) r
     WHERE ST_INTERSECTS(r.geometry, dbu.geometry);
@@ -51,7 +58,8 @@ if __name__ == "__main__":
     print(f"{unsynced_records} records to sync.")
 
     if unsynced_records > 0:
-        run_db_command(UPDATE_SCRIPT)
+        run_db_command(ENGLISH_REGION_UPDATE_SCRIPT)
+        run_db_command(SCOTLAND_WALES_REGION_UPDATE_SCRIPT)
 
         print(f"Synced region name for {unsynced_records} records.")
     else:

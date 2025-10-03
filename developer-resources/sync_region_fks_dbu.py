@@ -61,6 +61,6 @@ if __name__ == "__main__":
         run_db_command(ENGLISH_REGION_UPDATE_SCRIPT)
         run_db_command(SCOTLAND_WALES_REGION_UPDATE_SCRIPT)
 
-        print(f"Synced region name for {unsynced_records} records.")
+        print(f"Synced region foriegn keys for {unsynced_records} records.")
     else:
         print("No records to sync.")

@@ -40,7 +40,7 @@ def downgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.district_borough_unitary
-        DROP CONSTRAINT english_region_fid_fk
+        DROP CONSTRAINT english_region_fid_fk,
         DROP CONSTRAINT scotland_and_wales_region_fid_fk;
         """
     )
@@ -48,6 +48,7 @@ def downgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.district_borough_unitary
-        DROP english_region_fid, scotland_and_wales_region_fid;
+        DROP COLUMN english_region_fid,
+        DROP COLUMN scotland_and_wales_region_fid;
         """
     )

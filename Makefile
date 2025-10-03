@@ -26,7 +26,7 @@ load-country:
 
 load-districts:
 	TARGET_TABLE=district_borough_unitary GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=district_borough_unitary python developer-resources/load_gpkg_to_postgis.py
-	python developer-resources/sync_region_name_dbu.py
+	python developer-resources/sync_region_fks_dbu.py
 
 load-english-region:
 	TARGET_TABLE=english_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=english_region python developer-resources/load_gpkg_to_postgis.py

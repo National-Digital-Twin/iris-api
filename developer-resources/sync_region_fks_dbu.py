@@ -52,7 +52,7 @@ def run_db_command(command: str, fetchone=False):
 
 
 if __name__ == "__main__":
-    print("Syncing region name on district_borough_unitary table...")
+    print("Syncing region foriegn keys on district_borough_unitary table...")
     unsynced_records = run_db_command(CHECK_SCRIPT, fetchone=True)
 
     print(f"{unsynced_records} records to sync.")

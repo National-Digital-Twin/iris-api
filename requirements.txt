@@ -19,3 +19,4 @@ geoalchemy2
 asyncpg
 geoalchemy2[shapely]
 pydantic_settings
+PyJWT

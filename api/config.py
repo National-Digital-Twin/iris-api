@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     LANDING_PAGE_URL: str = "http://localhost:5173"
     BOOTSTRAP_SERVERS: str = "localhost:9092"
     IES_TOPIC: str = "knowledge"
+    METABASE_SITE_URL: str = "http://localhost:8800"
+    METABASE_SECRET_KEY: str
+    DASHBOARD_ID: int = 0
 
     def get_db_connection_string(self):
         if self.ENVIRONMENT == "TEST":

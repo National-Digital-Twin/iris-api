@@ -3,49 +3,58 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import configparser
+import time
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
+import jwt
 import requests
 from access import AccessClient
 from config import get_settings
-from services.climate_service import fetch_geojson_for_hot_summer_days, fetch_geojson_for_icing_days, fetch_geojson_for_wind_driven_rain
-from services.energy_performance_service import fetch_geojson_for_energy_performance_by_wards, fetch_geojson_for_energy_performance_by_districts, fetch_geojson_for_energy_performance_by_counties, fetch_geojson_for_energy_performance_by_regions
 from db import get_db
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from mappers import (map_bounded_buildings_response,
                      map_bounded_filterable_buildings_response,
                      map_epc_statistics_response, map_filter_summary_response,
                      map_flagged_buildings_response,
                      map_single_building_response,
                      map_structure_unit_flag_history_response)
-from models.dto_models import (DetailedBuilding, DetailedBuildingSchema, EpcAndOsBuildingSchema,
-                               EpcStatistics, FilterableBuilding,
-                               FilterableBuildingSchema, FilterSummary,
-                               FlaggedBuilding, FlagHistory, SimpleBuilding)
+from models.dto_models import (DetailedBuilding, DetailedBuildingSchema,
+                               EpcAndOsBuildingSchema, EpcStatistics,
+                               FilterableBuilding, FilterableBuildingSchema,
+                               FilterSummary, FlaggedBuilding, FlagHistory,
+                               SimpleBuilding)
 from models.ies_models import (EDH, ClassificationEmum, IesAccount,
                                IesAssessment, IesAssessToBeFalse,
                                IesAssessToBeTrue, IesClass, IesEntity,
                                IesPerson, IesState, IesThing, ies)
 from pydantic import BaseModel
-from query import (get_building, get_buildings_in_bounding_box_query,
+from query import (get_all_ngd_attributes_pg, get_building,
+                   get_buildings_in_bounding_box_query,
                    get_filterable_buildings_in_bounding_box_query,
                    get_flag_history, get_flagged_buildings,
-                   get_floor_for_building, get_roof_for_building,
-                   get_statistics_for_wards,
-                   get_walls_and_windows_for_building,
-                   get_fueltype_for_building,
-                   get_all_ngd_attributes_pg,
+                   get_floor_for_building, get_fueltype_for_building,
+                   get_ngd_roof_aspect_areas_for_building,
                    get_ngd_roof_material_for_building,
-                   get_ngd_solar_panel_presence_for_building,
                    get_ngd_roof_shape_for_building,
-                   get_ngd_roof_aspect_areas_for_building)
+                   get_ngd_solar_panel_presence_for_building,
+                   get_roof_for_building, get_statistics_for_wards,
+                   get_walls_and_windows_for_building)
 from rdflib import Graph
 from requests import codes, exceptions
+from services.climate_service import (fetch_geojson_for_hot_summer_days,
+                                      fetch_geojson_for_icing_days,
+                                      fetch_geojson_for_wind_driven_rain)
+from services.energy_performance_service import (
+    fetch_geojson_for_energy_performance_by_counties,
+    fetch_geojson_for_energy_performance_by_districts,
+    fetch_geojson_for_energy_performance_by_regions,
+    fetch_geojson_for_energy_performance_by_wards)
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils import get_headers as get_forwarding_headers, has_bindings
+from utils import get_headers as get_forwarding_headers
+from utils import has_bindings
 
 router = APIRouter()
 
@@ -359,6 +368,21 @@ def post_person(per: IesPerson):
     return per.uri
 
 
+@router.get("/metabase-url")
+def get_metabase_embed_url(filter: Optional[str] = Query(None)):
+    payload = {
+        "resource": {"dashboard": config_settings.DASHBOARD_ID},
+        "params": {},
+        "exp": int(time.time()) + (10 * 60),
+    }
+
+    token = jwt.encode(payload, config_settings.METABASE_SECRET_KEY, algorithm="HS256")
+
+    embed_url = f"{config_settings.METABASE_SITE_URL}/embed/dashboard/{token}#bordered=false&titled=false"
+
+    return {"embedUrl": embed_url}
+
+
 @router.get(
     "/buildings",
     response_model=List[SimpleBuilding],
@@ -374,7 +398,13 @@ async def get_buildings_in_bounding_box(
 ):
     buildings_in_bounding_box_results = await db.execute(
         text(get_buildings_in_bounding_box_query()),
-        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326}
+        {
+            "min_long": min_long,
+            "max_long": max_long,
+            "min_lat": min_lat,
+            "max_lat": max_lat,
+            "srid": 4326,
+        },
     )
     results = [
         EpcAndOsBuildingSchema.from_orm(result)
@@ -398,7 +428,13 @@ async def get_filter_summary(
 ):
     detailed_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
-        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
+        {
+            "min_long": min_long,
+            "max_long": max_long,
+            "min_lat": min_lat,
+            "max_lat": max_lat,
+            "srid": 4326,
+        },
     )
     results = [
         FilterableBuildingSchema.from_orm(result)
@@ -422,7 +458,13 @@ async def get_filterable_buildings_in_bounding_box(
 ):
     filterable_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
-        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
+        {
+            "min_long": min_long,
+            "max_long": max_long,
+            "min_lat": min_lat,
+            "max_lat": max_lat,
+            "srid": 4326,
+        },
     )
     results = [
         FilterableBuildingSchema.from_orm(result)
@@ -497,7 +539,9 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     response_model=DetailedBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
-async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depends(get_db)):
+async def get_building_by_uprn(
+    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+):
     building_results = run_sparql_query(
         get_building(uprn), get_forwarding_headers(req.headers)
     )
@@ -517,13 +561,15 @@ async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depen
         get_ngd_roof_material_for_building(uprn), get_forwarding_headers(req.headers)
     )
     ngd_solar_panel_presence_results = run_sparql_query(
-        get_ngd_solar_panel_presence_for_building(uprn), get_forwarding_headers(req.headers)
+        get_ngd_solar_panel_presence_for_building(uprn),
+        get_forwarding_headers(req.headers),
     )
     ngd_roof_shape_results = run_sparql_query(
         get_ngd_roof_shape_for_building(uprn), get_forwarding_headers(req.headers)
     )
     ngd_roof_aspect_areas_results = run_sparql_query(
-        get_ngd_roof_aspect_areas_for_building(uprn), get_forwarding_headers(req.headers)
+        get_ngd_roof_aspect_areas_for_building(uprn),
+        get_forwarding_headers(req.headers),
     )
 
     # OS NGD Buildings PG fallback
@@ -646,33 +692,51 @@ def post_flag_investigate(request: Request, visited: IesEntity):
     )
     return flag_state
 
+
 @router.get("/data/climate/wind-driven-rain")
-async def get_wind_driven_rain_data(geojson = Depends(fetch_geojson_for_wind_driven_rain)):
+async def get_wind_driven_rain_data(
+    geojson=Depends(fetch_geojson_for_wind_driven_rain),
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 @router.get("/data/climate/icing-days")
-async def get_icing_days_data(geojson = Depends(fetch_geojson_for_icing_days)):
+async def get_icing_days_data(geojson=Depends(fetch_geojson_for_icing_days)):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 @router.get("/data/climate/hot-summer-days")
-async def get_hot_summer_days_data(geojson = Depends(fetch_geojson_for_hot_summer_days)):
+async def get_hot_summer_days_data(geojson=Depends(fetch_geojson_for_hot_summer_days)):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 @router.get("/data/energy-performance/wards")
-async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_wards)):
+async def get_energy_performance_data_by_wards(
+    geojson=Depends(fetch_geojson_for_energy_performance_by_wards),
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 @router.get("/data/energy-performance/districts")
-async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_districts)):
+async def get_energy_performance_data_by_wards(
+    geojson=Depends(fetch_geojson_for_energy_performance_by_districts),
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 @router.get("/data/energy-performance/counties")
-async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_counties)):
+async def get_energy_performance_data_by_wards(
+    geojson=Depends(fetch_geojson_for_energy_performance_by_counties),
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
+
 @router.get("/data/energy-performance/regions")
-async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_regions)):
+async def get_energy_performance_data_by_wards(
+    geojson=Depends(fetch_geojson_for_energy_performance_by_regions),
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 # @app.post("/buildings/states",description="Add a new state to a building")
 def post_building_state(bs: IesState):

@@ -15,6 +15,10 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
+## [0.93.1] - 2025-10-03
+
+- [DPAV-1731] Added an `is_residential` flag to `iris.building` via Alembic migration to support distinguishing residential dwellings in downstream queries.
+
 ## [0.93.0] - 2025-09-11
 
 - Added OS NGD Buildings attributes to `/buildings/{uprn}`: roof material, solar panel presence, roof shape, and roof aspect areas (N, NE, E, SE, S, SW, W, NW, indeterminable).

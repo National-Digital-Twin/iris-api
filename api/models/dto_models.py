@@ -61,7 +61,7 @@ class DetailedBuilding(Building):
     roof_aspect_area_facing_west_m2: Optional[float] = None
     roof_aspect_area_facing_north_west_m2: Optional[float] = None
     roof_aspect_area_indeterminable_m2: Optional[float] = None
-    
+
 
 class DetailedBuildingSchema(DetailedBuilding):
 
@@ -71,15 +71,29 @@ class DetailedBuildingSchema(DetailedBuilding):
             solar_panel_presence=str(obj.has_roof_solar_panels),
             roof_material=obj.roof_material,
             roof_shape=obj.roof_shape,
-            roof_aspect_area_facing_north_m2=float(obj.roof_aspect_area_facing_north_m2),
-            roof_aspect_area_facing_north_east_m2=float(obj.roof_aspect_area_facing_north_east_m2),
+            roof_aspect_area_facing_north_m2=float(
+                obj.roof_aspect_area_facing_north_m2
+            ),
+            roof_aspect_area_facing_north_east_m2=float(
+                obj.roof_aspect_area_facing_north_east_m2
+            ),
             roof_aspect_area_facing_east_m2=float(obj.roof_aspect_area_facing_east_m2),
-            roof_aspect_area_facing_south_east_m2=float(obj.roof_aspect_area_facing_south_east_m2),
-            roof_aspect_area_facing_south_m2=float(obj.roof_aspect_area_facing_south_m2),
-            roof_aspect_area_facing_south_west_m2=float(obj.roof_aspect_area_facing_south_west_m2),
+            roof_aspect_area_facing_south_east_m2=float(
+                obj.roof_aspect_area_facing_south_east_m2
+            ),
+            roof_aspect_area_facing_south_m2=float(
+                obj.roof_aspect_area_facing_south_m2
+            ),
+            roof_aspect_area_facing_south_west_m2=float(
+                obj.roof_aspect_area_facing_south_west_m2
+            ),
             roof_aspect_area_facing_west_m2=float(obj.roof_aspect_area_facing_west_m2),
-            roof_aspect_area_facing_north_west_m2=float(obj.roof_aspect_area_facing_north_west_m2),
-            roof_aspect_area_indeterminable_m2=float(obj.roof_aspect_area_indeterminable_m2)
+            roof_aspect_area_facing_north_west_m2=float(
+                obj.roof_aspect_area_facing_north_west_m2
+            ),
+            roof_aspect_area_indeterminable_m2=float(
+                obj.roof_aspect_area_indeterminable_m2
+            ),
         )
 
 
@@ -255,3 +269,84 @@ class FilterSummary(BaseModel):
     roof_construction: set[str] = set()
     roof_insulation_location: set[str] = set()
     roof_insulation_thickness: set[str] = set()
+
+
+class CountOfEpcRatings(BaseModel):
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class CountOfEpcRatingsPerRegion(CountOfEpcRatings):
+    region_name: str
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            region_name=obj.region_name,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class PercentageBuildingAttributesPerRegion(BaseModel):
+    region_name: str
+    percentage_roof_solar_panels: float
+    percentage_double_glazing: float
+    percentage_single_glazing: float
+    percentage_solid_floor: float
+    percentage_roof_insulation_thickness_150mm: float
+    percentage_roof_insulation_thickness_200mm: float
+    percentage_roof_insulation_thickness_250mm: float
+    percentage_pitched_roof: float
+    percentage_cavity_wall: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            region_name=obj.region_name,
+            percentage_roof_solar_panels=obj.percentage_roof_solar_panels,
+            percentage_double_glazing=obj.percentage_double_glazing,
+            percentage_single_glazing=obj.percentage_single_glazing,
+            percentage_solid_floor=obj.percentage_solid_floor,
+            percentage_roof_insulation_thickness_150mm=obj.percentage_roof_insulation_thickness_150mm,
+            percentage_roof_insulation_thickness_200mm=obj.percentage_roof_insulation_thickness_200mm,
+            percentage_roof_insulation_thickness_250mm=obj.percentage_roof_insulation_thickness_250mm,
+            percentage_pitched_roof=obj.percentage_pitched_roof,
+            percentage_cavity_wall=obj.percentage_cavity_wall,
+        )
+
+
+class AverageSapScorePerLodgementDate(BaseModel):
+    lodgement_date: datetime.date
+    avg_sap_score: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            lodgement_date=datetime.datetime.strptime(
+                obj.lodgement_date, "%Y-%m-%d"
+            ).date(),
+            avg_sap_score=obj.avg_sap_score,
+        )

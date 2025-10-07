@@ -20,18 +20,22 @@ from mappers import (map_bounded_buildings_response,
                      map_flagged_buildings_response,
                      map_single_building_response,
                      map_structure_unit_flag_history_response)
-from models.dto_models import (DetailedBuilding, DetailedBuildingSchema,
+from models.dto_models import (AverageSapScorePerLodgementDate,
+                               CountOfEpcRatings, CountOfEpcRatingsPerRegion,
+                               DetailedBuilding, DetailedBuildingSchema,
                                EpcAndOsBuildingSchema, EpcStatistics,
                                FilterableBuilding, FilterableBuildingSchema,
                                FilterSummary, FlaggedBuilding, FlagHistory,
+                               PercentageBuildingAttributesPerRegion,
                                SimpleBuilding)
 from models.ies_models import (EDH, ClassificationEmum, IesAccount,
                                IesAssessment, IesAssessToBeFalse,
                                IesAssessToBeTrue, IesClass, IesEntity,
                                IesPerson, IesState, IesThing, ies)
 from pydantic import BaseModel
-from query import (get_all_ngd_attributes_pg, get_building,
-                   get_buildings_in_bounding_box_query,
+from query import (get_all_ngd_attributes_pg, get_avg_sap_score_overtime_query,
+                   get_building, get_buildings_in_bounding_box_query,
+                   get_count_of_epc_rating_query,
                    get_filterable_buildings_in_bounding_box_query,
                    get_flag_history, get_flagged_buildings,
                    get_floor_for_building, get_fueltype_for_building,
@@ -39,6 +43,7 @@ from query import (get_all_ngd_attributes_pg, get_building,
                    get_ngd_roof_material_for_building,
                    get_ngd_roof_shape_for_building,
                    get_ngd_solar_panel_presence_for_building,
+                   get_percentage_of_buildings_with_x_per_region_query,
                    get_roof_for_building, get_statistics_for_wards,
                    get_walls_and_windows_for_building)
 from rdflib import Graph
@@ -381,6 +386,44 @@ def get_metabase_embed_url(filter: Optional[str] = Query(None)):
     embed_url = f"{config_settings.METABASE_SITE_URL}/embed/dashboard/{token}#bordered=false&titled=false"
 
     return {"embedUrl": embed_url}
+
+
+@router.get("/dashboard/epc-ratings")
+async def get_epc_ratings_for_dashboard(db: AsyncSession = Depends(get_db)):
+    results = await db.execute(text(get_count_of_epc_rating_query()))
+    mapped_results = [CountOfEpcRatings.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get("/dashboard/epc-ratings-per-region")
+async def get_epc_ratings_for_dashboard(db: AsyncSession = Depends(get_db)):
+    results = await db.execute(text(get_count_of_epc_rating_query(True)))
+    mapped_results = [CountOfEpcRatingsPerRegion.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get("/dashboard/building-attributes-percentage")
+async def get_percentage_building_attributes_per_region(
+    db: AsyncSession = Depends(get_db),
+):
+    results = await db.execute(
+        text(get_percentage_of_buildings_with_x_per_region_query())
+    )
+    mapped_results = [
+        PercentageBuildingAttributesPerRegion.from_orm(row) for row in results
+    ]
+
+    return mapped_results
+
+
+@router.get("/dashboard/sap-score-overtime")
+async def get_sap_score_overtime(db: AsyncSession = Depends(get_db)):
+    results = await db.execute(text(get_avg_sap_score_overtime_query()))
+    mapped_results = [AverageSapScorePerLodgementDate.from_orm(row) for row in results]
+
+    return mapped_results
 
 
 @router.get(

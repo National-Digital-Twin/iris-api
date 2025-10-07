@@ -144,6 +144,7 @@ def get_fueltype_for_building(uprn: str) -> str:
         }}
     """
 
+
 def get_all_ngd_attributes_pg() -> str:
     return """
         SELECT
@@ -411,4 +412,53 @@ def get_flag_history(uprn: str) -> str:
                     ?_assessorName ies:representationValue ?assessorName .
                 }}
         }}
+    """
+
+
+def get_count_of_epc_rating_query(per_region: bool = False):
+    return f"""
+        SELECT {'coalesce AS region_name,' if per_region else ''}
+                COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
+                COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
+                COUNT(*) FILTER (WHERE epc_rating = 'C') AS epc_c,
+                COUNT(*) FILTER (WHERE epc_rating = 'D') AS epc_d,
+                COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
+                COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
+                COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
+        FROM iris."temp-dashboard-analytics"{'' if per_region else ';'}
+        {'GROUP BY region_name;' if per_region else ''}
+    """
+
+
+def _percentage_column(filter: str, alias: str):
+    return f"""
+        ROUND(
+            100.0 * COUNT(*) FILTER (WHERE {filter}) / SUM(COUNT(*)) OVER (), 2
+        ) AS {alias}
+    """
+
+
+def get_percentage_of_buildings_with_x_per_region_query():
+    return f"""
+        SELECT coalesce as region_name,
+                {_percentage_column('has_roof_solar_panels', 'percentage_roof_solar_panels')},
+                {_percentage_column("window_glazing = 'DoubleGlazing'", 'percentage_double_glazing')},
+                {_percentage_column("window_glazing = 'SingleGlazing'", 'percentage_single_glazing')},
+                {_percentage_column("floor_construction = 'SolidFloor'", 'percentage_solid_floor')},
+                {_percentage_column("roof_insulation_thickness = '150mm'", 'percentage_roof_insulation_thickness_150mm')},
+                {_percentage_column("roof_insulation_thickness = '200mm'", 'percentage_roof_insulation_thickness_200mm')},
+                {_percentage_column("roof_insulation_thickness = '250mm'", 'percentage_roof_insulation_thickness_250mm')},
+                {_percentage_column("roof_construction = 'PitchedRoof'", 'percentage_pitched_roof')},
+                {_percentage_column("wall_construction = 'CavityWall'", 'percentage_cavity_wall')}
+        FROM iris."temp-dashboard-analytics"
+        GROUP BY coalesce;
+    """
+
+
+def get_avg_sap_score_overtime_query():
+    return """
+        SELECT AVG(sap_score) as avg_sap_score,
+                lodgement_date
+        FROM iris."temp-dashboard-analytics"
+        GROUP BY lodgement_date;
     """

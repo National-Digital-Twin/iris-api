@@ -433,7 +433,7 @@ def get_count_of_epc_rating_query(per_region: bool = False):
 def _percentage_column(filter: str, alias: str):
     return f"""
         ROUND(
-            100.0 * COUNT(*) FILTER (WHERE {filter}) / SUM(COUNT(*)) OVER (), 2
+            100.0 * COUNT(*) FILTER (WHERE {filter}) / NULLIF(COUNT(*), 0), 2
         ) AS {alias}
     """
 
@@ -460,5 +460,6 @@ def get_avg_sap_score_overtime_query():
         SELECT AVG(sap_score) as avg_sap_score,
                 lodgement_date
         FROM iris."temp-dashboard-analytics"
-        GROUP BY lodgement_date;
+        GROUP BY lodgement_date
+        ORDER BY lodgement_date ASC;
     """

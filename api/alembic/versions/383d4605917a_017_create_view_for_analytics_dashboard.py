@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-"""create basic dashboard analytics view
+"""create view for analytics dashboard
 
 Revision ID: 383d4605917a
 Revises: 37989279ce33
@@ -24,7 +24,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
         """
-        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.dashboard_analytics
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.analytics
         AS (
             SELECT b.uprn, b.point, b.is_residential, ea.lodgement_date, ea.epc_rating, su.type, su.built_form,
                 su.fuel_type, su.window_glazing, su.wall_construction, su.wall_insulation, su.roof_construction,
@@ -51,6 +51,6 @@ def downgrade() -> None:
     """Downgrade schema."""
     op.execute(
         """
-        DROP MATERIALIZED VIEW iris.dashboard_analytics;
+        DROP MATERIALIZED VIEW iris.analytics;
         """
     )

@@ -46,8 +46,34 @@ def upgrade() -> None:
         """
     )
 
+    op.execute(
+        """
+            CREATE INDEX uprn_ix ON iris.analytics;
+        """
+    )
+
+    op.execute(
+        """
+            CREATE INDEX point_ix
+            ON iris.analytics
+            USING GIST (point);
+        """
+    )
+
 
 def downgrade() -> None:
+    op.execute(
+        """
+            DROP INDEX point_ix ON iris.analytics;
+        """
+    )
+
+    op.execute(
+        """
+            DROP INDEX uprn_ix ON iris.analytics;
+        """
+    )
+
     """Downgrade schema."""
     op.execute(
         """

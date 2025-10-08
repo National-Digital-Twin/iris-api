@@ -9,6 +9,7 @@ Revises: 37989279ce33
 Create Date: 2025-10-02 14:26:58.535815
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -22,25 +23,61 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+
+    # Add missing index on structure_unit.uprn for join performance
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_structure_unit_uprn ON iris.structure_unit(uprn);
+        """
+    )
+
+    # COALESCE picks structure_unit data from EPC path if available, otherwise from building path
+    # This handles both buildings with EPC assessments (via su_epc) and without (via su_build)
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.analytics
         AS (
-            SELECT b.uprn, b.point, b.is_residential, ea.lodgement_date, ea.epc_rating, su.type, su.built_form,
-                su.fuel_type, su.window_glazing, su.wall_construction, su.wall_insulation, su.roof_construction,
-                su.roof_insulation, su.roof_insulation_thickness, su.floor_construction, su.floor_insulation,
-                su.has_roof_solar_panels, su.roof_material, su.roof_aspect_area_facing_north_m2,
-                su.roof_aspect_area_facing_east_m2, su.roof_aspect_area_facing_south_m2,
-                su.roof_aspect_area_facing_west_m2, su.roof_aspect_area_facing_north_east_m2,
-                su.roof_aspect_area_facing_south_east_m2, su.roof_aspect_area_facing_south_west_m2,
-                su.roof_aspect_area_facing_north_west_m2, su.roof_aspect_area_indeterminable_m2, su.roof_shape,
+            SELECT
+                b.uprn,
+                b.point,
+                b.is_residential,
+                ea.lodgement_date,
+                ea.epc_rating,
+                COALESCE(su_epc.type, su_build.type) AS type,
+                COALESCE(su_epc.built_form, su_build.built_form) AS built_form,
+                COALESCE(su_epc.fuel_type, su_build.fuel_type) AS fuel_type,
+                COALESCE(su_epc.window_glazing, su_build.window_glazing) AS window_glazing,
+                COALESCE(su_epc.wall_construction, su_build.wall_construction) AS wall_construction,
+                COALESCE(su_epc.wall_insulation, su_build.wall_insulation) AS wall_insulation,
+                COALESCE(su_epc.roof_construction, su_build.roof_construction) AS roof_construction,
+                COALESCE(su_epc.roof_insulation, su_build.roof_insulation) AS roof_insulation,
+                COALESCE(su_epc.roof_insulation_thickness, su_build.roof_insulation_thickness) AS roof_insulation_thickness,
+                COALESCE(su_epc.floor_construction, su_build.floor_construction) AS floor_construction,
+                COALESCE(su_epc.floor_insulation, su_build.floor_insulation) AS floor_insulation,
+                COALESCE(su_epc.has_roof_solar_panels, su_build.has_roof_solar_panels) AS has_roof_solar_panels,
+                COALESCE(su_epc.roof_material, su_build.roof_material) AS roof_material,
+                COALESCE(su_epc.roof_aspect_area_facing_north_m2, su_build.roof_aspect_area_facing_north_m2) AS roof_aspect_area_facing_north_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_east_m2, su_build.roof_aspect_area_facing_east_m2) AS roof_aspect_area_facing_east_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_south_m2, su_build.roof_aspect_area_facing_south_m2) AS roof_aspect_area_facing_south_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_west_m2, su_build.roof_aspect_area_facing_west_m2) AS roof_aspect_area_facing_west_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_north_east_m2, su_build.roof_aspect_area_facing_north_east_m2) AS roof_aspect_area_facing_north_east_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_south_east_m2, su_build.roof_aspect_area_facing_south_east_m2) AS roof_aspect_area_facing_south_east_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_south_west_m2, su_build.roof_aspect_area_facing_south_west_m2) AS roof_aspect_area_facing_south_west_m2,
+                COALESCE(su_epc.roof_aspect_area_facing_north_west_m2, su_build.roof_aspect_area_facing_north_west_m2) AS roof_aspect_area_facing_north_west_m2,
+                COALESCE(su_epc.roof_aspect_area_indeterminable_m2, su_build.roof_aspect_area_indeterminable_m2) AS roof_aspect_area_indeterminable_m2,
+                COALESCE(su_epc.roof_shape, su_build.roof_shape) AS roof_shape,
                 COALESCE(er.name, sawr.name) AS region_name
             FROM iris.building b
             LEFT JOIN iris.epc_assessment ea ON ea.uprn = b.uprn
-            JOIN iris.structure_unit su ON su.epc_assessment_id = ea.id OR su.uprn = ea.uprn
+            LEFT JOIN iris.structure_unit su_epc ON su_epc.epc_assessment_id = ea.id
+            LEFT JOIN iris.structure_unit su_build
+                ON su_build.uprn = b.uprn
+                AND su_build.epc_assessment_id IS NULL
+                AND ea.id IS NULL
             JOIN iris.district_borough_unitary dbu ON ST_INTERSECTS(dbu.geometry, b.point)
             LEFT JOIN iris.english_region er ON er.fid = dbu.english_region_fid
             LEFT JOIN iris.scotland_and_wales_region sawr ON sawr.fid = dbu.scotland_and_wales_region_fid
+            WHERE su_epc.epc_assessment_id IS NOT NULL OR su_build.uprn IS NOT NULL
         )
         WITH NO DATA;
         """
@@ -48,35 +85,41 @@ def upgrade() -> None:
 
     op.execute(
         """
-            CREATE INDEX uprn_ix ON iris.analytics;
+        CREATE INDEX IF NOT EXISTS uprn_ix ON iris.analytics(uprn);
         """
     )
 
     op.execute(
         """
-            CREATE INDEX point_ix
-            ON iris.analytics
-            USING GIST (point);
+        CREATE INDEX IF NOT EXISTS point_ix ON iris.analytics USING GIST(point);
+        """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS region_name_ix ON iris.analytics(region_name);
+        """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS lodgement_date_ix ON iris.analytics(lodgement_date);
         """
     )
 
 
 def downgrade() -> None:
-    op.execute(
-        """
-            DROP INDEX point_ix ON iris.analytics;
-        """
-    )
-
-    op.execute(
-        """
-            DROP INDEX uprn_ix ON iris.analytics;
-        """
-    )
-
     """Downgrade schema."""
+    # Drop materialized view (automatically drops all its indexes)
     op.execute(
         """
-        DROP MATERIALIZED VIEW iris.analytics;
+        DROP MATERIALIZED VIEW IF EXISTS iris.analytics;
+        """
+    )
+
+    # Drop index on source table (not auto-dropped with view)
+    op.execute(
+        """
+        DROP INDEX IF EXISTS iris.idx_structure_unit_uprn;
         """
     )

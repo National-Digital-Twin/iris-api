@@ -2,11 +2,11 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-"""create view for analytics dashboard
+"""018_create_view_for_analytics_dashboard
 
-Revision ID: 383d4605917a
-Revises: 37989279ce33
-Create Date: 2025-10-02 14:26:58.535815
+Revision ID: b55e05000f66
+Revises: b0c5faee6d07
+Create Date: 2025-10-10 10:45:39.530115
 
 """
 
@@ -14,52 +14,16 @@ from typing import Sequence, Union
 
 from alembic import op
 
+
 # revision identifiers, used by Alembic.
-revision: str = "383d4605917a"
-down_revision: Union[str, None] = "37989279ce33"
+revision: str = "b55e05000f66"
+down_revision: Union[str, None] = "b0c5faee6d07"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-
-    # Add sap_score and expiry_date columns to epc_assessment table
-    op.execute(
-        """
-        ALTER TABLE iris.epc_assessment
-        ADD COLUMN IF NOT EXISTS sap_score INTEGER;
-        """
-    )
-    op.execute(
-        """
-        ALTER TABLE iris.epc_assessment
-        ADD COLUMN IF NOT EXISTS expiry_date DATE;
-        """
-    )
-
-    # Add composite unique index for upserts on (uprn, lodgement_date)
-    op.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_epc_uprn_lodgement
-        ON iris.epc_assessment(uprn, lodgement_date);
-        """
-    )
-
-    # Add index on expiry_date for filtering active/expired certificates
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_epc_expiry_date
-        ON iris.epc_assessment(expiry_date);
-        """
-    )
-
-    # Add missing index on structure_unit.uprn for join performance
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_structure_unit_uprn ON iris.structure_unit(uprn);
-        """
-    )
 
     # COALESCE picks structure_unit data from EPC path if available, otherwise from building path
     # This handles both buildings with EPC assessments (via su_epc) and without (via su_build)
@@ -146,34 +110,5 @@ def downgrade() -> None:
     op.execute(
         """
         DROP MATERIALIZED VIEW IF EXISTS iris.analytics;
-        """
-    )
-
-    # Drop additional indexes not auto-dropped with view
-    op.execute(
-        """
-        DROP INDEX IF EXISTS iris.idx_structure_unit_uprn;
-        """
-    )
-
-    # Drop composite index (not auto-dropped since uprn/lodgement_date columns remain)
-    op.execute(
-        """
-        DROP INDEX IF EXISTS iris.idx_epc_uprn_lodgement;
-        """
-    )
-
-    # Remove sap_score and expiry_date columns
-    op.execute(
-        """
-        ALTER TABLE iris.epc_assessment
-        DROP COLUMN IF EXISTS sap_score;
-        """
-    )
-
-    op.execute(
-        """
-        ALTER TABLE iris.epc_assessment
-        DROP COLUMN IF EXISTS expiry_date;
         """
     )

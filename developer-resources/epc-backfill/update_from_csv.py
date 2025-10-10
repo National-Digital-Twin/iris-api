@@ -42,41 +42,50 @@ def parse_int(int_str):
         return None
 
 
+def list_s3_csv_files(path):
+    """List CSV files from S3 bucket."""
+    path_parts = path[5:].split("/", 1)
+    bucket = path_parts[0]
+    prefix = path_parts[1] if len(path_parts) > 1 else ""
+
+    s3 = boto3.client("s3")
+    paginator = s3.get_paginator("list_objects_v2")
+    csv_files = []
+
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        if "Contents" not in page:
+            continue
+        for obj in page["Contents"]:
+            if obj["Key"].lower().endswith(".csv"):
+                csv_files.append(f"s3://{bucket}/{obj['Key']}")
+
+    logger.info(f"Found {len(csv_files)} CSV files in {path}")
+    return csv_files
+
+
+def list_local_csv_files(path):
+    """List CSV files from local filesystem."""
+    p = Path(path)
+    if not p.exists():
+        logger.error(f"Path does not exist: {path}")
+        return []
+
+    csv_files = []
+    if p.is_file() and p.suffix.lower() == ".csv":
+        csv_files.append(str(p))
+    elif p.is_dir():
+        csv_files = [str(f) for f in p.glob("**/*.csv")]
+
+    logger.info(f"Found {len(csv_files)} CSV files in {path}")
+    return csv_files
+
+
 def list_csv_files(path):
     """List CSV files from S3 bucket or local filesystem."""
     if path.startswith("s3://"):
-        # S3 path: s3://bucket/prefix
-        path_parts = path[5:].split("/", 1)
-        bucket = path_parts[0]
-        prefix = path_parts[1] if len(path_parts) > 1 else ""
-
-        s3 = boto3.client("s3")
-        paginator = s3.get_paginator("list_objects_v2")
-        csv_files = []
-
-        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-            if "Contents" not in page:
-                continue
-            for obj in page["Contents"]:
-                if obj["Key"].lower().endswith(".csv"):
-                    csv_files.append(f"s3://{bucket}/{obj['Key']}")
-
-        logger.info(f"Found {len(csv_files)} CSV files in {path}")
-        return csv_files
-    else:  # Local filesystem path
-        p = Path(path)
-        if not p.exists():
-            logger.error(f"Path does not exist: {path}")
-            return []
-
-        csv_files = []
-        if p.is_file() and p.suffix.lower() == ".csv":
-            csv_files.append(str(p))
-        elif p.is_dir():
-            csv_files = [str(f) for f in p.glob("**/*.csv")]
-
-        logger.info(f"Found {len(csv_files)} CSV files in {path}")
-        return csv_files
+        return list_s3_csv_files(path)
+    else:
+        return list_local_csv_files(path)
 
 
 def process_batch(conn, batch):

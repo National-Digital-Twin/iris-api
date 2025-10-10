@@ -120,7 +120,6 @@ def process_batch(conn, batch):
         FROM epc_temp t
         ON CONFLICT (uprn, lodgement_date)
         DO UPDATE SET
-            epc_rating = EXCLUDED.epc_rating,
             sap_score = EXCLUDED.sap_score,
             expiry_date = EXCLUDED.expiry_date;
     """)

@@ -24,7 +24,7 @@ pip install -r requirements.txt
 ### From S3
 
 ```bash
-CSV_PATH=s3://iris-data-bucket/csv-data/ python update_from_csv.py
+CSV_PATH=s3://bucket/prefix/ python update_from_csv.py
 ```
 
 ### From Local Folder

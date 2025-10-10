@@ -24,6 +24,36 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
 
+    # Add sap_score and expiry_date columns to epc_assessment table
+    op.execute(
+        """
+        ALTER TABLE iris.epc_assessment
+        ADD COLUMN IF NOT EXISTS sap_score INTEGER;
+        """
+    )
+    op.execute(
+        """
+        ALTER TABLE iris.epc_assessment
+        ADD COLUMN IF NOT EXISTS expiry_date DATE;
+        """
+    )
+
+    # Add composite unique index for upserts on (uprn, lodgement_date)
+    op.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_epc_uprn_lodgement
+        ON iris.epc_assessment(uprn, lodgement_date);
+        """
+    )
+
+    # Add index on expiry_date for filtering active/expired certificates
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_epc_expiry_date
+        ON iris.epc_assessment(expiry_date);
+        """
+    )
+
     # Add missing index on structure_unit.uprn for join performance
     op.execute(
         """
@@ -43,6 +73,8 @@ def upgrade() -> None:
                 b.is_residential,
                 ea.lodgement_date,
                 ea.epc_rating,
+                ea.sap_score,
+                ea.expiry_date,
                 COALESCE(su_epc.type, su_build.type) AS type,
                 COALESCE(su_epc.built_form, su_build.built_form) AS built_form,
                 COALESCE(su_epc.fuel_type, su_build.fuel_type) AS fuel_type,
@@ -117,9 +149,31 @@ def downgrade() -> None:
         """
     )
 
-    # Drop index on source table (not auto-dropped with view)
+    # Drop additional indexes not auto-dropped with view
     op.execute(
         """
         DROP INDEX IF EXISTS iris.idx_structure_unit_uprn;
+        """
+    )
+
+    # Drop composite index (not auto-dropped since uprn/lodgement_date columns remain)
+    op.execute(
+        """
+        DROP INDEX IF EXISTS iris.idx_epc_uprn_lodgement;
+        """
+    )
+
+    # Remove sap_score and expiry_date columns
+    op.execute(
+        """
+        ALTER TABLE iris.epc_assessment
+        DROP COLUMN IF EXISTS sap_score;
+        """
+    )
+
+    op.execute(
+        """
+        ALTER TABLE iris.epc_assessment
+        DROP COLUMN IF EXISTS expiry_date;
         """
     )

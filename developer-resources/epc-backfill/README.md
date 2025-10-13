@@ -49,7 +49,6 @@ CSV_PATH=/path/to/file.csv python update_from_csv.py
 | `DB_PASSWORD`       | No       | `postgres`  | PostgreSQL password                                           |
 | `DB_NAME`           | No       | `iris`      | Database name                                                 |
 | `DB_PORT`           | No       | `5432`      | PostgreSQL port                                               |
-| `DISABLE_FK_CHECKS` | No       | `false`     | Set to `true` to disable foreign key checks (testing only)    |
 
 ### AWS Credentials
 

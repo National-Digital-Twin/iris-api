@@ -9,6 +9,9 @@ spec:
       containers:
         - name: iris/epc-backfill-python
           image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/epc-backfill-python:latest
+          resources:
+            limits:
+              memory: 512Mi
           env:
             - name: DB_HOST
               value: { REPLACE_ME }

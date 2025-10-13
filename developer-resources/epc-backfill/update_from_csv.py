@@ -10,8 +10,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import psycopg2
 import boto3
+import psycopg2
 from smart_open import open as smart_open
 
 logging.basicConfig(
@@ -95,49 +95,37 @@ def process_batch(conn, batch):
 
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TEMP TABLE epc_temp (
             uprn TEXT,
-            epc_rating CHAR(1),
-            lodgement_date DATE,
             sap_score INTEGER
         ) ON COMMIT DROP;
-    """)
+    """
+    )
 
     buffer = io.StringIO()
     for row in batch:
-        buffer.write(
-            f"{row['uprn']}\t{row['epc_rating']}\t{row['lodgement_date']}\t{row['sap_score']}\n"
-        )
+        buffer.write(f"{row['uprn']}\t{row['sap_score']}\n")
     buffer.seek(0)
 
     cur.copy_from(
         buffer,
         "epc_temp",
-        columns=["uprn", "epc_rating", "lodgement_date", "sap_score"],
+        columns=["uprn", "sap_score"],
     )
 
-    cur.execute("""
-        INSERT INTO iris.epc_assessment (id, uprn, epc_rating, lodgement_date, sap_score, expiry_date)
-        SELECT
-            gen_random_uuid(),
-            t.uprn,
-            t.epc_rating,
-            t.lodgement_date,
-            t.sap_score,
-            t.lodgement_date + INTERVAL '10 years'
-        FROM epc_temp t
-        ON CONFLICT (uprn, lodgement_date)
-        DO UPDATE SET
-            sap_score = EXCLUDED.sap_score,
-            expiry_date = EXCLUDED.expiry_date;
-    """)
+    cur.execute(
+        """
+        UPDATE iris.epc_assessment
+        SET sap_score = et.sap_score
+        FROM epc_temp et
+        WHERE iris.epc_assessment.uprn = et.uprn
+        """
+    )
 
-    affected = cur.rowcount
     conn.commit()
     cur.close()
-
-    return affected
 
 
 def process_csv_file(csv_path, db_conn):
@@ -145,7 +133,7 @@ def process_csv_file(csv_path, db_conn):
 
     batch = []
     file_rows = 0
-    file_stats = {"processed": 0, "upserted": 0, "skipped": 0}
+    file_stats = {"processed": 0, "skipped": 0}
 
     with smart_open(csv_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter=",")
@@ -153,45 +141,45 @@ def process_csv_file(csv_path, db_conn):
         for row in reader:
             file_rows += 1
 
+            certificate_type = row.get("CertificateType", "").strip()
+
+            if certificate_type != "domestic":
+                file_stats["skipped"] += 1
+                continue
+
             sap_band = row.get("SAPBand", "").strip()
             if not sap_band:
                 file_stats["skipped"] += 1
                 continue
 
             uprn = row.get("UPRN", "").strip()
-            lodgement_date = parse_date(row.get("LodgementDate", ""))
             sap_score = parse_int(row.get("SAPScore", ""))
-            if not uprn or not lodgement_date or sap_score is None:
+            if not uprn or sap_score is None:
                 file_stats["skipped"] += 1
                 continue
 
             batch.append(
                 {
                     "uprn": uprn,
-                    "epc_rating": sap_band[0].upper(),
-                    "lodgement_date": lodgement_date,
                     "sap_score": sap_score,
                 }
             )
 
             if len(batch) >= BATCH_SIZE:
-                affected = process_batch(db_conn, batch)
+                process_batch(db_conn, batch)
                 file_stats["processed"] += len(batch)
-                file_stats["upserted"] += affected
                 logger.info(
                     f"  Batch: {file_stats['processed']:,} processed, {file_stats['skipped']:,} skipped"
                 )
                 batch = []
 
     if batch:
-        affected = process_batch(db_conn, batch)
+        process_batch(db_conn, batch)
         file_stats["processed"] += len(batch)
-        file_stats["upserted"] += affected
 
     logger.info(
         f"Completed: {file_rows:,} scanned, "
         f"{file_stats['processed']:,} processed, "
-        f"{file_stats['upserted']:,} upserted, "
         f"{file_stats['skipped']:,} skipped"
     )
 
@@ -241,7 +229,7 @@ def main():
         conn.close()
         return
 
-    stats = {"processed": 0, "upserted": 0, "skipped": 0}
+    stats = {"processed": 0, "skipped": 0}
     start_time = datetime.now()
     logger.info(f"Starting import of {len(csv_files)} file(s)")
 
@@ -250,7 +238,6 @@ def main():
         try:
             file_stats = process_csv_file(csv_file, conn)
             stats["processed"] += file_stats["processed"]
-            stats["upserted"] += file_stats["upserted"]
             stats["skipped"] += file_stats["skipped"]
 
             file_elapsed = (datetime.now() - file_start).total_seconds()
@@ -270,7 +257,6 @@ def main():
     logger.info("IMPORT SUMMARY")
     logger.info("=" * 60)
     logger.info(f"Rows processed:  {stats['processed']:,}")
-    logger.info(f"Rows upserted:   {stats['upserted']:,}")
     logger.info(f"Rows skipped:    {stats['skipped']:,}")
     logger.info(f"Total time:      {elapsed:.2f} seconds")
     logger.info("=" * 60)

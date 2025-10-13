@@ -10,8 +10,12 @@ spec:
         - name: iris/epc-backfill-python
           image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/epc-backfill-python:latest
           resources:
-            limits:
+            requests:
+              ephemeral-storage: "2Gi"
               memory: 512Mi
+              cpu: 0.5
+            limits:
+              memory: 1Gi
           env:
             - name: DB_HOST
               value: { REPLACE_ME }

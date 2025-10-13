@@ -99,6 +99,7 @@ def process_batch(conn, batch):
         """
         CREATE TEMP TABLE epc_temp (
             uprn TEXT,
+            lodgement_date DATE,
             sap_score INTEGER
         ) ON COMMIT DROP;
     """
@@ -106,21 +107,21 @@ def process_batch(conn, batch):
 
     buffer = io.StringIO()
     for row in batch:
-        buffer.write(f"{row['uprn']}\t{row['sap_score']}\n")
+        buffer.write(f"{row['uprn']}\t{row['lodgement_date']}\t{row['sap_score']}\n")
     buffer.seek(0)
 
     cur.copy_from(
         buffer,
         "epc_temp",
-        columns=["uprn", "sap_score"],
+        columns=["uprn", "lodgement_date", "sap_score"],
     )
 
     cur.execute(
         """
-        UPDATE iris.epc_assessment
+        UPDATE iris.epc_assessment ea
         SET sap_score = et.sap_score
         FROM epc_temp et
-        WHERE iris.epc_assessment.uprn = et.uprn
+        WHERE ea.uprn = et.uprn AND ea.lodgement_date = et.lodgement_date;
         """
     )
 
@@ -153,14 +154,16 @@ def process_csv_file(csv_path, db_conn):
                 continue
 
             uprn = row.get("UPRN", "").strip()
+            lodgement_date = parse_date(row.get("LodgementDate", ""))
             sap_score = parse_int(row.get("SAPScore", ""))
-            if not uprn or sap_score is None:
+            if not uprn or not lodgement_date or sap_score is None:
                 file_stats["skipped"] += 1
                 continue
 
             batch.append(
                 {
                     "uprn": uprn,
+                    "lodgement_date": lodgement_date,
                     "sap_score": sap_score,
                 }
             )

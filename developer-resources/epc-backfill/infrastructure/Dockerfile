@@ -8,10 +8,7 @@ WORKDIR /usr/src/app
 COPY ../requirements.txt .
 COPY ../update_from_csv.py .
 
-RUN pip install -r requirements.txt
-
-# Change ownership of necessary files and directories to the non-root user
-RUN chown -R appuser:appuser update_from_csv.py
+RUN pip install -r requirements.txt && chown -R appuser:appuser update_from_csv.py
 
 # Switch to the non-root user
 USER appuser

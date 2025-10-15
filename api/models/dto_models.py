@@ -9,8 +9,9 @@ from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from pydantic import BaseModel
 
+from api.utils import get_nullable_float
+
 from .ies_models import IesThing
-from .utils import get_nullable_float
 
 print(pydantic.VERSION)
 

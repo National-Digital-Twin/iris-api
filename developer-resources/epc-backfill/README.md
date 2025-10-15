@@ -8,7 +8,7 @@ The CSV files used are from a previous import, they require the columns:
 | --------------- | --------------------------------------- | ------------- |
 | `UPRN`          | Unique Property Reference Number        | `10033219288` |
 | `SAPBand`       | EPC rating band (A-G)                   | `C`           |
-| `SAPScore`      | SAP numeric score                       | `72`          |
+| `SAPRating`      | SAP numeric score                       | `72`          |
 | `LodgementDate` | Certificate lodgement date (YYYY-MM-DD) | `2008-10-01`  |
 
 **Note:** Rows with missing or empty values for `SAPBand`, `SAPScore`, `UPRN`, or `LodgementDate` will be skipped.

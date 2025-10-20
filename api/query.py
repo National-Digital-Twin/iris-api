@@ -163,7 +163,7 @@ def get_fueltype_for_building(uprn: str) -> str:
     PREFIX data:     <http://ndtp.co.uk/data#>
     PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
 
-    SELECT ?state ?lodgement ?fuelType
+    SELECT ?fuelType
     WHERE {{
     {{
         SELECT ?structureUnit ?state ?lodgement
@@ -182,7 +182,7 @@ def get_fueltype_for_building(uprn: str) -> str:
         LIMIT 1
     }}
 
-        GRAPH <http://ndtp.com/graph/heating-v1> {{
+        GRAPH <http://ndtp.com/graph/heating-v2> {{
         ?state building:isServicedBy ?heatingSystem .
         ?heatingSystem building:isOperableWithFuel ?fuelType .
         }}

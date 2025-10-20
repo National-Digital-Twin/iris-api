@@ -158,21 +158,36 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
 
 def get_fueltype_for_building(uprn: str) -> str:
     return f"""
-        PREFIX ies:      <http://informationexchangestandard.org/ont/ies#>
-        PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
-        PREFIX data:     <http://ndtp.co.uk/data#>
+    PREFIX ies:      <http://informationexchangestandard.org/ont/ies#>
+    PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+    PREFIX data:     <http://ndtp.co.uk/data#>
+    PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
 
-        SELECT ?fuelType
-            WHERE {{
-            ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
-            ?structureUnitState ies:isStateOf ?structureUnit .
+    SELECT ?state ?lodgement ?fuelType
+    WHERE {{
+    {{
+        SELECT ?structureUnit ?state ?lodgement
+        WHERE {{
+        ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} ;
+                        a building:StructureUnit .
+        ?state a building:StructureUnitState ;
+                ies:isStateOf ?structureUnit .
 
-            GRAPH <http://ndtp.com/graph/heating-v1> {{
-                ?structureUnitState building:isServicedBy ?heatingSystem .
-                ?heatingSystem building:isOperableWithFuel ?fuelType .
-            }}
-        }} ORDER BY DESC(?lodgementDate)
+        BIND(STR(?state) AS ?s)
+        BIND(STRAFTER(?s, CONCAT(STR(data:), "StructureUnitState_")) AS ?afterPrefix)
+        BIND(STRAFTER(?afterPrefix, "_") AS ?yyyymmdd)
+        BIND(xsd:date(CONCAT(SUBSTR(?yyyymmdd,1,4), "-", SUBSTR(?yyyymmdd,5,2), "-", SUBSTR(?yyyymmdd,7,2))) AS ?lodgement)
+        }}
+        ORDER BY DESC(?lodgement)
         LIMIT 1
+    }}
+
+        GRAPH <http://ndtp.com/graph/heating-v1> {{
+        ?state building:isServicedBy ?heatingSystem .
+        ?heatingSystem building:isOperableWithFuel ?fuelType .
+        }}
+
+    }}
     """
 
 

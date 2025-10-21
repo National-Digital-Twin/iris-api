@@ -158,36 +158,45 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
 
 def get_fueltype_for_building(uprn: str) -> str:
     return f"""
-    PREFIX ies:      <http://informationexchangestandard.org/ont/ies#>
-    PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
-    PREFIX data:     <http://ndtp.co.uk/data#>
-    PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
+        PREFIX ies:      <http://informationexchangestandard.org/ont/ies#>
+        PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data:     <http://ndtp.co.uk/data#>
+        PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
 
-    SELECT ?fuelType
-    WHERE {{
-    {{
-        SELECT ?structureUnit ?state ?lodgement
-        WHERE {{
-        ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} ;
-                        a building:StructureUnit .
-        ?state a building:StructureUnitState ;
-                ies:isStateOf ?structureUnit .
+        SELECT ?fuelType
+            WHERE {{
+            {{
+                SELECT ?structureUnit ?structureUnitState ?lodgement
+                WHERE {{
+                        ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} ;
+                                        a building:StructureUnit .
+                        ?structureUnitState a building:StructureUnitState ;
+                                ies:isStateOf ?structureUnit .
 
-        BIND(STR(?state) AS ?s)
-        BIND(STRAFTER(?s, CONCAT(STR(data:), "StructureUnitState_")) AS ?afterPrefix)
-        BIND(STRAFTER(?afterPrefix, "_") AS ?yyyymmdd)
-        BIND(xsd:date(CONCAT(SUBSTR(?yyyymmdd,1,4), "-", SUBSTR(?yyyymmdd,5,2), "-", SUBSTR(?yyyymmdd,7,2))) AS ?lodgement)
+                        BIND(STR(?structureUnitState) AS ?s)            # cast structure unit state URI to a string
+                        BIND(REPLACE(?s, ".*_([0-9]{{8}})$", "$1") AS ?yyyymmdd)    # get last 8 digits
+                        
+                        # check if we managed to pull the last 8 digits if the regex pattern matched
+                        FILTER( ?yyyymmdd != ?s )
+                        
+                        # split into year, month and day components
+                        BIND(SUBSTR(?yyyymmdd,1,4) AS ?yyyy)
+                        BIND(SUBSTR(?yyyymmdd,5,2) AS ?mm)
+                        BIND(SUBSTR(?yyyymmdd,7,2) AS ?dd)
+                        
+                        # check whether month and day are within expected intervals
+                        FILTER ( xsd:integer(?mm) >= 1 && xsd:integer(?mm) <= 12 )
+                        FILTER ( xsd:integer(?dd) >= 1 && xsd:integer(?dd) <= 31 )
+                        
+                        # create the final date component
+                        BIND( xsd:date(CONCAT(?yyyy, "-", ?mm, "-", ?dd)) AS ?lodgement )
+                    }} ORDER BY DESC(?lodgement) LIMIT 1
+            }}
+                GRAPH <http://ndtp.com/graph/heating-v2> {{
+                        ?structureUnitState building:isServicedBy ?heatingSystem .
+                        ?heatingSystem building:isOperableWithFuel ?fuelType .
+            }}
         }}
-        ORDER BY DESC(?lodgement)
-        LIMIT 1
-    }}
-
-        GRAPH <http://ndtp.com/graph/heating-v2> {{
-        ?state building:isServicedBy ?heatingSystem .
-        ?heatingSystem building:isOperableWithFuel ?fuelType .
-        }}
-
-    }}
     """
 
 

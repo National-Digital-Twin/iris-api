@@ -78,7 +78,7 @@ from query import (
     get_ngd_roof_material_for_building,
     get_ngd_roof_shape_for_building,
     get_ngd_solar_panel_presence_for_building,
-    get_percentage_of_buildings_with_x_per_region_query,
+    get_percentage_of_buildings_attributes_per_region_query,
     get_roof_for_building,
     get_statistics_for_wards,
     get_walls_and_windows_for_building,
@@ -440,7 +440,7 @@ async def get_percentage_building_attributes_per_region(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
 ):
-    query, params = get_percentage_of_buildings_with_x_per_region_query(polygon)
+    query, params = get_percentage_of_buildings_attributes_per_region_query(polygon)
     results = await db.execute(text(query), params)
     mapped_results = [
         PercentageBuildingAttributesPerRegion.from_orm(row) for row in results

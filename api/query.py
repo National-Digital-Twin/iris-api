@@ -525,7 +525,7 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     return query, params
 
 
-def get_percentage_of_buildings_with_x_per_region_query(polygon: str = None):
+def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None):
     where_conditions = []
     params = {}
 

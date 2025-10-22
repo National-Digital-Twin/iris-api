@@ -15,6 +15,10 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
+## [0.94.2] - 2025-10-22
+
+- [DPAV-1922] Updated EPC-related queries to fetch latest EPC records. Also added migration to update view definition for EPC analytics.
+
 ## [0.93.1] - 2025-10-03
 
 - [DPAV-1731] Added an `is_residential` flag to `iris.building` via Alembic migration to support distinguishing residential dwellings in downstream queries.

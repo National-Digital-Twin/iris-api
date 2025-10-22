@@ -19,12 +19,9 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 - [DPAV-1922] Updated EPC-related queries to fetch latest EPC records. Also added migration to update view definition for EPC analytics.
 
-## [0.93.1] - 2025-10-03
+## [0.94.1] - 2025-10-14
 
 - [DPAV-1731] Added an `is_residential` flag to `iris.building` via Alembic migration to support distinguishing residential dwellings in downstream queries.
-
-## [0.93.0] - 2025-09-11
-
 - Added OS NGD Buildings attributes to `/buildings/{uprn}`: roof material, solar panel presence, roof shape, and roof aspect areas (N, NE, E, SE, S, SW, W, NW, indeterminable).
 - Added PostGIS fallback for NGD attributes when graph data is missing; extended mappers/DTOs accordingly.
 - Included OS roof data in filterable buildings and filter summary; only include aspect directions with area > 0.

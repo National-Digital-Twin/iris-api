@@ -20,6 +20,32 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _create_indices() -> None:
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS uprn_ix ON iris.analytics(uprn);
+        """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS point_ix ON iris.analytics USING GIST(point);
+        """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS region_name_ix ON iris.analytics(region_name);
+        """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS lodgement_date_ix ON iris.analytics(lodgement_date);
+        """
+    )
+
+
 def upgrade() -> None:
     """Upgrade schema."""
     op.execute(
@@ -86,6 +112,8 @@ def upgrade() -> None:
     """
     )
 
+    _create_indices()
+
 
 def downgrade() -> None:
     """Downgrade schema."""
@@ -146,3 +174,5 @@ def downgrade() -> None:
         WITH NO DATA;
     """
     )
+
+    _create_indices()

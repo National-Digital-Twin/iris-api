@@ -499,6 +499,8 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     where_conditions = []
     params = {}
 
+    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
@@ -506,9 +508,15 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     if per_region:
         where_conditions.append("region_name IS NOT NULL AND region_name != ''")
 
-    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+    where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
+        WITH active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
+            FROM iris.analytics
+            {where_clause}
+            ORDER BY uprn, lodgement_date DESC
+        )
         SELECT {"region_name," if per_region else ""}
                 COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
                 COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
@@ -517,8 +525,7 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
                 COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
                 COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
                 COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
-        FROM iris.analytics
-        {where_clause}
+        FROM active_epcs
         {"GROUP BY region_name" if per_region else ""};
     """
 
@@ -537,15 +544,21 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
         ) AS {alias}
     """
 
+    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
 
-    where_conditions.append("region_name IS NOT NULL AND region_name != ''")
-
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
+        WITH active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
+            FROM iris.analytics
+            {where_clause}
+            ORDER BY uprn, lodgement_date DESC
+        )
         SELECT region_name,
                 {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")},
                 {percentage_column("window_glazing = 'DoubleGlazing'", "percentage_double_glazing")},
@@ -556,8 +569,7 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
                 {percentage_column("roof_insulation_thickness = '250mm'", "percentage_roof_insulation_thickness_250mm")},
                 {percentage_column("roof_construction = 'PitchedRoof'", "percentage_pitched_roof")},
                 {percentage_column("wall_construction = 'CavityWall'", "percentage_cavity_wall")}
-        FROM iris.analytics
-        {where_clause}
+        FROM active_epcs
         GROUP BY region_name;
     """
 

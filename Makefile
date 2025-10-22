@@ -24,6 +24,9 @@ load-epc-data:
 load-country:
 	TARGET_TABLE=country_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=country_region python developer-resources/load_gpkg_to_postgis.py
 
+load-counties:
+	TARGET_TABLE=boundary_line_ceremonial_counties GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=boundary_line_ceremonial_counties python developer-resources/load_gpkg_to_postgis.py
+
 load-districts:
 	TARGET_TABLE=district_borough_unitary GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=district_borough_unitary python developer-resources/load_gpkg_to_postgis.py
 	python developer-resources/sync_region_fks_dbu.py
@@ -33,6 +36,10 @@ load-english-region:
 
 load-scotland-and-wales-region:
 	TARGET_TABLE=scotland_and_wales_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=scotland_and_wales_region python developer-resources/load_gpkg_to_postgis.py
+
+load-wards:
+	TARGET_TABLE=district_borough_unitary_ward GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=district_borough_unitary_ward  python developer-resources/load_gpkg_to_postgis.py
+	TARGET_TABLE=unitary_electoral_division GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=unitary_electoral_division python developer-resources/load_gpkg_to_postgis.py
 
 migrate:
 	alembic upgrade head

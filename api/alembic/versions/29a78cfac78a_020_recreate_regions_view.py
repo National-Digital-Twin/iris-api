@@ -2,11 +2,11 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-"""015_recreate_regions_view
+"""020_recreate_regions_view
 
-Revision ID: b533d2cb175b
-Revises: cc816c325e2a
-Create Date: 2025-09-10 11:50:37.710083
+Revision ID: 29a78cfac78a
+Revises: f7639f884c24
+Create Date: 2025-10-23 15:45:36.986302
 
 """
 from typing import Sequence, Union
@@ -16,8 +16,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'b533d2cb175b'
-down_revision: Union[str, None] = 'cc816c325e2a'
+revision: str = '29a78cfac78a'
+down_revision: Union[str, None] = 'f7639f884c24'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

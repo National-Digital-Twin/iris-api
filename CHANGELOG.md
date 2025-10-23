@@ -18,6 +18,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 ## [0.94.2] - 2025-10-22
 
 - [DPAV-1922] Updated EPC-related queries to fetch latest EPC records. Also added migration to update view definition for EPC analytics.
+- [DPAV-1922] New migration to reduce time taken by regions materialized view refresh
 
 ## [0.94.1] - 2025-10-14
 

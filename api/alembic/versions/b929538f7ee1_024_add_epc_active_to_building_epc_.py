@@ -76,6 +76,12 @@ def upgrade() -> None:
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.building_epc_analytics
         AS (
+            WITH active_epcs AS (
+                SELECT DISTINCT ON (uprn) *
+                FROM iris.epc_assessment
+                WHERE lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE
+                ORDER BY uprn, lodgement_date DESC
+            )
             SELECT b.uprn,
                 b.point,
                 b.is_residential,
@@ -111,11 +117,12 @@ def upgrade() -> None:
                 dbu.name AS district_name,
                 COALESCE(dbuw.name, ued.name) AS ward_name,
                 CASE
-                    WHEN ea.lodgement_date IS NOT NULL AND ea.expiry_date > CURRENT_DATE THEN true
+                    WHEN aes.id IS NOT NULL THEN true
                     ELSE false
                 END AS epc_active
             FROM iris.building b
             LEFT JOIN iris.epc_assessment ea ON ea.uprn = b.uprn
+            LEFT JOIN active_epcs aes ON ea.id = aes.id
             LEFT JOIN iris.structure_unit su_epc ON su_epc.epc_assessment_id = ea.id
             LEFT JOIN iris.structure_unit su_build ON su_build.uprn = b.uprn AND su_build.epc_assessment_id IS NULL AND ea.id IS NULL
             JOIN iris.boundary_line_ceremonial_counties blcc ON st_intersects(blcc.geometry, b.point)

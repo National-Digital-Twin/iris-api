@@ -680,3 +680,97 @@ def get_buildings_affected_by_extreme_weather_data_query():
     """
 
     return query
+
+
+def get_number_of_in_date_and_expired_epcs_query():
+    query = """
+        SELECT COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '10 years')
+        ) AS number_of_expired_10y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '9 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '10 years')
+        ) AS number_of_expired_9y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '8 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '9 years')
+        ) AS number_of_expired_8y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '7 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '8 years')
+        ) AS number_of_expired_7y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '6 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '7 years')
+        ) AS number_of_expired_6y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '5 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '6 years')
+        ) AS number_of_expired_5y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '4 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '5 years')
+        ) AS number_of_expired_4y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '3 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '4 years')
+        ) AS number_of_expired_3y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '2 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '3 years')
+        ) AS number_of_expired_2y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < (CURRENT_DATE - INTERVAL '1 years')
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '2 years')
+        ) AS number_of_expired_1y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date < CURRENT_DATE
+            AND bea.expiry_date >= (CURRENT_DATE - INTERVAL '1 years')
+        ) AS number_of_expired_now,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '10 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '9 years')
+        ) AS number_of_active_10y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '9 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '8 years')
+        ) AS number_of_active_9y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '8 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '7 years')
+        ) AS number_of_active_8y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '7 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '6 years')
+        ) AS number_of_active_7y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '6 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '5 years')
+        ) AS number_of_active_6y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '5 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '4 years')
+        ) AS number_of_active_5y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '4 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '3 years')
+        ) AS number_of_active_4y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '3 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '2 years')
+        ) AS number_of_active_3y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '2 years')
+            AND bea.expiry_date < (CURRENT_DATE - INTERVAL '1 years')
+        ) AS number_of_active_2y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= (CURRENT_DATE - INTERVAL '1 years')
+            AND bea.expiry_date < CURRENT_DATE
+        ) AS number_of_active_1y,
+        COUNT(*) FILTER(
+            WHERE bea.expiry_date >= CURRENT_DATE
+        ) AS number_of_active_now
+        FROM iris.building_epc_analytics bea;
+    """
+
+    return query

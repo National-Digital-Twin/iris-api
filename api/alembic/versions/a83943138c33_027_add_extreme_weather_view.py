@@ -31,9 +31,9 @@ def upgrade() -> None:
                 FROM iris.building_weather_analytics
                 WHERE icing_days > (
                     SELECT percentile_cont(0.75) WITHIN GROUP (
-                    ORDER BY icingdays
+                        ORDER BY icing_days
                     )
-                    FROM iris.annual_count_of_icing_days_1991_2020
+                    FROM iris.building_weather_analytics
                 )
             ),
             buildings_affected_by_hsds AS (
@@ -43,67 +43,59 @@ def upgrade() -> None:
                     SELECT percentile_cont(0.75) WITHIN GROUP (
                         ORDER BY hsd_40_median
                     )
-                    FROM iris.annual_count_of_hot_summer_days_projections_12km
+                    FROM iris.building_weather_analytics
                 )
             ),
             buildings_affected_by_wdrp AS (
                 SELECT uprn, true AS affected
                 FROM iris.building_weather_analytics
                 WHERE wdr_40_median_0 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_0
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 0
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_45 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_45
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 45
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_90 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_90
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 90
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_135 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_135
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 135
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_180 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_180
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 180
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_225 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_225
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 225
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_270 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_270
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 270
+                    FROM iris.building_weather_analytics
                 )
                 OR wdr_40_median_315 > (
-                    SELECT percentile_cont(0.7) WITHIN GROUP (
-                        ORDER BY wdr_40_median
+                    SELECT percentile_cont(0.75) WITHIN GROUP (
+                        ORDER BY wdr_40_median_315
                     )
-                    FROM iris.wind_driven_rain_projections
-                    WHERE wall_orientation = 315
+                    FROM iris.building_weather_analytics
                 )
             )
             SELECT bwa.uprn, bwa.point, babi.affected as affected_by_icing_days,

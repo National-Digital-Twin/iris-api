@@ -474,19 +474,16 @@ async def get_buildings_affected_by_extreme_weather(
 
 @router.get(
     "/dashboard/no-of-in-date-and-expired-epcs",
-    response_model=NumberOfInDateAndExpiredEpcs,
+    response_model=List[NumberOfInDateAndExpiredEpcs],
 )
 async def get_number_of_in_date_and_expired_epcs(
     db: AsyncSession = Depends(get_db),
 ):
     query = get_number_of_in_date_and_expired_epcs_query()
     results = await db.execute(text(query))
-    result = results.first()
+    mapped_results = [NumberOfInDateAndExpiredEpcs.from_orm(row) for row in results]
 
-    if not result:
-        return NumberOfInDateAndExpiredEpcs.make_default()
-
-    return NumberOfInDateAndExpiredEpcs.from_orm(result)
+    return mapped_results
 
 
 @router.get(

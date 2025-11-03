@@ -385,79 +385,10 @@ class BuildingsAffectedByExtremeWeather(BaseModel):
 
 
 class NumberOfInDateAndExpiredEpcs(BaseModel):
-    number_of_expired_10y: int
-    number_of_expired_9y: int
-    number_of_expired_8y: int
-    number_of_expired_7y: int
-    number_of_expired_6y: int
-    number_of_expired_5y: int
-    number_of_expired_4y: int
-    number_of_expired_3y: int
-    number_of_expired_2y: int
-    number_of_expired_1y: int
-    number_of_expired_now: int
-    number_of_active_10y: int
-    number_of_active_9y: int
-    number_of_active_8y: int
-    number_of_active_7y: int
-    number_of_active_6y: int
-    number_of_active_5y: int
-    number_of_active_4y: int
-    number_of_active_3y: int
-    number_of_active_2y: int
-    number_of_active_1y: int
-    number_of_active_now: int
-
-    @classmethod
-    def make_default(cls):
-        return cls(
-            number_of_expired_10y=0,
-            number_of_expired_9y=0,
-            number_of_expired_8y=0,
-            number_of_expired_7y=0,
-            number_of_expired_6y=0,
-            number_of_expired_5y=0,
-            number_of_expired_4y=0,
-            number_of_expired_3y=0,
-            number_of_expired_2y=0,
-            number_of_expired_1y=0,
-            number_of_expired_now=0,
-            number_of_active_10y=0,
-            number_of_active_9y=0,
-            number_of_active_8y=0,
-            number_of_active_7y=0,
-            number_of_active_6y=0,
-            number_of_active_5y=0,
-            number_of_active_4y=0,
-            number_of_active_3y=0,
-            number_of_active_2y=0,
-            number_of_active_1y=0,
-            number_of_active_now=0,
-        )
+    year: datetime.date
+    expired: int
+    active: int
 
     @classmethod
     def from_orm(cls, obj):
-        return cls(
-            number_of_expired_10y=obj.number_of_expired_10y,
-            number_of_expired_9y=obj.number_of_expired_9y,
-            number_of_expired_8y=obj.number_of_expired_8y,
-            number_of_expired_7y=obj.number_of_expired_7y,
-            number_of_expired_6y=obj.number_of_expired_6y,
-            number_of_expired_5y=obj.number_of_expired_5y,
-            number_of_expired_4y=obj.number_of_expired_4y,
-            number_of_expired_3y=obj.number_of_expired_3y,
-            number_of_expired_2y=obj.number_of_expired_2y,
-            number_of_expired_1y=obj.number_of_expired_1y,
-            number_of_expired_now=obj.number_of_expired_now,
-            number_of_active_10y=obj.number_of_active_10y,
-            number_of_active_9y=obj.number_of_active_9y,
-            number_of_active_8y=obj.number_of_active_8y,
-            number_of_active_7y=obj.number_of_active_7y,
-            number_of_active_6y=obj.number_of_active_6y,
-            number_of_active_5y=obj.number_of_active_5y,
-            number_of_active_4y=obj.number_of_active_4y,
-            number_of_active_3y=obj.number_of_active_3y,
-            number_of_active_2y=obj.number_of_active_2y,
-            number_of_active_1y=obj.number_of_active_1y,
-            number_of_active_now=obj.number_of_active_now,
-        )
+        return cls(year=obj.year, expired=obj.expired, active=obj.active)

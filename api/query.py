@@ -685,191 +685,27 @@ def get_buildings_affected_by_extreme_weather_data_query():
 def get_number_of_in_date_and_expired_epcs_query():
     query = """
         WITH bounds AS (
-            SELECT CURRENT_DATE - INTERVAL '10 years' AS y10,
-                CURRENT_DATE - INTERVAL '9 years' AS y9,
-                CURRENT_DATE - INTERVAL '8 years' AS y8,
-                CURRENT_DATE - INTERVAL '7 years' AS y7,
-                CURRENT_DATE - INTERVAL '6 years' AS y6,
-                CURRENT_DATE - INTERVAL '5 years' AS y5,
-                CURRENT_DATE - INTERVAL '4 years' AS y4,
-                CURRENT_DATE - INTERVAL '3 years' AS y3,
-                CURRENT_DATE - INTERVAL '2 years' AS y2,
-                CURRENT_DATE - INTERVAL '1 years' AS y1,
-                CURRENT_DATE AS now
-        ), epc_validity_y10 AS (
-            SELECT y10 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y10
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y10
-                    AND expiry_date < y9
-                ) AS active
+            SELECT
+                generate_series(
+                    date_trunc('year', CURRENT_DATE) - INTERVAL '10 years',
+                    date_trunc('year', CURRENT_DATE) + INTERVAL '1 year',
+                    INTERVAL '1 year'
+                )::date AS start_date
+        ), active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
             FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y10
-        ), epc_validity_y9 AS (
-            SELECT y9 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y9
-                    AND expiry_date >= y10
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y9
-                    AND expiry_date < y8
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y9
-        ), epc_validity_y8 AS (
-            SELECT y8 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y8
-                    AND expiry_date >= y9
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y8
-                    AND expiry_date < y7
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y8
-        ), epc_validity_y7 AS (
-            SELECT y7 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y7
-                    AND expiry_date >= y8
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y7
-                    AND expiry_date < y6
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y7
-        ), epc_validity_y6 AS (
-            SELECT y6 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y6
-                    AND expiry_date >= y7
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y6
-                    AND expiry_date < y5
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y6
-        ), epc_validity_y5 AS (
-            SELECT y5 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y5
-                    AND expiry_date >= y6
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y5
-                    AND expiry_date < y4
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y5
-        ), epc_validity_y4 AS (
-            SELECT y4 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y4
-                    AND expiry_date >= y5
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y4
-                    AND expiry_date < y3
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y4
-        ), epc_validity_y3 AS (
-            SELECT y3 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y3
-                    AND expiry_date >= y4
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y3
-                    AND expiry_date < y2
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y3
-        ), epc_validity_y2 AS (
-            SELECT y2 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y2
-                    AND expiry_date >= y3
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y2
-                    AND expiry_date < y1
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y2
-        ), epc_validity_y1 AS (
-            SELECT y1 AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < y1
-                    AND expiry_date >= y2
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= y1
-                    AND expiry_date < now
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY y1
-        ), epc_validity_now AS (
-            SELECT now AS year,
-                COUNT(*) FILTER(
-                    WHERE expiry_date < now
-                    AND expiry_date >= y1
-                ) AS expired,
-                COUNT(*) FILTER(
-                    WHERE expiry_date >= now
-                ) AS active
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds
-            GROUP BY now
+            CROSS JOIN bounds b
+            ORDER BY uprn, lodgement_date DESC
         )
-        SELECT year, expired, active
-        FROM epc_validity_y10
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y9
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y8
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y7
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y6
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y5
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y4
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y3
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y2
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_y1
-        UNION
-        SELECT year, expired, active
-        FROM epc_validity_now;
+        SELECT
+            b.start_date AS year,
+            SUM(CASE WHEN aes.expiry_date < b.start_date THEN 1 ELSE 0 END) AS expired,
+            SUM(CASE WHEN aes.expiry_date >= b.start_date THEN 1 ELSE 0 END) AS active
+            FROM active_epcs aes
+            CROSS JOIN bounds b
+            WHERE aes.lodgement_date <= b.start_date
+            GROUP BY b.start_date
+        ORDER BY b.start_date;
     """
 
     return query

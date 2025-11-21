@@ -27,6 +27,7 @@ from models.dto_models import (
     BuildingAttributePercentagesPerRegion,
     BuildingsAffectedByExtremeWeather,
     CountOfEpcRatings,
+    CountOfEpcRatingsByArea,
     CountOfEpcRatingsPerRegion,
     DetailedBuilding,
     DetailedBuildingSchema,
@@ -62,6 +63,7 @@ from query import (
     get_building,
     get_buildings_affected_by_extreme_weather_data_query,
     get_buildings_in_bounding_box_query,
+    get_count_of_epc_rating_by_area_level_query,
     get_count_of_epc_rating_query,
     get_county_names_query,
     get_district_names_query,
@@ -447,6 +449,26 @@ async def get_epc_ratings_per_region_for_dashboard(
     )
     results = await db.execute(text(query), params)
     mapped_results = [CountOfEpcRatingsPerRegion.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get(
+    "/dashboard/epc-ratings-by-area-level", response_model=List[CountOfEpcRatingsByArea]
+)
+async def get_epc_ratings_by_area_level_for_dashboard(
+    db: AsyncSession = Depends(get_db),
+    group_by_level: str = Query(..., regex="^(region|county|district|ward)$"),
+    filter_area_level: Optional[str] = Query(None, regex="^(region|county|district|ward)$"),
+    filter_area_names: Optional[List[str]] = Query(None),
+):
+    query, params = get_count_of_epc_rating_by_area_level_query(
+        group_by_level=group_by_level,
+        filter_area_level=filter_area_level,
+        filter_area_names=filter_area_names,
+    )
+    results = await db.execute(text(query), params)
+    mapped_results = [CountOfEpcRatingsByArea.from_orm(row) for row in results]
 
     return mapped_results
 

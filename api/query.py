@@ -546,49 +546,86 @@ def get_count_of_epc_rating_query(
     area_level: str = None,
     area_names: list = None,
 ):
-    where_conditions = []
     params = {}
 
-    where_conditions.append(EPC_ACTIVE_TRUE)
-
     if polygon:
+        where_conditions = []
+        where_conditions.append(EPC_ACTIVE_TRUE)
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
-    elif area_level and area_names:
-        area_names = expand_wales_region(area_names)
-        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
-        params["area_names"] = area_names
 
-    if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        if per_region:
+            where_conditions.append("region_name IS NOT NULL AND region_name != ''")
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+        where_clause = "WHERE " + " AND ".join(where_conditions)
 
-    region_select = f"""CASE
-            WHEN region_name IN ({WELSH_REGIONS_SQL})
-            THEN 'Wales'
-            ELSE region_name
-        END AS region_name,""" if per_region else ""
+        region_select = f"""CASE
+                WHEN region_name IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE region_name
+            END AS region_name,""" if per_region else ""
 
-    group_by = f"""GROUP BY CASE
-            WHEN region_name IN ({WELSH_REGIONS_SQL})
-            THEN 'Wales'
-            ELSE region_name
-        END""" if per_region else ""
+        group_by = f"""GROUP BY CASE
+                WHEN region_name IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE region_name
+            END""" if per_region else ""
 
-    query = f"""
-        SELECT {region_select}
-                COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
-                COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
-                COUNT(*) FILTER (WHERE epc_rating = 'C') AS epc_c,
-                COUNT(*) FILTER (WHERE epc_rating = 'D') AS epc_d,
-                COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
-                COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
-                COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
-        FROM iris.building_epc_analytics
-        {where_clause}
-        {group_by};
-    """
+        query = f"""
+            SELECT {region_select}
+                    COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
+                    COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
+                    COUNT(*) FILTER (WHERE epc_rating = 'C') AS epc_c,
+                    COUNT(*) FILTER (WHERE epc_rating = 'D') AS epc_d,
+                    COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
+                    COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
+                    COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
+            FROM iris.building_epc_analytics
+            {where_clause}
+            {group_by};
+        """
+    else:
+        where_conditions = []
+
+        if area_level and area_names:
+            area_names = expand_wales_region(area_names)
+            where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+            params["area_names"] = area_names
+
+        if per_region:
+            where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+
+        where_conditions.append(
+            "snapshot_date = (SELECT MAX(snapshot_date) FROM iris.building_epc_analytics_aggregates)"
+        )
+
+        where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+
+        region_select = f"""CASE
+                WHEN region_name IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE region_name
+            END AS region_name,""" if per_region else ""
+
+        group_by = f"""GROUP BY CASE
+                WHEN region_name IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE region_name
+            END""" if per_region else ""
+
+        query = f"""
+            SELECT {region_select}
+                    SUM(count_rating_a) AS epc_a,
+                    SUM(count_rating_b) AS epc_b,
+                    SUM(count_rating_c) AS epc_c,
+                    SUM(count_rating_d) AS epc_d,
+                    SUM(count_rating_e) AS epc_e,
+                    SUM(count_rating_f) AS epc_f,
+                    SUM(count_rating_g) AS epc_g
+            FROM iris.building_epc_analytics_aggregates
+            {where_clause}
+            {group_by};
+        """
 
     return query, params
 
@@ -870,6 +907,63 @@ def get_ward_names_query() -> str:
         WHERE ward_name IS NOT NULL
         ORDER BY ward_name
     """
+
+
+def get_count_of_epc_rating_by_area_level_query(
+    group_by_level: str,
+    filter_area_level: str = None,
+    filter_area_names: list = None,
+):
+    params = {}
+    where_conditions = []
+
+    group_column = area_level_to_column(group_by_level)
+
+    if filter_area_level and filter_area_names:
+        filter_area_names = expand_wales_region(filter_area_names)
+        filter_column = area_level_to_column(filter_area_level)
+        where_conditions.append(f"{filter_column} = ANY(:filter_area_names)")
+        params["filter_area_names"] = filter_area_names
+
+    where_conditions.append(f"{group_column} IS NOT NULL AND {group_column} != ''")
+
+    where_conditions.append(
+        "snapshot_date = (SELECT MAX(snapshot_date) FROM iris.building_epc_analytics_aggregates)"
+    )
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    if group_by_level == 'region':
+        area_select = f"""CASE
+                WHEN {group_column} IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE {group_column}
+            END AS area_name"""
+        group_by = f"""GROUP BY CASE
+                WHEN {group_column} IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE {group_column}
+            END"""
+    else:
+        area_select = f"{group_column} as area_name"
+        group_by = f"GROUP BY {group_column}"
+
+    query = f"""
+        SELECT
+            {area_select},
+            SUM(count_rating_a) AS epc_a,
+            SUM(count_rating_b) AS epc_b,
+            SUM(count_rating_c) AS epc_c,
+            SUM(count_rating_d) AS epc_d,
+            SUM(count_rating_e) AS epc_e,
+            SUM(count_rating_f) AS epc_f,
+            SUM(count_rating_g) AS epc_g
+        FROM iris.building_epc_analytics_aggregates
+        {where_clause}
+        {group_by};
+    """
+
+    return query, params
 
 
 def get_epc_ratings_overtime_query(

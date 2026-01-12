@@ -168,14 +168,37 @@ def map_fueltype_results(building: DetailedBuilding, results: dict) -> None:
             building.fueltype = get_value_from_result(result, "fuelType")
 
 
+def map_fueltype_results(building: DetailedBuilding, results: dict) -> None:
+    """
+    Maps fuel type data to a `SingleBuilding` instance.
+
+    Args:
+        building (SingleBuilding): A representation of a building.
+        results (dict): Fuel type SPARQL data retrieved regarding the building e.g. the glazing of the windows.
+
+    Returns:
+        None
+    """
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            building.fueltype = get_value_from_result(result, "fuelType")
+
+
 def map_ngd_roof_material_results(building: DetailedBuilding, results: dict) -> None:
 
-    if results and results.get("results") and results["results"].get("bindings"):       # check if results come from Fuseki or from PostGIS
+    if (
+        results and results.get("results") and results["results"].get("bindings")
+    ):  # check if results come from Fuseki or from PostGIS
         for result in results["results"]["bindings"]:
             building.roof_material = get_value_from_result(result, "roofMaterial")
     else:
-        if 'roof_material' in results.keys():
-            building.roof_material = results['roof_material'].replace(' ', '') if results['roof_material'] else results['roof_material']
+        if "roof_material" in results.keys():
+            building.roof_material = (
+                results["roof_material"].replace(" ", "")
+                if results["roof_material"]
+                else results["roof_material"]
+            )
+
 
 def map_ngd_solar_panel_presence_results(
     building: DetailedBuilding, results: dict
@@ -186,8 +209,13 @@ def map_ngd_solar_panel_presence_results(
                 result, "solarPanelPresence"
             )
     else:
-        if 'solar_panel_presence' in results.keys():
-            building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']=='True' else 'NoSolarPanels'
+        if "solar_panel_presence" in results.keys():
+            building.solar_panel_presence = (
+                "HasSolarPanels"
+                if results["solar_panel_presence"] == "True"
+                else "NoSolarPanels"
+            )
+
 
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
@@ -195,14 +223,14 @@ def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> Non
             building.roof_shape = get_value_from_result(result, "roofShape")
     else:
         sag_alignment = {
-            'Pitched': 'PitchedRoofShape',
-            'Flat' : 'FlatRoofShape',
-            'Mixed' : 'MixedRoofShape',
-            'Unknown': 'UnknownRoofShape',
-            None: None
+            "Pitched": "PitchedRoofShape",
+            "Flat": "FlatRoofShape",
+            "Mixed": "MixedRoofShape",
+            "Unknown": "UnknownRoofShape",
+            None: None,
         }
-        if 'roof_shape' in results.keys():
-            building.roof_shape = sag_alignment[results['roof_shape']]
+        if "roof_shape" in results.keys():
+            building.roof_shape = sag_alignment[results["roof_shape"]]
 
 
 def map_ngd_roof_aspect_area_facings_results(
@@ -235,7 +263,6 @@ def map_ngd_roof_aspect_area_facings_results(
     if "roof_aspect_area_facing_north_m2" in results:
         for field, m2 in results.items():
             assign(field, m2)
-
 
 
 def map_single_building_response(
@@ -275,7 +302,9 @@ def map_single_building_response(
     map_ngd_roof_material_results(building, ngd_roof_material_results)
     map_ngd_solar_panel_presence_results(building, ngd_solar_panel_presence_results)
     map_ngd_roof_shape_results(building, ngd_roof_shape_results)
-    map_ngd_roof_aspect_area_facings_results(building, ngd_roof_aspect_area_facings_results)
+    map_ngd_roof_aspect_area_facings_results(
+        building, ngd_roof_aspect_area_facings_results
+    )
 
     return building
 
@@ -644,7 +673,9 @@ def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSu
     return mapped_result
 
 
-def map_percentage_building_attributes_per_region_response(results) -> list[BuildingAttributePercentagesPerRegion]:
+def map_percentage_building_attributes_per_region_response(
+    results,
+) -> list[BuildingAttributePercentagesPerRegion]:
     attribute_mappings = [
         ("percentage_single_glazing", "Single glazing"),
         ("percentage_double_glazing", "Double glazing"),
@@ -665,12 +696,13 @@ def map_percentage_building_attributes_per_region_response(results) -> list[Buil
         attributes = []
         for column_name, label in attribute_mappings:
             value = getattr(row, column_name, 0.0)
-            attributes.append(BuildingAttributePercentage(label=label, value=float(value)))
+            attributes.append(
+                BuildingAttributePercentage(label=label, value=float(value))
+            )
 
         mapped_results.append(
             BuildingAttributePercentagesPerRegion(
-                region_name=row.region_name,
-                attributes=attributes
+                region_name=row.region_name, attributes=attributes
             )
         )
 

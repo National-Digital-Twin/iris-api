@@ -428,9 +428,9 @@ class BuildingsAffectedByExtremeWeather(BaseModel):
     def from_orm(cls, obj, has_filter: bool = True):
         return cls(
             number_of_buildings=obj.number_of_buildings,
-            filtered_number_of_buildings=(
-                obj.filtered_number_of_buildings if has_filter else None
-            ),
+            filtered_number_of_buildings=obj.filtered_number_of_buildings
+            if has_filter
+            else None,
             affected_by_icing_days=obj.affected_by_icing_days,
             affected_by_hsds=obj.affected_by_hsds,
             affected_by_wdr=obj.affected_by_wdr,

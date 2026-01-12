@@ -15,6 +15,47 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
+## [0.95.0] - 2026-01-12
+
+### Features
+
+- [NON-REQ]: added materialized view for analytics dashboard
+- [DPAV-1779]: add endpoints for initial dashboard charts
+- [DPAV-1779]: add endpoint for building fuel type chart
+- [DPAV-1926]: updated and split the analytics view for dashboards
+- [NON-REQ]: updated dashboard queries to reference renamed view
+- [NON-REQ]: updated epc analytics view to include epc active field
+- [NON-REQ]: added partial indices for base charts
+- [NON-REQ]: added way to retrieve data for extreme weather chart
+- [DPAV-1956]: updated view, query and routes to match extreme weather national dashboard spec
+- [DPAV-1961]: added query and route to fetch data for the in date vs expired epc chart
+- [DPAV-1951]: add covering index for historical EPC queries
+- [DPAV-1951]: add active_snapshots to build_epc_analytics
+- [DPAV-2060]: add database query timeout
+- [DPAV-1951]: add building_epc_analytics_aggregates materialized view
+- [DPAV-2060]: Ensure DEFAULT_QUERY_TIMEOUT is set with fallback
+- [DPAV-1968]: add support for named areas dashboard
+- [DPAV-1961]: support area filters on expired vs in-date epc
+- [DPAV-1957]: add area columns to the extreme weather analytics view
+- [DPAV-1970]: add active partial indices for building_epc_analytics table
+- [DPAV-1970]: add composite partial index for fuel charts
+- [DPAV-1963]: update dashboard building attributes endpoint
+- [DPAV-1953]: add dashboard endpoint for epc over time chart
+- [DPAV-2118]: combine Welsh regions
+- [DPAV-1779]: New EPC charts
+- [DPAV-1958] & [DPAV-1959]: add endpoints for grouped sap timeline charts
+- [DPAV-2060]: reverted db query timeout back to 29 seconds
+
+### Bug fixes
+
+- [NON-REQ]: fixed down revision id to reference penultimate revision
+- [NON-REQ]: added gpkg table to entrypoint script to fix data loading error
+- [NON-REQ]: standardized index names across migrations
+- [NON-REQ]: moved where statement to subquery to ngd attributes query
+- [DPAV-2060]: fix execute_with_timeout reset
+- [DPAV-1926]: changed the logic for geom matching to contains
+- [DPAV-1926]: corrected the join logic in the sync region fk script
+
 ## [0.94.4] - 2025-10-24
 
 - Fixed and removed visual overlap of region polygons introduced in 0.94.3.

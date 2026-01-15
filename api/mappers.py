@@ -151,6 +151,22 @@ def map_wall_window_results(building: DetailedBuilding, results: dict) -> None:
             building.wall_insulation = get_value_from_result(result, "wallInsulation")
             building.window_glazing = get_value_from_result(result, "windowGlazing")
 
+def map_fueltype_results(building: DetailedBuilding, results:dict) -> None:
+    """
+    Maps fuel type data to a `SingleBuilding` instance.
+
+    Args:
+        building (SingleBuilding): A representation of a building.
+        results (dict): Fuel type SPARQL data retrieved regarding the building e.g. the glazing of the windows.
+
+    Returns:
+        None
+    """
+    if results and results["results"] and results["results"]["bindings"]:
+        for result in results["results"]["bindings"]:
+            building.fueltype = get_value_from_result(
+                result, "fuelType"
+            )
 
 def map_fueltype_results(building: DetailedBuilding, results: dict) -> None:
     """

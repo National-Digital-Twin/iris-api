@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.epc_assessment
-        ADD COLUMN match_score NUMERIC(1, 1);
+        ADD COLUMN match_score NUMERIC(2, 1);
         """
     )
 

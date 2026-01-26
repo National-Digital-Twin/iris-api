@@ -10,6 +10,7 @@ from geoalchemy2.shape import to_shape
 from pydantic import BaseModel
 
 from .ies_models import IesThing
+from .utils import get_nullable_float
 
 print(pydantic.VERSION)
 
@@ -47,6 +48,57 @@ class DetailedBuilding(Building):
     wall_insulation: Optional[str] = None
     window_glazing: Optional[str] = None
     fueltype: Optional[str] = None
+    # OS NGD Buildings attributes
+    roof_material: Optional[str] = None
+    solar_panel_presence: Optional[str] = None
+    roof_shape: Optional[str] = None
+    # Roof aspect areas (square meters) by direction
+    roof_aspect_area_facing_north_m2: Optional[float] = None
+    roof_aspect_area_facing_north_east_m2: Optional[float] = None
+    roof_aspect_area_facing_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_m2: Optional[float] = None
+    roof_aspect_area_facing_south_west_m2: Optional[float] = None
+    roof_aspect_area_facing_west_m2: Optional[float] = None
+    roof_aspect_area_facing_north_west_m2: Optional[float] = None
+    roof_aspect_area_indeterminable_m2: Optional[float] = None
+
+
+class DetailedBuildingSchema(DetailedBuilding):
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            solar_panel_presence=str(obj.has_roof_solar_panels),
+            roof_material=obj.roof_material,
+            roof_shape=obj.roof_shape,
+            roof_aspect_area_facing_north_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_north_m2
+            ),
+            roof_aspect_area_facing_north_east_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_north_east_m2
+            ),
+            roof_aspect_area_facing_east_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_east_m2
+            ),
+            roof_aspect_area_facing_south_east_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_south_east_m2
+            ),
+            roof_aspect_area_facing_south_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_south_m2
+            ),
+            roof_aspect_area_facing_south_west_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_south_west_m2
+            ),
+            roof_aspect_area_facing_west_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_west_m2
+            ),
+            roof_aspect_area_facing_north_west_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_north_west_m2
+            ),
+            roof_aspect_area_indeterminable_m2=get_nullable_float(
+                obj.roof_aspect_area_indeterminable_m2
+            ),
+        )
 
 
 class FilterableBuilding(BaseModel):
@@ -63,6 +115,16 @@ class FilterableBuilding(BaseModel):
     wall_construction: Optional[str] = None
     wall_insulation: Optional[str] = None
     window_glazing: Optional[str] = None
+    has_roof_solar_panels: Optional[bool] = None
+    roof_material: Optional[str] = None
+    roof_aspect_area_facing_north: Optional[float] = None
+    roof_aspect_area_facing_north_east: Optional[float] = None
+    roof_aspect_area_facing_east: Optional[float] = None
+    roof_aspect_area_facing_south_east: Optional[float] = None
+    roof_aspect_area_facing_south: Optional[float] = None
+    roof_aspect_area_facing_south_west: Optional[float] = None
+    roof_aspect_area_facing_west: Optional[float] = None
+    roof_aspect_area_facing_north_west: Optional[float] = None
 
 
 class EpcStatistics(IesThing):
@@ -148,6 +210,16 @@ class FilterableBuildingSchema(BaseModel):
     wall_insulation: Optional[str]
     floor_construction: Optional[str]
     floor_insulation: Optional[str]
+    has_roof_solar_panels: Optional[bool]
+    roof_material: Optional[str]
+    roof_aspect_area_facing_north_m2: Optional[float]
+    roof_aspect_area_facing_north_east_m2: Optional[float]
+    roof_aspect_area_facing_east_m2: Optional[float]
+    roof_aspect_area_facing_south_east_m2: Optional[float]
+    roof_aspect_area_facing_south_m2: Optional[float]
+    roof_aspect_area_facing_south_west_m2: Optional[float]
+    roof_aspect_area_facing_west_m2: Optional[float]
+    roof_aspect_area_facing_north_west_m2: Optional[float]
     roof_construction: Optional[str]
     roof_insulation: Optional[str]
     roof_insulation_thickness: Optional[str]
@@ -168,7 +240,20 @@ class FilterableBuildingSchema(BaseModel):
             roof_construction=obj.roof_construction,
             roof_insulation=obj.roof_insulation,
             roof_insulation_thickness=obj.roof_insulation_thickness,
+            has_roof_solar_panels=obj.has_roof_solar_panels,
+            roof_material=obj.roof_material,
+            roof_aspect_area_facing_north_m2=obj.roof_aspect_area_facing_north_m2,
+            roof_aspect_area_facing_north_east_m2=obj.roof_aspect_area_facing_north_east_m2,
+            roof_aspect_area_facing_east_m2=obj.roof_aspect_area_facing_east_m2,
+            roof_aspect_area_facing_south_east_m2=obj.roof_aspect_area_facing_south_east_m2,
+            roof_aspect_area_facing_south_m2=obj.roof_aspect_area_facing_south_m2,
+            roof_aspect_area_facing_south_west_m2=obj.roof_aspect_area_facing_south_west_m2,
+            roof_aspect_area_facing_west_m2=obj.roof_aspect_area_facing_west_m2,
+            roof_aspect_area_facing_north_west_m2=obj.roof_aspect_area_facing_north_west_m2,
         )
+
+    class Config:
+        from_orm = True
 
 
 class FilterSummary(BaseModel):
@@ -182,6 +267,191 @@ class FilterSummary(BaseModel):
     wall_insulation: set[str] = set()
     floor_construction: set[str] = set()
     floor_insulation: set[str] = set()
+    has_roof_solar_panels: set[bool] = set()
+    roof_material: set[str] = set()
+    roof_aspect_area_direction: set[str] = set()
     roof_construction: set[str] = set()
     roof_insulation_location: set[str] = set()
     roof_insulation_thickness: set[str] = set()
+
+
+class CountOfEpcRatings(BaseModel):
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class CountOfEpcRatingsPerRegion(CountOfEpcRatings):
+    region_name: str
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            region_name=obj.region_name,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class EPCRatingsByCategory(BaseModel):
+    name: str
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+    total: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        name = getattr(obj, "name", None) or getattr(obj, "area_name", None)
+        return cls(
+            name=name,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+            total=sum(
+                [
+                    obj.epc_a,
+                    obj.epc_b,
+                    obj.epc_c,
+                    obj.epc_d,
+                    obj.epc_e,
+                    obj.epc_f,
+                    obj.epc_g,
+                ]
+            ),
+        )
+
+
+class FuelTypesByBuildingType(BaseModel):
+    building_type: str
+    fuel_type: str
+    count: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            building_type=obj.building_type,
+            fuel_type=obj.fuel_type,
+            count=obj.count,
+        )
+
+
+class AverageSapRatingPerLodgementDate(BaseModel):
+    date: datetime.date
+    national_avg_sap_rating: float
+    filtered_avg_sap_rating: Optional[float]
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            date=obj.date,
+            national_avg_sap_rating=obj.national_avg_sap_rating,
+            filtered_avg_sap_rating=obj.filtered_avg_sap_rating,
+        )
+
+
+class SapRatingTimelineDataPoint(BaseModel):
+    date: datetime.date
+    name: str
+    avg_sap_rating: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            date=obj.date,
+            name=obj.name,
+            avg_sap_rating=obj.avg_sap_rating,
+        )
+
+
+class EpcRatingCountsOvertime(BaseModel):
+    date: datetime.date
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            date=obj.date,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class BuildingsAffectedByExtremeWeather(BaseModel):
+    number_of_buildings: int
+    filtered_number_of_buildings: Optional[int] = None
+    affected_by_icing_days: Optional[bool]
+    affected_by_hsds: Optional[bool]
+    affected_by_wdr: Optional[bool]
+
+    @classmethod
+    def from_orm(cls, obj, has_filter: bool = True):
+        return cls(
+            number_of_buildings=obj.number_of_buildings,
+            filtered_number_of_buildings=obj.filtered_number_of_buildings
+            if has_filter
+            else None,
+            affected_by_icing_days=obj.affected_by_icing_days,
+            affected_by_hsds=obj.affected_by_hsds,
+            affected_by_wdr=obj.affected_by_wdr,
+        )
+
+
+class NumberOfInDateAndExpiredEpcs(BaseModel):
+    year: datetime.date
+    expired: int
+    active: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(year=obj.year, expired=obj.expired, active=obj.active)
+
+
+class BuildingAttributePercentage(BaseModel):
+    label: str
+    value: float
+
+
+class BuildingAttributePercentagesPerRegion(BaseModel):
+    region_name: str
+    attributes: List[BuildingAttributePercentage]

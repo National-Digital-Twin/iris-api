@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     DB_USERNAME: str
     DB_PASSWORD: str
     DB_HOST: str
+    DB_PORT: int = 5432
 
     JENA_URL: str = "localhost"
     JENA_PORT: int = 3030
@@ -33,12 +34,13 @@ class Settings(BaseSettings):
     LANDING_PAGE_URL: str = "http://localhost:5173"
     BOOTSTRAP_SERVERS: str = "localhost:9092"
     IES_TOPIC: str = "knowledge"
+    DB_QUERY_TIMEOUT: int = 29
 
     def get_db_connection_string(self):
         if self.ENVIRONMENT == "TEST":
             return None
         else:
-            return f"postgresql+asyncpg://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:5432/iris"
+            return f"postgresql+asyncpg://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/iris"
 
 
 @lru_cache

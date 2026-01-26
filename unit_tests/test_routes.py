@@ -12,6 +12,11 @@ from fastapi.testclient import TestClient
 import api.routes as routes
 from api.config import get_settings
 
+from fastapi import FastAPI
+from unittest.mock import AsyncMock
+import db as db_module
+
+
 # --- Dummy classes and helper functions for testing ---
 
 
@@ -67,10 +72,16 @@ class DummyAdapter:
 # --- Fixtures for FastAPI endpoints ---
 @pytest.fixture
 def client():
-    from fastapi import FastAPI
+    async def mock_get_db():
+        mock_db_session = AsyncMock()
+        mock_db_result = AsyncMock()
+        mock_db_result.__iter__ = lambda self: iter([])
+        mock_db_session.execute.return_value = mock_db_result
+        yield mock_db_session
 
     app = FastAPI()
     app.include_router(routes.router)
+    app.dependency_overrides[db_module.get_db] = mock_get_db
     return TestClient(app)
 
 
@@ -585,3 +596,183 @@ def test_post_assessment_not_found(monkeypatch):
     with pytest.raises(HTTPException) as excinfo:
         routes.post_assessment(dummy_ass)
     assert excinfo.value.status_code == 404
+
+
+def test_epc_ratings_invalid_area_level(client):
+    response = client.get(
+        "/dashboard/epc-ratings",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_valid_area_level(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings",
+        params={"area_level": "region", "area_names": ["Test"]}
+    )
+    assert response.status_code == 200
+
+
+def test_sap_rating_overtime_invalid_area_level(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/sap-rating-overtime",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
+
+
+def test_fuel_types_invalid_area_level(client):
+    response = client.get(
+        "/dashboard/fuel-types-by-building-type",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
+
+
+def test_building_attributes_invalid_area_level(client):
+    response = client.get(
+        "/dashboard/building-attributes-percentage-per-region",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_feature_valid_feature(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={"feature": "glazing_types"}
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_feature_invalid_feature(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={"feature": "invalid_feature"}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_feature_with_area_filter(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={
+            "feature": "fuel_types",
+            "area_level": "region",
+            "area_names": ["East Midlands", "Eastern"]
+        }
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_feature_invalid_area_level(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={
+            "feature": "glazing_types",
+            "area_level": "invalid",
+            "area_names": ["Test"]
+        }
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_area_level_valid(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={"group_by_level": "region"}
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_area_level_invalid_group_by(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={"group_by_level": "invalid"}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_area_level_with_filter(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={
+            "group_by_level": "county",
+            "filter_area_level": "region",
+            "filter_area_names": ["East Midlands"]
+        }
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_area_level_invalid_filter_level(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={
+            "group_by_level": "county",
+            "filter_area_level": "invalid",
+            "filter_area_names": ["Test"]
+        }
+    )
+    assert response.status_code == 422

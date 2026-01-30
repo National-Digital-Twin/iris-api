@@ -16,6 +16,13 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## [0.95.2] - 2026-01-30
+
+- [DPAV-2388]: added new query to fetch EPC attributes from the Geonode PG DB when no data is present in the SAG (EPC fallback for use on the detailed building view)
+- [DPAV-2388]: refactored routes to detect which EPC attributes require use of the Geonode fallback query
+- [NON-REQ]: Fixed an issue where roof‑aspect areas from the OS NGD fallback always appeared as 'No Data' even when the database had values
+- [NON-REQ]: Fixed an issue where the south‑east roof‑aspect value from the OS NGD fallback was read from the wrong field, causing it to display incorrectly
+
 ## [0.95.1] - 2026-01-14
 
 - [NON-REQ]: updated indices to optimise for performance of the building feature charts

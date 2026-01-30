@@ -23,7 +23,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - [NON-REQ]: Fixed an issue where roof‑aspect areas from the OS NGD fallback always appeared as 'No Data' even when the database had values
 - [NON-REQ]: Fixed an issue where the south‑east roof‑aspect value from the OS NGD fallback was read from the wrong field, causing it to display incorrectly
 
-## [0.95.2-0.95-3]:
+## [0.95.2-0.95.3]:
  
 - [NON-REQ] Aligned branches to production
 

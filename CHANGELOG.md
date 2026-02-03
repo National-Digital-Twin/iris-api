@@ -16,6 +16,10 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## [0.95.5] - 2026-02-03
+
+- [DPAV-2425]: updated api queries to handle UPRNs which are linked to address-matched EPC certificates
+
 ## [0.95.4] - 2026-01-30
 
 - [DPAV-2388]: added new query to fetch EPC attributes from the Geonode PG DB when no data is present in the SAG (EPC fallback for use on the detailed building view)

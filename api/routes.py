@@ -12,100 +12,81 @@ from access import AccessClient
 from config import get_settings
 from db import execute_with_timeout, get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from mappers import (
-    map_bounded_buildings_response,
-    map_bounded_filterable_buildings_response,
-    map_percentage_building_attributes_per_region_response,
-    map_epc_statistics_response,
-    map_filter_summary_response,
-    map_flagged_buildings_response,
-    map_single_building_response,
-    map_structure_unit_flag_history_response,
-)
-from models.dto_models import (
-    AverageSapRatingPerLodgementDate,
-    BuildingAttributePercentagesPerRegion,
-    BuildingsAffectedByExtremeWeather,
-    CountOfEpcRatings,
-    CountOfEpcRatingsPerRegion,
-    DetailedBuilding,
-    DetailedBuildingSchema,
-    EPCRatingsByCategory,
-    EpcAndOsBuildingSchema,
-    EpcRatingCountsOvertime,
-    EpcStatistics,
-    FilterableBuilding,
-    FilterableBuildingSchema,
-    FilterSummary,
-    FlaggedBuilding,
-    FlagHistory,
-    FuelTypesByBuildingType,
-    NumberOfInDateAndExpiredEpcs,
-    SapRatingTimelineDataPoint,
-    SimpleBuilding,
-)
-from models.ies_models import (
-    EDH,
-    ClassificationEmum,
-    IesAccount,
-    IesAssessment,
-    IesAssessToBeFalse,
-    IesAssessToBeTrue,
-    IesClass,
-    IesEntity,
-    IesPerson,
-    IesState,
-    IesThing,
-    ies,
-)
+from mappers import (map_bounded_buildings_response,
+                     map_bounded_filterable_buildings_response,
+                     map_building_hot_summer_days_response,
+                     map_building_icing_days_response,
+                     map_building_weather_summary_response,
+                     map_building_wind_driven_rain_response,
+                     map_epc_statistics_response, map_filter_summary_response,
+                     map_flagged_buildings_response,
+                     map_percentage_building_attributes_per_region_response,
+                     map_single_building_response,
+                     map_structure_unit_flag_history_response)
+from models.dto_models import (AverageSapRatingPerLodgementDate,
+                               BuildingAttributePercentagesPerRegion,
+                               BuildingHotSummerDaysData,
+                               BuildingHotSummerDaysSchema,
+                               BuildingIcingDaysData, BuildingIcingDaysSchema,
+                               BuildingsAffectedByExtremeWeather,
+                               BuildingWeatherSummaryData,
+                               BuildingWeatherSummarySchema,
+                               BuildingWindDrivenRainData,
+                               BuildingWindDrivenRainSchema, CountOfEpcRatings,
+                               CountOfEpcRatingsPerRegion, DetailedBuilding,
+                               DetailedBuildingSchema, EpcAndOsBuildingSchema,
+                               EpcRatingCountsOvertime, EPCRatingsByCategory,
+                               EpcStatistics, FilterableBuilding,
+                               FilterableBuildingSchema, FilterSummary,
+                               FlaggedBuilding, FlagHistory,
+                               FuelTypesByBuildingType,
+                               NumberOfInDateAndExpiredEpcs,
+                               SapRatingTimelineDataPoint, SimpleBuilding)
+from models.ies_models import (EDH, ClassificationEmum, IesAccount,
+                               IesAssessment, IesAssessToBeFalse,
+                               IesAssessToBeTrue, IesClass, IesEntity,
+                               IesPerson, IesState, IesThing, ies)
 from pydantic import AfterValidator, BaseModel
-from query import (
-    get_all_ngd_attributes_pg,
-    get_building,
-    get_epc_attributes_pg,
-    get_buildings_affected_by_extreme_weather_data_query,
-    get_buildings_in_bounding_box_query,
-    get_count_of_epc_rating_by_area_level_query,
-    get_count_of_epc_rating_by_features_query,
-    get_count_of_epc_rating_query,
-    get_county_names_query,
-    get_district_names_query,
-    get_epc_ratings_overtime_query,
-    get_filterable_buildings_in_bounding_box_query,
-    get_filtered_avg_sap_rating_overtime_query,
-    get_flag_history,
-    get_flagged_buildings,
-    get_floor_for_building,
-    get_fuel_types_by_building_type_query,
-    get_fueltype_for_building,
-    get_national_avg_sap_rating_overtime_query,
-    get_ngd_roof_aspect_areas_for_building,
-    get_ngd_roof_material_for_building,
-    get_ngd_roof_shape_for_building,
-    get_ngd_solar_panel_presence_for_building,
-    get_number_of_in_date_and_expired_epcs_query,
-    get_percentage_of_buildings_attributes_per_region_query,
-    get_region_names_query,
-    get_roof_for_building,
-    get_sap_rating_overtime_by_area_query,
-    get_sap_rating_overtime_by_property_type_query,
-    get_statistics_for_wards,
-    get_walls_and_windows_for_building,
-    get_ward_names_query,
-)
+from query import (get_all_ngd_attributes_pg, get_building,
+                   get_buildings_affected_by_extreme_weather_data_query,
+                   get_buildings_in_bounding_box_query,
+                   get_count_of_epc_rating_by_area_level_query,
+                   get_count_of_epc_rating_by_features_query,
+                   get_count_of_epc_rating_query, get_county_names_query,
+                   get_district_names_query, get_epc_attributes_pg,
+                   get_epc_ratings_overtime_query,
+                   get_filterable_buildings_in_bounding_box_query,
+                   get_filtered_avg_sap_rating_overtime_query,
+                   get_flag_history, get_flagged_buildings,
+                   get_floor_for_building,
+                   get_fuel_types_by_building_type_query,
+                   get_fueltype_for_building,
+                   get_hot_summer_days_data_for_building_query,
+                   get_icing_days_data_for_building_query,
+                   get_national_avg_sap_rating_overtime_query,
+                   get_ngd_roof_aspect_areas_for_building,
+                   get_ngd_roof_material_for_building,
+                   get_ngd_roof_shape_for_building,
+                   get_ngd_solar_panel_presence_for_building,
+                   get_number_of_in_date_and_expired_epcs_query,
+                   get_percentage_of_buildings_attributes_per_region_query,
+                   get_region_names_query, get_roof_for_building,
+                   get_sap_rating_overtime_by_area_query,
+                   get_sap_rating_overtime_by_property_type_query,
+                   get_statistics_for_wards,
+                   get_walls_and_windows_for_building, get_ward_names_query,
+                   get_weather_summary_data_for_building_query,
+                   get_wind_driven_rain_data_for_building_query)
 from rdflib import Graph
 from requests import codes, exceptions
-from services.climate_service import (
-    fetch_geojson_for_hot_summer_days,
-    fetch_geojson_for_icing_days,
-    fetch_geojson_for_wind_driven_rain,
-)
+from services.climate_service import (fetch_geojson_for_hot_summer_days,
+                                      fetch_geojson_for_icing_days,
+                                      fetch_geojson_for_wind_driven_rain)
 from services.energy_performance_service import (
     fetch_geojson_for_energy_performance_by_counties,
     fetch_geojson_for_energy_performance_by_districts,
     fetch_geojson_for_energy_performance_by_regions,
-    fetch_geojson_for_energy_performance_by_wards,
-)
+    fetch_geojson_for_energy_performance_by_wards)
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_headers as get_forwarding_headers
@@ -119,7 +100,7 @@ EPC_FIELDS = [
     "built_form",
     "structure_unit_type",
     "floor_construction",
-    "floor_insulation", 
+    "floor_insulation",
     "roof_construction",
     "roof_insulation_location",
     "roof_insulation_thickness",
@@ -807,7 +788,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     assessor, person = create_person_insert(user["user_id"], user["username"])
     assessment_time = ISO_8601_URL + datetime.now().isoformat()
     assessment = data_uri_stub + str(uuid.uuid4())
-    (assessment_subclasses, assessment_list) = get_subtypes(
+    assessment_subclasses, assessment_list = get_subtypes(
         prefix_dict["ndt_ont"] + "AssessToBeFalse",
         get_forwarding_headers(request.headers),
     )
@@ -832,8 +813,10 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     run_sparql_update(query=query, securityLabel=invalid.securityLabel)
     return assessment
 
+
 def is_missing(value):
     return value is None or value == "" or value == "NoData"
+
 
 def apply_epc_fallback(building: DetailedBuilding, pg_row):
 
@@ -849,7 +832,7 @@ def apply_epc_fallback(building: DetailedBuilding, pg_row):
         "wall_construction": pg_row.wall_construction,
         "wall_insulation": pg_row.wall_insulation,
         "window_glazing": pg_row.window_glazing,
-        "fueltype": pg_row.fuel_type
+        "fueltype": pg_row.fuel_type,
     }
 
     for field, value in updates.items():
@@ -954,11 +937,13 @@ async def get_building_by_uprn(
 
     # EPC fallback
     if any(is_missing(getattr(building, f)) for f in EPC_FIELDS):
-        geonode_results = await db.execute(text(get_epc_attributes_pg()), {"uprn": uprn})
+        geonode_results = await db.execute(
+            text(get_epc_attributes_pg()), {"uprn": uprn}
+        )
         geonode_row = geonode_results.first()
         if geonode_row:
             apply_epc_fallback(building, geonode_row)
-    
+
     return building
 
 
@@ -1327,3 +1312,95 @@ def get_signout_links():
             )
         else:
             raise HTTPException(codes.internal_server_error, IDENTITY_API_CALL_ERROR)
+
+
+@router.get(
+    "/buildings/{uprn}/wind-driven-rain",
+    response_model=BuildingWindDrivenRainData,
+    description="returns wind driven rain data for the building that corresponds to the provided UPRN",
+)
+async def get_wind_driven_rain_data_by_uprn(
+    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+):
+    query, params = get_wind_driven_rain_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.one_or_none()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find wind driven rain data for the provided UPRN!",
+        )
+
+    row = BuildingWindDrivenRainSchema.from_orm(row)
+    return map_building_wind_driven_rain_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/hot-summer-days",
+    response_model=BuildingHotSummerDaysData,
+    description="returns hot summer days data for the building that corresponds to the provided UPRN",
+)
+async def get_hot_summer_days_data_by_uprn(
+    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+):
+    query, params = get_hot_summer_days_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.one_or_none()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find hot summer days data for the provided UPRN!",
+        )
+
+    row = BuildingHotSummerDaysSchema.from_orm(row)
+    return map_building_hot_summer_days_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/icing-days",
+    response_model=BuildingIcingDaysData,
+    description="returns icing days data for the building that corresponds to the provided UPRN",
+)
+async def get_icing_days_data_by_uprn(
+    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+):
+    query, params = get_icing_days_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.one_or_none()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find icing days data for the provided UPRN!",
+        )
+
+    row = BuildingIcingDaysSchema.from_orm(row)
+    return map_building_icing_days_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/weather-summary",
+    response_model=BuildingWeatherSummaryData,
+    description="returns weather summary data for the building that corresponds to the provided UPRN",
+)
+async def get_weather_summary_data_by_uprn(
+    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+):
+    query, params = get_weather_summary_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.one_or_none()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find weather summary data for the provided UPRN!",
+        )
+
+    row = BuildingWeatherSummarySchema.from_orm(row)
+    return map_building_weather_summary_response(row)

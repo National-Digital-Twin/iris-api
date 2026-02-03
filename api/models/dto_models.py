@@ -428,9 +428,9 @@ class BuildingsAffectedByExtremeWeather(BaseModel):
     def from_orm(cls, obj, has_filter: bool = True):
         return cls(
             number_of_buildings=obj.number_of_buildings,
-            filtered_number_of_buildings=obj.filtered_number_of_buildings
-            if has_filter
-            else None,
+            filtered_number_of_buildings=(
+                obj.filtered_number_of_buildings if has_filter else None
+            ),
             affected_by_icing_days=obj.affected_by_icing_days,
             affected_by_hsds=obj.affected_by_hsds,
             affected_by_wdr=obj.affected_by_wdr,
@@ -455,3 +455,121 @@ class BuildingAttributePercentage(BaseModel):
 class BuildingAttributePercentagesPerRegion(BaseModel):
     region_name: str
     attributes: List[BuildingAttributePercentage]
+
+
+class BuildingWindDrivenRainSchema(BaseModel):
+    wdr_20_0: float
+    wdr_20_45: float
+    wdr_20_90: float
+    wdr_20_135: float
+    wdr_20_180: float
+    wdr_20_225: float
+    wdr_20_270: float
+    wdr_20_315: float
+
+    wdr_40_0: float
+    wdr_40_45: float
+    wdr_40_90: float
+    wdr_40_135: float
+    wdr_40_180: float
+    wdr_40_225: float
+    wdr_40_270: float
+    wdr_40_315: float
+
+    @classmethod
+    def from_orm(obj, cls):
+        return cls(
+            wdr_20_0=obj.wdr_20_0,
+            wdr_20_45=obj.wdr_20_45,
+            wdr_20_90=obj.wdr_20_90,
+            wdr_20_135=obj.wdr_20_135,
+            wdr_20_180=obj.wdr_20_180,
+            wdr_20_225=obj.wdr_20_225,
+            wdr_20_270=obj.wdr_20_270,
+            wdr_20_315=obj.wdr_20_315,
+            wdr_40_0=obj.wdr_40_0,
+            wdr_40_45=obj.wdr_40_45,
+            wdr_40_90=obj.wdr_40_90,
+            wdr_40_135=obj.wdr_40_135,
+            wdr_40_180=obj.wdr_40_180,
+            wdr_40_225=obj.wdr_40_225,
+            wdr_40_270=obj.wdr_40_270,
+            wdr_40_315=obj.wdr_40_315,
+        )
+
+
+class BuildingWindDrivenRainData(BaseModel):
+    north_two_degrees_median: float
+    east_two_degrees_median: float
+    south_east_two_degrees_median: float
+    south_two_degress_median: float
+    south_west_two_degrees_median: float
+    west_two_degrees_median: float
+    north_west_two_degrees_median: float
+    north_east_two_degrees_median: float
+
+    north_four_degrees_median: float
+    east_four_degrees_median: float
+    south_east_four_degrees_median: float
+    south_four_degress_median: float
+    south_west_four_degrees_median: float
+    west_four_degrees_median: float
+    north_west_four_degrees_median: float
+    north_east_four_degrees_median: float
+
+
+class BuildingHotSummerDaysSchema(BaseModel):
+    hsd_baseline_01_20_median: float
+    hsd_15_median: float
+    hsd_20_median: float
+    hsd_25_median: float
+    hsd_30_median: float
+    hsd_40_median: float
+
+    @classmethod
+    def from_orm(obj, cls):
+        return cls(
+            hsd_baseline_01_20_median=obj.hsd_baseline_01_20_median,
+            hsd_15_median=obj.hsd_15_median,
+            hsd_20_median=obj.hsd_20_median,
+            hsd_25_median=obj.hsd_25_median,
+            hsd_30_median=obj.hsd_30_median,
+            hsd_40_median=obj.hsd_40_median,
+        )
+
+
+class BuildingHotSummerDaysData(BaseModel):
+    hsd_baseline: float
+    hsd_1_5_degree_above_baseline: float
+    hsd_2_0_degree_above_baseline: float
+    hsd_2_5_degree_above_baseline: float
+    hsd_3_0_degree_above_baseline: float
+    hsd_4_0_degree_above_baseline: float
+
+
+class BuildingIcingDaysSchema(BaseModel):
+    icingdays: float
+
+
+class BuildingIcingDaysData(BaseModel):
+    icing_days: float
+
+
+class BuildingWeatherSummarySchema(BaseModel):
+    affected_by_icing_days: bool
+    affected_by_hsds: bool
+    affected_by_wdr: bool
+
+    @classmethod
+    def from_orm(obj, cls):
+        return cls(
+            affected_by_icing_days=obj.affected_by_icing_days,
+            affected_by_hsds=obj.affected_by_hsds,
+            affected_by_wdr=obj.affected_by_wdr,
+        )
+
+
+class BuildingWeatherSummaryData(BaseModel):
+    affected_by_icing_days: bool
+    affected_by_hot_summer_days: bool
+    affected_by_wind_driven_rain: bool

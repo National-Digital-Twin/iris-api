@@ -5,19 +5,27 @@
 import datetime
 import re
 
-from models.dto_models import (BuildingAttributePercentage,
-                               BuildingAttributePercentagesPerRegion,
-                               BuildingHotSummerDaysData,
-                               BuildingHotSummerDaysSchema,
-                               BuildingIcingDaysData, BuildingIcingDaysSchema,
-                               BuildingWeatherSummaryData,
-                               BuildingWeatherSummarySchema,
-                               BuildingWindDrivenRainData,
-                               BuildingWindDrivenRainSchema, DetailedBuilding,
-                               EpcAndOsBuildingSchema, EpcStatistics,
-                               FilterableBuilding, FilterableBuildingSchema,
-                               FilterSummary, FlaggedBuilding, FlagHistory,
-                               SimpleBuilding)
+from models.dto_models import (
+    BuildingAttributePercentage,
+    BuildingAttributePercentagesPerRegion,
+    BuildingHotSummerDaysData,
+    BuildingHotSummerDaysSchema,
+    BuildingIcingDaysData,
+    BuildingIcingDaysSchema,
+    BuildingWeatherSummaryData,
+    BuildingWeatherSummarySchema,
+    BuildingWindDrivenRainData,
+    BuildingWindDrivenRainSchema,
+    DetailedBuilding,
+    EpcAndOsBuildingSchema,
+    EpcStatistics,
+    FilterableBuilding,
+    FilterableBuildingSchema,
+    FilterSummary,
+    FlaggedBuilding,
+    FlagHistory,
+    SimpleBuilding,
+)
 
 structure_unit_type_hierarchy = {
     "House": 1,
@@ -741,9 +749,17 @@ def map_building_icing_days_response(row: BuildingIcingDaysSchema):
 
 def map_building_weather_summary_response(row: BuildingWeatherSummarySchema):
     data = BuildingWeatherSummaryData(
-        affected_by_icing_days=row.affected_by_icing_days,
-        affected_by_hot_summer_days=row.affected_by_hsds,
-        affected_by_wind_driven_rain=row.affected_by_wdr,
+        affected_by_icing_days=(
+            row.affected_by_icing_days
+            if row.affected_by_icing_days is not None
+            else False
+        ),
+        affected_by_hot_summer_days=(
+            row.affected_by_hsds if row.affected_by_hsds is not None else False
+        ),
+        affected_by_wind_driven_rain=(
+            row.affected_by_wdr if row.affected_by_wdr is not None else False
+        ),
     )
 
     return data

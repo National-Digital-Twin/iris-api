@@ -560,9 +560,9 @@ class BuildingIcingDaysData(BaseModel):
 
 
 class BuildingWeatherSummarySchema(BaseModel):
-    affected_by_icing_days: bool
-    affected_by_hsds: bool
-    affected_by_wdr: bool
+    affected_by_icing_days: Optional[bool]
+    affected_by_hsds: Optional[bool]
+    affected_by_wdr: Optional[bool]
 
     @classmethod
     def from_orm(cls, obj):

@@ -5,27 +5,19 @@
 import datetime
 import re
 
-from models.dto_models import (
-    BuildingAttributePercentage,
-    BuildingAttributePercentagesPerRegion,
-    BuildingHotSummerDaysData,
-    BuildingHotSummerDaysSchema,
-    BuildingIcingDaysData,
-    BuildingIcingDaysSchema,
-    BuildingWeatherSummaryData,
-    BuildingWeatherSummarySchema,
-    BuildingWindDrivenRainData,
-    BuildingWindDrivenRainSchema,
-    DetailedBuilding,
-    EpcAndOsBuildingSchema,
-    EpcStatistics,
-    FilterableBuilding,
-    FilterableBuildingSchema,
-    FilterSummary,
-    FlaggedBuilding,
-    FlagHistory,
-    SimpleBuilding,
-)
+from models.dto_models import (BuildingAttributePercentage,
+                               BuildingAttributePercentagesPerRegion,
+                               BuildingExtremeWeatherSummaryData,
+                               BuildingExtremeWeatherSummarySchema,
+                               BuildingHotSummerDaysData,
+                               BuildingHotSummerDaysSchema,
+                               BuildingIcingDaysData, BuildingIcingDaysSchema,
+                               BuildingWindDrivenRainData,
+                               BuildingWindDrivenRainSchema, DetailedBuilding,
+                               EpcAndOsBuildingSchema, EpcStatistics,
+                               FilterableBuilding, FilterableBuildingSchema,
+                               FilterSummary, FlaggedBuilding, FlagHistory,
+                               SimpleBuilding)
 
 structure_unit_type_hierarchy = {
     "House": 1,
@@ -747,8 +739,8 @@ def map_building_icing_days_response(row: BuildingIcingDaysSchema):
     return data
 
 
-def map_building_weather_summary_response(row: BuildingWeatherSummarySchema):
-    data = BuildingWeatherSummaryData(
+def map_building_weather_summary_response(row: BuildingExtremeWeatherSummarySchema):
+    data = BuildingExtremeWeatherSummaryData(
         affected_by_icing_days=(
             row.affected_by_icing_days
             if row.affected_by_icing_days is not None

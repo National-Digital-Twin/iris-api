@@ -25,12 +25,12 @@ from mappers import (map_bounded_buildings_response,
                      map_structure_unit_flag_history_response)
 from models.dto_models import (AverageSapRatingPerLodgementDate,
                                BuildingAttributePercentagesPerRegion,
+                               BuildingExtremeWeatherSummaryData,
+                               BuildingExtremeWeatherSummarySchema,
                                BuildingHotSummerDaysData,
                                BuildingHotSummerDaysSchema,
                                BuildingIcingDaysData, BuildingIcingDaysSchema,
                                BuildingsAffectedByExtremeWeather,
-                               BuildingWeatherSummaryData,
-                               BuildingWeatherSummarySchema,
                                BuildingWindDrivenRainData,
                                BuildingWindDrivenRainSchema, CountOfEpcRatings,
                                CountOfEpcRatingsPerRegion, DetailedBuilding,
@@ -425,7 +425,7 @@ def post_person(per: IesPerson):
 
 @router.get("/dashboard/epc-ratings", response_model=List[CountOfEpcRatings])
 async def get_epc_ratings_for_dashboard(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     area_names: Optional[List[str]] = Query(None),
@@ -443,7 +443,7 @@ async def get_epc_ratings_for_dashboard(
     "/dashboard/epc-ratings-per-region", response_model=List[CountOfEpcRatingsPerRegion]
 )
 async def get_epc_ratings_per_region_for_dashboard(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     area_names: Optional[List[str]] = Query(None),
@@ -461,7 +461,7 @@ async def get_epc_ratings_per_region_for_dashboard(
     "/dashboard/epc-ratings-by-area-level", response_model=List[EPCRatingsByCategory]
 )
 async def get_epc_ratings_by_area_level_for_dashboard(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
     filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     filter_area_names: Optional[List[str]] = Query(None),
@@ -480,7 +480,7 @@ async def get_epc_ratings_by_area_level_for_dashboard(
     "/dashboard/epc-ratings-by-feature", response_model=List[EPCRatingsByCategory]
 )
 async def get_epc_ratings_by_feature_for_dashboard(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     feature: str = Query(..., pattern=FEATURE_PATTERN),
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
@@ -499,7 +499,7 @@ async def get_epc_ratings_by_feature_for_dashboard(
     response_model=List[BuildingAttributePercentagesPerRegion],
 )
 async def get_percentage_building_attributes_per_region(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     area_names: Optional[List[str]] = Query(None),
@@ -517,7 +517,7 @@ async def get_percentage_building_attributes_per_region(
     response_model=List[AverageSapRatingPerLodgementDate],
 )
 async def get_sap_rating_overtime(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     area_names: Optional[List[str]] = Query(None),
@@ -552,7 +552,7 @@ async def get_sap_rating_overtime(
     response_model=List[SapRatingTimelineDataPoint],
 )
 async def get_sap_rating_overtime_by_property_type(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: GeoJSONPolygon = Query(...),
 ):
     query, params = get_sap_rating_overtime_by_property_type_query(polygon=polygon)
@@ -565,7 +565,7 @@ async def get_sap_rating_overtime_by_property_type(
     response_model=List[SapRatingTimelineDataPoint],
 )
 async def get_sap_rating_overtime_by_area(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
     filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     filter_area_names: Optional[List[str]] = Query(None),
@@ -584,7 +584,7 @@ async def get_sap_rating_overtime_by_area(
     response_model=List[EpcRatingCountsOvertime],
 )
 async def get_epc_ratings_overtime(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None),
     area_names: Optional[List[str]] = Query(None),
@@ -603,7 +603,7 @@ async def get_epc_ratings_overtime(
     response_model=List[FuelTypesByBuildingType],
 )
 async def get_fuel_types_by_building_type(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     area_names: Optional[List[str]] = Query(None),
@@ -622,7 +622,7 @@ async def get_fuel_types_by_building_type(
     response_model=List[BuildingsAffectedByExtremeWeather],
 )
 async def get_buildings_affected_by_extreme_weather(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
     area_names: Optional[List[str]] = Query(None),
@@ -646,7 +646,7 @@ async def get_buildings_affected_by_extreme_weather(
     response_model=List[NumberOfInDateAndExpiredEpcs],
 )
 async def get_number_of_in_date_and_expired_epcs(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     polygon: Optional[GeoJSONPolygon] = Query(None),
     area_level: Optional[str] = Query(None),
     area_names: Optional[List[str]] = Query(None),
@@ -671,7 +671,7 @@ async def get_buildings_in_bounding_box(
     min_lat: float,
     max_lat: float,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     buildings_in_bounding_box_results = await db.execute(
         text(get_buildings_in_bounding_box_query()),
@@ -701,7 +701,7 @@ async def get_filter_summary(
     min_lat: float,
     max_lat: float,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     detailed_buildings_in_bounding_box_results = await execute_with_timeout(
         db,
@@ -734,7 +734,7 @@ async def get_filterable_buildings_in_bounding_box(
     min_lat: float,
     max_lat: float,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     filterable_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
@@ -846,7 +846,9 @@ def apply_epc_fallback(building: DetailedBuilding, pg_row):
     description="returns the building that corresponds to the provided UPRN",
 )
 async def get_building_by_uprn(
-    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     building_results = run_sparql_query(
         get_building(uprn), get_forwarding_headers(req.headers)
@@ -1055,7 +1057,9 @@ async def get_energy_performance_data_by_regions(
 
 
 @router.get("/areas/regions", response_model=List[str])
-async def get_regions(db: AsyncSession = Depends(get_db)):
+async def get_regions(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct region names."""
     query = get_region_names_query()
     result = await db.execute(text(query))
@@ -1063,7 +1067,9 @@ async def get_regions(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/areas/counties", response_model=List[str])
-async def get_counties(db: AsyncSession = Depends(get_db)):
+async def get_counties(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct county names."""
     query = get_county_names_query()
     result = await db.execute(text(query))
@@ -1071,7 +1077,9 @@ async def get_counties(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/areas/districts", response_model=List[str])
-async def get_districts(db: AsyncSession = Depends(get_db)):
+async def get_districts(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct district names."""
     query = get_district_names_query()
     result = await db.execute(text(query))
@@ -1079,7 +1087,9 @@ async def get_districts(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/areas/wards", response_model=List[str])
-async def get_wards(db: AsyncSession = Depends(get_db)):
+async def get_wards(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct ward names."""
     query = get_ward_names_query()
     result = await db.execute(text(query))
@@ -1320,7 +1330,9 @@ def get_signout_links():
     description="returns wind driven rain data for the building that corresponds to the provided UPRN",
 )
 async def get_wind_driven_rain_data_by_uprn(
-    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     query, params = get_wind_driven_rain_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
@@ -1343,7 +1355,9 @@ async def get_wind_driven_rain_data_by_uprn(
     description="returns hot summer days data for the building that corresponds to the provided UPRN",
 )
 async def get_hot_summer_days_data_by_uprn(
-    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     query, params = get_hot_summer_days_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
@@ -1366,7 +1380,9 @@ async def get_hot_summer_days_data_by_uprn(
     description="returns icing days data for the building that corresponds to the provided UPRN",
 )
 async def get_icing_days_data_by_uprn(
-    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     query, params = get_icing_days_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
@@ -1385,11 +1401,13 @@ async def get_icing_days_data_by_uprn(
 
 @router.get(
     "/buildings/{uprn}/weather-summary",
-    response_model=BuildingWeatherSummaryData,
+    response_model=BuildingExtremeWeatherSummaryData,
     description="returns weather summary data for the building that corresponds to the provided UPRN",
 )
 async def get_weather_summary_data_by_uprn(
-    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     query, params = get_weather_summary_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
@@ -1402,5 +1420,5 @@ async def get_weather_summary_data_by_uprn(
             detail="Unable to find weather summary data for the provided UPRN!",
         )
 
-    row = BuildingWeatherSummarySchema.from_orm(row)
+    row = BuildingExtremeWeatherSummarySchema.from_orm(row)
     return map_building_weather_summary_response(row)

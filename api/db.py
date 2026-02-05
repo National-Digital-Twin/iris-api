@@ -18,7 +18,9 @@ db_connection_string = settings.get_db_connection_string()
 
 if db_connection_string and db_connection_string.startswith("postgres"):
     statement_timeout_ms = str(settings.DB_QUERY_TIMEOUT * 1000)
-    logger.info(f"Connecting to PostgreSQL database with query timeout: ({statement_timeout_ms}ms)")
+    logger.info(
+        f"Connecting to PostgreSQL database with query timeout: ({statement_timeout_ms}ms)"
+    )
     engine: Optional[AsyncEngine] = create_async_engine(
         db_connection_string,
         connect_args={"server_settings": {"statement_timeout": statement_timeout_ms}},
@@ -39,7 +41,7 @@ else:
     async_session_maker = None
 
 
-async def get_db():
+async def get_db() -> AsyncSession:
     if async_session_maker is None:
         raise RuntimeError("Database not configured")
     async with async_session_maker() as session:
@@ -56,7 +58,11 @@ async def execute_with_timeout(
     The timeout is set to the given timeout_seconds for the duration of the query.
     After the query is executed, the timeout is reset to the global query timeout.
     """
-    await session.execute(text(f"SET LOCAL statement_timeout = '{timeout_seconds * 1000}'"))
+    await session.execute(
+        text(f"SET LOCAL statement_timeout = '{timeout_seconds * 1000}'")
+    )
     result = await session.execute(query, params)
-    await session.execute(text(f"SET LOCAL statement_timeout = '{settings.DB_QUERY_TIMEOUT * 1000}'"))
+    await session.execute(
+        text(f"SET LOCAL statement_timeout = '{settings.DB_QUERY_TIMEOUT * 1000}'")
+    )
     return result

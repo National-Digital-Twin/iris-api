@@ -1278,11 +1278,11 @@ def get_wind_driven_rain_data_for_building_query(uprn: str):
             mpps.wdr20_315,
             mpps.wdr40_315
         FROM iris.median_projections_per_shape mpps
-        JOIN iris.building b ON ST_INTERSECTS(mpps.shape, b.point)
+        JOIN iris.building b ON ST_INTERSECTS(mpps.shape::geometry, b.point)
         WHERE b.uprn = :uprn;
     """
 
-    params = {"uprn", uprn}
+    params = {"uprn": uprn}
 
     return query, params
 
@@ -1328,6 +1328,6 @@ def get_weather_summary_data_for_building_query(uprn: str):
         WHERE uprn = :uprn
     """
 
-    params = {"uprn", uprn}
+    params = {"uprn": uprn}
 
     return query, params

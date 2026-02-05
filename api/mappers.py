@@ -5,27 +5,19 @@
 import datetime
 import re
 
-from models.dto_models import (
-    BuildingAttributePercentage,
-    BuildingAttributePercentagesPerRegion,
-    BuildingHotSummerDaysData,
-    BuildingHotSummerDaysSchema,
-    BuildingIcingDaysData,
-    BuildingIcingDaysSchema,
-    BuildingWeatherSummaryData,
-    BuildingWeatherSummarySchema,
-    BuildingWindDrivenRainData,
-    BuildingWindDrivenRainSchema,
-    DetailedBuilding,
-    EpcAndOsBuildingSchema,
-    EpcStatistics,
-    FilterableBuilding,
-    FilterableBuildingSchema,
-    FilterSummary,
-    FlaggedBuilding,
-    FlagHistory,
-    SimpleBuilding,
-)
+from models.dto_models import (BuildingAttributePercentage,
+                               BuildingAttributePercentagesPerRegion,
+                               BuildingHotSummerDaysData,
+                               BuildingHotSummerDaysSchema,
+                               BuildingIcingDaysData, BuildingIcingDaysSchema,
+                               BuildingWeatherSummaryData,
+                               BuildingWeatherSummarySchema,
+                               BuildingWindDrivenRainData,
+                               BuildingWindDrivenRainSchema, DetailedBuilding,
+                               EpcAndOsBuildingSchema, EpcStatistics,
+                               FilterableBuilding, FilterableBuildingSchema,
+                               FilterSummary, FlaggedBuilding, FlagHistory,
+                               SimpleBuilding)
 
 structure_unit_type_hierarchy = {
     "House": 1,
@@ -704,25 +696,24 @@ def map_percentage_building_attributes_per_region_response(
 def map_building_wind_driven_rain_response(
     row: BuildingWindDrivenRainSchema,
 ) -> BuildingWindDrivenRainData:
-    data = BuildingWindDrivenRainData()
-
-    data.north_two_degrees_median = row.wdr_20_0
-    data.north_east_two_degrees_median = row.wdr_20_45
-    data.east_two_degrees_median = row.wdr_20_90
-    data.south_east_two_degrees_median = row.wdr_20_135
-    data.south_two_degrees_median = row.wdr_20_180
-    data.south_west_two_degrees_median = row.wdr_20_225
-    data.west_two_degrees_median = row.wdr_20_270
-    data.north_west_two_degrees_median = row.wdr_20_315
-
-    data.north_four_degrees_median = row.wdr_40_0
-    data.north_east_four_degrees_median = row.wdr_40_45
-    data.east_four_degrees_median = row.wdr_40_90
-    data.south_east_four_degrees_median = row.wdr_40_135
-    data.south_four_degrees_median = row.wdr_40_180
-    data.south_west_four_degrees_median = row.wdr_40_225
-    data.west_four_degrees_median = row.wdr_40_270
-    data.north_west_four_degrees_median = row.wdr_40_315
+    data = BuildingWindDrivenRainData(
+        north_two_degrees_median=row.wdr20_0,
+        north_east_two_degrees_median=row.wdr20_45,
+        east_two_degrees_median=row.wdr20_90,
+        south_east_two_degrees_median=row.wdr20_135,
+        south_two_degrees_median=row.wdr20_180,
+        south_west_two_degrees_median=row.wdr20_225,
+        west_two_degrees_median=row.wdr20_270,
+        north_west_two_degrees_median=row.wdr20_315,
+        north_four_degrees_median=row.wdr40_0,
+        north_east_four_degrees_median=row.wdr40_45,
+        east_four_degrees_median=row.wdr40_90,
+        south_east_four_degrees_median=row.wdr40_135,
+        south_four_degrees_median=row.wdr40_180,
+        south_west_four_degrees_median=row.wdr40_225,
+        west_four_degrees_median=row.wdr40_270,
+        north_west_four_degrees_median=row.wdr40_315,
+    )
 
     return data
 
@@ -730,31 +721,29 @@ def map_building_wind_driven_rain_response(
 def map_building_hot_summer_days_response(
     row: BuildingHotSummerDaysSchema,
 ) -> BuildingHotSummerDaysData:
-    data = BuildingHotSummerDaysData()
-
-    data.hsd_baseline = row.hsd_baseline_01_20_median
-    data.hsd_1_5_degree_above_baseline = row.hsd_15_median
-    data.hsd_2_0_degree_above_baseline = row.hsd_20_median
-    data.hsd_2_5_degree_above_baseline = row.hsd_25_median
-    data.hsd_3_0_degree_above_baseline = row.hsd_30_median
-    data.hsd_4_0_degree_above_baseline = row.hsd_40_median
+    data = BuildingHotSummerDaysData(
+        hsd_baseline=row.hsd_baseline_01_20_median,
+        hsd_1_5_degree_above_baseline=row.hsd_15_median,
+        hsd_2_0_degree_above_baseline=row.hsd_20_median,
+        hsd_2_5_degree_above_baseline=row.hsd_25_median,
+        hsd_3_0_degree_above_baseline=row.hsd_30_median,
+        hsd_4_0_degree_above_baseline=row.hsd_40_median,
+    )
 
     return data
 
 
 def map_building_icing_days_response(row: BuildingIcingDaysSchema):
-    data = BuildingIcingDaysData()
-
-    data.icing_days = row.icingdays
+    data = BuildingIcingDaysData(icing_days=row.icingdays)
 
     return data
 
 
 def map_building_weather_summary_response(row: BuildingWeatherSummarySchema):
-    data = BuildingWeatherSummaryData()
-
-    data.affected_by_icing_days = row.affected_by_icing_days
-    data.affected_by_hot_summer_days = row.affected_by_hsds
-    data.affected_by_wind_driven_rain = row.affected_by_wdr
+    data = BuildingWeatherSummaryData(
+        affected_by_icing_days=row.affected_by_icing_days,
+        affected_by_hot_summer_days=row.affected_by_hsds,
+        affected_by_wind_driven_rain=row.affected_by_wdr,
+    )
 
     return data

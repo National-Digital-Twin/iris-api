@@ -458,43 +458,43 @@ class BuildingAttributePercentagesPerRegion(BaseModel):
 
 
 class BuildingWindDrivenRainSchema(BaseModel):
-    wdr_20_0: float
-    wdr_20_45: float
-    wdr_20_90: float
-    wdr_20_135: float
-    wdr_20_180: float
-    wdr_20_225: float
-    wdr_20_270: float
-    wdr_20_315: float
+    wdr20_0: float
+    wdr20_45: float
+    wdr20_90: float
+    wdr20_135: float
+    wdr20_180: float
+    wdr20_225: float
+    wdr20_270: float
+    wdr20_315: float
 
-    wdr_40_0: float
-    wdr_40_45: float
-    wdr_40_90: float
-    wdr_40_135: float
-    wdr_40_180: float
-    wdr_40_225: float
-    wdr_40_270: float
-    wdr_40_315: float
+    wdr40_0: float
+    wdr40_45: float
+    wdr40_90: float
+    wdr40_135: float
+    wdr40_180: float
+    wdr40_225: float
+    wdr40_270: float
+    wdr40_315: float
 
     @classmethod
-    def from_orm(obj, cls):
+    def from_orm(cls, obj):
         return cls(
-            wdr_20_0=obj.wdr_20_0,
-            wdr_20_45=obj.wdr_20_45,
-            wdr_20_90=obj.wdr_20_90,
-            wdr_20_135=obj.wdr_20_135,
-            wdr_20_180=obj.wdr_20_180,
-            wdr_20_225=obj.wdr_20_225,
-            wdr_20_270=obj.wdr_20_270,
-            wdr_20_315=obj.wdr_20_315,
-            wdr_40_0=obj.wdr_40_0,
-            wdr_40_45=obj.wdr_40_45,
-            wdr_40_90=obj.wdr_40_90,
-            wdr_40_135=obj.wdr_40_135,
-            wdr_40_180=obj.wdr_40_180,
-            wdr_40_225=obj.wdr_40_225,
-            wdr_40_270=obj.wdr_40_270,
-            wdr_40_315=obj.wdr_40_315,
+            wdr20_0=obj.wdr20_0,
+            wdr20_45=obj.wdr20_45,
+            wdr20_90=obj.wdr20_90,
+            wdr20_135=obj.wdr20_135,
+            wdr20_180=obj.wdr20_180,
+            wdr20_225=obj.wdr20_225,
+            wdr20_270=obj.wdr20_270,
+            wdr20_315=obj.wdr20_315,
+            wdr40_0=obj.wdr40_0,
+            wdr40_45=obj.wdr40_45,
+            wdr40_90=obj.wdr40_90,
+            wdr40_135=obj.wdr40_135,
+            wdr40_180=obj.wdr40_180,
+            wdr40_225=obj.wdr40_225,
+            wdr40_270=obj.wdr40_270,
+            wdr40_315=obj.wdr40_315,
         )
 
 
@@ -502,7 +502,7 @@ class BuildingWindDrivenRainData(BaseModel):
     north_two_degrees_median: float
     east_two_degrees_median: float
     south_east_two_degrees_median: float
-    south_two_degress_median: float
+    south_two_degrees_median: float
     south_west_two_degrees_median: float
     west_two_degrees_median: float
     north_west_two_degrees_median: float
@@ -511,7 +511,7 @@ class BuildingWindDrivenRainData(BaseModel):
     north_four_degrees_median: float
     east_four_degrees_median: float
     south_east_four_degrees_median: float
-    south_four_degress_median: float
+    south_four_degrees_median: float
     south_west_four_degrees_median: float
     west_four_degrees_median: float
     north_west_four_degrees_median: float
@@ -527,7 +527,7 @@ class BuildingHotSummerDaysSchema(BaseModel):
     hsd_40_median: float
 
     @classmethod
-    def from_orm(obj, cls):
+    def from_orm(cls, obj):
         return cls(
             hsd_baseline_01_20_median=obj.hsd_baseline_01_20_median,
             hsd_15_median=obj.hsd_15_median,
@@ -550,6 +550,10 @@ class BuildingHotSummerDaysData(BaseModel):
 class BuildingIcingDaysSchema(BaseModel):
     icingdays: float
 
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(icingdays=obj.icingdays)
+
 
 class BuildingIcingDaysData(BaseModel):
     icing_days: float
@@ -561,7 +565,7 @@ class BuildingWeatherSummarySchema(BaseModel):
     affected_by_wdr: bool
 
     @classmethod
-    def from_orm(obj, cls):
+    def from_orm(cls, obj):
         return cls(
             affected_by_icing_days=obj.affected_by_icing_days,
             affected_by_hsds=obj.affected_by_hsds,

@@ -1325,7 +1325,7 @@ async def get_wind_driven_rain_data_by_uprn(
     query, params = get_wind_driven_rain_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
 
-    row = result.one_or_none()
+    row = result.first()
 
     if row is None:
         raise HTTPException(
@@ -1348,7 +1348,7 @@ async def get_hot_summer_days_data_by_uprn(
     query, params = get_hot_summer_days_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
 
-    row = result.one_or_none()
+    row = result.first()
 
     if row is None:
         raise HTTPException(
@@ -1371,7 +1371,7 @@ async def get_icing_days_data_by_uprn(
     query, params = get_icing_days_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
 
-    row = result.one_or_none()
+    row = result.first()
 
     if row is None:
         raise HTTPException(
@@ -1394,7 +1394,7 @@ async def get_weather_summary_data_by_uprn(
     query, params = get_weather_summary_data_for_building_query(uprn)
     result = await db.execute(text(query), params)
 
-    row = result.one_or_none()
+    row = result.first()
 
     if row is None:
         raise HTTPException(

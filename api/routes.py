@@ -778,6 +778,14 @@ class InvalidateFlag(BaseModel):
     "/invalidate-flag",
     description="Post to this endpoint to invalidate an existing flag.",
     response_model=str,
+    responses={
+        422: {
+            "description": "assessmentTypeOverride must be a subclass of ndt_ont:AssessToBeFalse"
+        },
+        500: {
+            "description": ACCESS_API_CALL_ERROR,
+        },
+    },
 )
 def invalidate_flag(request: Request, invalid: InvalidateFlag):
     try:
@@ -792,7 +800,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     assessor, person = create_person_insert(user["user_id"], user["username"])
     assessment_time = ISO_8601_URL + datetime.now().isoformat()
     assessment = data_uri_stub + str(uuid.uuid4())
-    assessment_subclasses, assessment_list = get_subtypes(
+    assessment_subclasses, _ = get_subtypes(
         prefix_dict["ndt_ont"] + "AssessToBeFalse",
         get_forwarding_headers(request.headers),
     )
@@ -979,6 +987,10 @@ def get_all_flagged_buildings(req: Request):
     "/flag-to-investigate",
     description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
     response_model=str,
+    responses={
+        422: {"description": "URI of flagged entity must be provided"},
+        500: {"description": ACCESS_API_CALL_ERROR},
+    },
 )
 def post_flag_investigate(request: Request, visited: IesEntity):
     if not visited or not visited.uri:
@@ -1340,6 +1352,11 @@ def get_signout_links():
     "/buildings/{uprn}/wind-driven-rain",
     response_model=BuildingWindDrivenRainData,
     description="returns wind driven rain data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "detail": "Unable to find wind driven rain data for the provided UPRN!"
+        }
+    }
 )
 async def get_wind_driven_rain_data_by_uprn(
     uprn: str,
@@ -1365,6 +1382,11 @@ async def get_wind_driven_rain_data_by_uprn(
     "/buildings/{uprn}/hot-summer-days",
     response_model=BuildingHotSummerDaysData,
     description="returns hot summer days data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find hot summer days data for the provided UPRN!"
+        }
+    }
 )
 async def get_hot_summer_days_data_by_uprn(
     uprn: str,
@@ -1390,6 +1412,11 @@ async def get_hot_summer_days_data_by_uprn(
     "/buildings/{uprn}/icing-days",
     response_model=BuildingIcingDaysData,
     description="returns icing days data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find icing days data for the provided UPRN!"
+        }
+    }
 )
 async def get_icing_days_data_by_uprn(
     uprn: str,
@@ -1415,6 +1442,11 @@ async def get_icing_days_data_by_uprn(
     "/buildings/{uprn}/weather-summary",
     response_model=BuildingExtremeWeatherSummaryData,
     description="returns weather summary data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find weather summary data for the provided UPRN!"
+        }
+    }
 )
 async def get_weather_summary_data_by_uprn(
     uprn: str,

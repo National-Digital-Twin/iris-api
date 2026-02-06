@@ -5,7 +5,7 @@
 import configparser
 import uuid
 from datetime import datetime
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Tuple
 
 import requests
 from access import AccessClient
@@ -1017,45 +1017,53 @@ def post_flag_investigate(request: Request, visited: IesEntity):
 
 @router.get("/data/climate/wind-driven-rain")
 async def get_wind_driven_rain_data(
-    geojson=Depends(fetch_geojson_for_wind_driven_rain),
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_wind_driven_rain)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/climate/icing-days")
-async def get_icing_days_data(geojson=Depends(fetch_geojson_for_icing_days)):
+async def get_icing_days_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_icing_days)],
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/climate/hot-summer-days")
-async def get_hot_summer_days_data(geojson=Depends(fetch_geojson_for_hot_summer_days)):
+async def get_hot_summer_days_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_hot_summer_days)],
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/wards")
 async def get_energy_performance_data_by_wards(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_wards),
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_energy_performance_by_wards)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/districts")
 async def get_energy_performance_data_by_districts(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_districts),
+    geojson: Annotated[
+        Tuple, Depends(fetch_geojson_for_energy_performance_by_districts)
+    ],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/counties")
 async def get_energy_performance_data_by_counties(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_counties),
+    geojson: Annotated[
+        Tuple, Depends(fetch_geojson_for_energy_performance_by_counties)
+    ],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/regions")
 async def get_energy_performance_data_by_regions(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_regions),
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_energy_performance_by_regions)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 

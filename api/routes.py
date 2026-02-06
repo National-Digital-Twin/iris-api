@@ -426,9 +426,9 @@ def post_person(per: IesPerson):
 @router.get("/dashboard/epc-ratings", response_model=List[CountOfEpcRatings])
 async def get_epc_ratings_for_dashboard(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -444,9 +444,9 @@ async def get_epc_ratings_for_dashboard(
 )
 async def get_epc_ratings_per_region_for_dashboard(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_query(
         per_region=True, polygon=polygon, area_level=area_level, area_names=area_names
@@ -462,9 +462,11 @@ async def get_epc_ratings_per_region_for_dashboard(
 )
 async def get_epc_ratings_by_area_level_for_dashboard(
     db: Annotated[AsyncSession, Depends(get_db)],
-    group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
-    filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    filter_area_names: Optional[List[str]] = Query(None),
+    group_by_level: Annotated[str, Query(..., pattern=AREA_LEVEL_PATTERN)],
+    filter_area_level: Annotated[
+        Optional[str], Query(pattern=AREA_LEVEL_PATTERN)
+    ] = None,
+    filter_area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_by_area_level_query(
         group_by_level=group_by_level,
@@ -481,10 +483,10 @@ async def get_epc_ratings_by_area_level_for_dashboard(
 )
 async def get_epc_ratings_by_feature_for_dashboard(
     db: Annotated[AsyncSession, Depends(get_db)],
-    feature: str = Query(..., pattern=FEATURE_PATTERN),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    feature: Annotated[str, Query(..., pattern=FEATURE_PATTERN)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_by_features_query(
         feature=feature, polygon=polygon, area_level=area_level, area_names=area_names
@@ -500,9 +502,9 @@ async def get_epc_ratings_by_feature_for_dashboard(
 )
 async def get_percentage_building_attributes_per_region(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_percentage_of_buildings_attributes_per_region_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -518,9 +520,9 @@ async def get_percentage_building_attributes_per_region(
 )
 async def get_sap_rating_overtime(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     national_query = get_national_avg_sap_rating_overtime_query()
     national_results = await db.execute(text(national_query))
@@ -553,7 +555,7 @@ async def get_sap_rating_overtime(
 )
 async def get_sap_rating_overtime_by_property_type(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: GeoJSONPolygon = Query(...),
+    polygon: Annotated[GeoJSONPolygon, Query(...)],
 ):
     query, params = get_sap_rating_overtime_by_property_type_query(polygon=polygon)
     results = await db.execute(text(query), params)
@@ -566,9 +568,11 @@ async def get_sap_rating_overtime_by_property_type(
 )
 async def get_sap_rating_overtime_by_area(
     db: Annotated[AsyncSession, Depends(get_db)],
-    group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
-    filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    filter_area_names: Optional[List[str]] = Query(None),
+    group_by_level: Annotated[str, Query(..., pattern=AREA_LEVEL_PATTERN)],
+    filter_area_level: Annotated[
+        Optional[str], Query(pattern=AREA_LEVEL_PATTERN)
+    ] = None,
+    filter_area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_sap_rating_overtime_by_area_query(
         group_by_level=group_by_level,
@@ -585,9 +589,9 @@ async def get_sap_rating_overtime_by_area(
 )
 async def get_epc_ratings_overtime(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_epc_ratings_overtime_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -604,9 +608,9 @@ async def get_epc_ratings_overtime(
 )
 async def get_fuel_types_by_building_type(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_fuel_types_by_building_type_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -623,9 +627,9 @@ async def get_fuel_types_by_building_type(
 )
 async def get_buildings_affected_by_extreme_weather(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     has_filter = bool(polygon or (area_level and area_names))
     query, params = get_buildings_affected_by_extreme_weather_data_query(
@@ -647,9 +651,9 @@ async def get_buildings_affected_by_extreme_weather(
 )
 async def get_number_of_in_date_and_expired_epcs(
     db: Annotated[AsyncSession, Depends(get_db)],
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None),
-    area_names: Optional[List[str]] = Query(None),
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_number_of_in_date_and_expired_epcs_query(
         polygon=polygon, area_level=area_level, area_names=area_names

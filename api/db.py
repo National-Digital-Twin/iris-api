@@ -4,11 +4,12 @@
 
 
 import logging
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 from config import get_settings
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    create_async_engine)
 from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ else:
     async_session_maker = None
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncIterator[AsyncSession]:
     if async_session_maker is None:
         raise RuntimeError("Database not configured")
     async with async_session_maker() as session:

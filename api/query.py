@@ -27,6 +27,13 @@ def get_building(uprn: str) -> str:
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
             OPTIONAL {{
+                ?addressMatch a ies:AssessToBeTrue ;
+                    ies:assessed data:UPRN_{uprn} ;
+                    ies:confidence ?matchScore ;
+                    ies:isPartOf ?epc_assessment .
+            }}
+
+            OPTIONAL {{
                 ?_bf a ?builtForm .
                 ?builtForm a building:BuiltForm .
                 ?_bf ies:isStateOf ?structureUnit .
@@ -37,7 +44,7 @@ def get_building(uprn: str) -> str:
                 ?structureUnitType a building:StructureUnitType .
                 ?_sut ies:isStateOf ?structureUnit .
             }}
-        }} ORDER BY DESC(?lodgementDate)
+        }} ORDER BY ASC(BOUND(?matchScore)) DESC(?matchScore) DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -62,6 +69,13 @@ def get_roof_for_building(uprn: str) -> str:
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
             OPTIONAL {{
+                ?addressMatch a ies:AssessToBeTrue ;
+                    ies:assessed data:UPRN_{uprn} ;
+                    ies:confidence ?matchScore ;
+                    ies:isPartOf ?epc_assessment .
+            }}
+
+            OPTIONAL {{
                 ?_rc a ?roofConstruction .
                 ?roofConstruction a building:RoofConstruction .
                 ?_rc ies:isPartOf ?structureUnitState .
@@ -78,7 +92,7 @@ def get_roof_for_building(uprn: str) -> str:
                 ?roofInsulationThickness a building:RoofInsulationThickness .
                 ?_rit ies:isPartOf ?structureUnitState .
             }}
-        }} ORDER BY DESC(?lodgementDate)
+        }} ORDER BY ASC(BOUND(?matchScore)) DESC(?matchScore) DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -103,6 +117,13 @@ def get_floor_for_building(uprn: str) -> str:
         ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
         OPTIONAL {{
+            ?addressMatch a ies:AssessToBeTrue ;
+                ies:assessed data:UPRN_{uprn} ;
+                ies:confidence ?matchScore ;
+                ies:isPartOf ?epc_assessment .
+        }}
+
+        OPTIONAL {{
             ?_fc a ?floorConstruction .
             ?floorConstruction a building:FloorConstruction .
             ?_fc ies:isPartOf ?structureUnitState .
@@ -114,7 +135,7 @@ def get_floor_for_building(uprn: str) -> str:
             ?_fi ies:isPartOf ?structureUnitState .
         }}
 
-        }} ORDER BY DESC(?lodgementDate)
+        }} ORDER BY ASC(BOUND(?matchScore)) DESC(?matchScore) DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -139,6 +160,13 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
             OPTIONAL {{
+                ?addressMatch a ies:AssessToBeTrue ;
+                    ies:assessed data:UPRN_{uprn} ;
+                    ies:confidence ?matchScore ;
+                    ies:isPartOf ?epc_assessment .
+            }}
+
+            OPTIONAL {{
                 ?_wc a ?wallConstruction .
                 ?wallConstruction a building:WallConstruction .
                 ?_wc ies:isPartOf ?structureUnitState .
@@ -156,7 +184,7 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
                 ?_wg ies:isPartOf ?structureUnitState .
             }}
 
-        }} ORDER BY DESC(?lodgementDate)
+        }} ORDER BY ASC(BOUND(?matchScore)) DESC(?matchScore) DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -177,7 +205,15 @@ def get_fueltype_for_building(uprn: str) -> str:
                                         a building:StructureUnit .
                         ?structureUnitState a building:StructureUnitState ;
                                 ies:isStateOf ?structureUnit .
-
+                        ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
+                        
+                        OPTIONAL {{
+                            ?addressMatch a ies:AssessToBeTrue ;
+                                ies:assessed data:UPRN_{uprn} ;
+                                ies:confidence ?matchScore ;
+                                ies:isPartOf ?epc_assessment .
+                        }}
+                                
                         BIND(STR(?structureUnitState) AS ?s)            # cast structure unit state URI to a string
                         BIND(REPLACE(?s, ".*_([0-9]{{8}})$", "$1") AS ?yyyymmdd)    # get last 8 digits
 
@@ -195,7 +231,7 @@ def get_fueltype_for_building(uprn: str) -> str:
 
                         # create the final date component
                         BIND( xsd:date(CONCAT(?yyyy, "-", ?mm, "-", ?dd)) AS ?lodgement )
-                    }} ORDER BY DESC(?lodgement) LIMIT 1
+                    }} ORDER BY ASC(BOUND(?matchScore)) DESC(?matchScore) DESC(?lodgement) LIMIT 1
             }}
                 GRAPH <http://ndtp.com/graph/heating-v2> {{
                         ?structureUnitState building:isServicedBy ?heatingSystem .
@@ -204,6 +240,47 @@ def get_fueltype_for_building(uprn: str) -> str:
         }}
     """
 
+def get_epc_attributes_pg() -> str:
+    return """
+        WITH selected_dwelling AS (
+            SELECT uprn, toid, post_code, point
+            FROM iris.building
+            WHERE is_residential = true
+                AND uprn = :uprn
+        )
+        SELECT
+            sd.uprn, sd.toid, sd.post_code,
+            su.built_form, 
+            su.type as structure_unit_type,
+            su.fuel_type,
+            ea.lodgement_date, su.window_glazing,
+            su.wall_construction, su.wall_insulation,
+            su.floor_construction, su.floor_insulation,
+            su.roof_construction, 
+            su.roof_insulation as roof_insulation_location,
+            su.roof_insulation_thickness
+        FROM
+            selected_dwelling sd
+        LEFT JOIN LATERAL (
+            SELECT
+                id,
+                uprn,
+                epc_rating,
+                lodgement_date
+            FROM
+                iris.epc_assessment
+            WHERE
+                uprn = sd.uprn
+            ORDER BY
+                match_score desc nulls first,
+                lodgement_date desc nulls last,
+                id desc
+            LIMIT 1
+        ) ea ON TRUE
+        LEFT JOIN iris.structure_unit su
+        ON
+            su.epc_assessment_id = ea.id;
+    """
 
 def get_all_ngd_attributes_pg() -> str:
     return """
@@ -243,6 +320,7 @@ def get_all_ngd_attributes_pg() -> str:
                 iris.epc_assessment
             WHERE uprn = :uprn
             ORDER BY
+                match_score desc nulls first,
                 lodgement_date desc nulls last,
                 id desc
             LIMIT 1) ea
@@ -383,6 +461,7 @@ def get_buildings_in_bounding_box_query() -> str:
             WHERE
                 uprn = fb.uprn
             ORDER BY
+                match_score desc nulls first,
                 lodgement_date desc nulls last,
                 id desc
             LIMIT 1
@@ -433,6 +512,7 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
             WHERE
                 uprn = fb.uprn
             ORDER BY
+                match_score desc nulls first,
                 lodgement_date desc nulls last,
                 id desc
             LIMIT 1

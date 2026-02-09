@@ -2,7 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from utils import expand_wales_region, WELSH_REGIONS
+from utils import WELSH_REGIONS, expand_wales_region
 
 EPC_ACTIVE_TRUE = "epc_active = true"
 WELSH_REGIONS_SQL = ", ".join(f"'{region}'" for region in sorted(WELSH_REGIONS))
@@ -240,6 +240,7 @@ def get_fueltype_for_building(uprn: str) -> str:
         }}
     """
 
+
 def get_epc_attributes_pg() -> str:
     return """
         WITH selected_dwelling AS (
@@ -281,6 +282,7 @@ def get_epc_attributes_pg() -> str:
         ON
             su.epc_assessment_id = ea.id;
     """
+
 
 def get_all_ngd_attributes_pg() -> str:
     return """
@@ -1252,5 +1254,80 @@ def get_sap_rating_overtime_by_area_query(
         GROUP BY {group_by}
         ORDER BY date ASC, name ASC;
     """
+
+    return query, params
+
+
+def get_wind_driven_rain_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT mpps.wdr20_0,
+            mpps.wdr40_0,
+            mpps.wdr20_45,
+            mpps.wdr40_45,
+            mpps.wdr20_90,
+            mpps.wdr40_90,
+            mpps.wdr20_135,
+            mpps.wdr40_135,
+            mpps.wdr20_180,
+            mpps.wdr40_180,
+            mpps.wdr20_225,
+            mpps.wdr40_225,
+            mpps.wdr20_270,
+            mpps.wdr40_270,
+            mpps.wdr20_315,
+            mpps.wdr40_315
+        FROM iris.median_projections_per_shape mpps
+        JOIN iris.building b ON ST_INTERSECTS(mpps.shape::geometry, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_hot_summer_days_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT hsd_baseline_01_20_median,
+            hsd_15_median,
+            hsd_20_median,
+            hsd_25_median,
+            hsd_30_median,
+            hsd_40_median
+        FROM iris.median_summer_days_per_projection msdpp
+        JOIN iris.building b ON ST_INTERSECTS(msdpp.shape, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_icing_days_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT icingdays
+        FROM iris.annual_count_of_icing_days_1991_2020 icing_days
+        JOIN iris.building b ON ST_INTERSECTS(icing_days.shape, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_weather_summary_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT affected_by_icing_days, affected_by_hsds, affected_by_wdr
+        FROM iris.building_extreme_weather_analytics
+        WHERE uprn = :uprn
+    """
+
+    params = {"uprn": uprn}
 
     return query, params

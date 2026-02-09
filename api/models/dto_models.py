@@ -180,8 +180,8 @@ class EpcAndOsBuildingSchema(BaseModel):
     toid: str
     lattitude: float
     longitude: float
-    epc_rating: Optional[str]
-    structure_unit_type: Optional[str]
+    epc_rating: Optional[str] = None
+    structure_unit_type: Optional[str] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -202,27 +202,27 @@ class EpcAndOsBuildingSchema(BaseModel):
 class FilterableBuildingSchema(BaseModel):
     uprn: str
     post_code: str
-    built_form: Optional[str]
-    lodgement_date: Optional[datetime.date]
-    fuel_type: Optional[str]
-    window_glazing: Optional[str]
-    wall_construction: Optional[str]
-    wall_insulation: Optional[str]
-    floor_construction: Optional[str]
-    floor_insulation: Optional[str]
-    has_roof_solar_panels: Optional[bool]
-    roof_material: Optional[str]
-    roof_aspect_area_facing_north_m2: Optional[float]
-    roof_aspect_area_facing_north_east_m2: Optional[float]
-    roof_aspect_area_facing_east_m2: Optional[float]
-    roof_aspect_area_facing_south_east_m2: Optional[float]
-    roof_aspect_area_facing_south_m2: Optional[float]
-    roof_aspect_area_facing_south_west_m2: Optional[float]
-    roof_aspect_area_facing_west_m2: Optional[float]
-    roof_aspect_area_facing_north_west_m2: Optional[float]
-    roof_construction: Optional[str]
-    roof_insulation: Optional[str]
-    roof_insulation_thickness: Optional[str]
+    built_form: Optional[str] = None
+    lodgement_date: Optional[datetime.date] = None
+    fuel_type: Optional[str] = None
+    window_glazing: Optional[str] = None
+    wall_construction: Optional[str] = None
+    wall_insulation: Optional[str] = None
+    floor_construction: Optional[str] = None
+    floor_insulation: Optional[str] = None
+    has_roof_solar_panels: Optional[bool] = None
+    roof_material: Optional[str] = None
+    roof_aspect_area_facing_north_m2: Optional[float] = None
+    roof_aspect_area_facing_north_east_m2: Optional[float] = None
+    roof_aspect_area_facing_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_m2: Optional[float] = None
+    roof_aspect_area_facing_south_west_m2: Optional[float] = None
+    roof_aspect_area_facing_west_m2: Optional[float] = None
+    roof_aspect_area_facing_north_west_m2: Optional[float] = None
+    roof_construction: Optional[str] = None
+    roof_insulation: Optional[str] = None
+    roof_insulation_thickness: Optional[str] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -368,7 +368,7 @@ class FuelTypesByBuildingType(BaseModel):
 class AverageSapRatingPerLodgementDate(BaseModel):
     date: datetime.date
     national_avg_sap_rating: float
-    filtered_avg_sap_rating: Optional[float]
+    filtered_avg_sap_rating: Optional[float] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -420,17 +420,17 @@ class EpcRatingCountsOvertime(BaseModel):
 class BuildingsAffectedByExtremeWeather(BaseModel):
     number_of_buildings: int
     filtered_number_of_buildings: Optional[int] = None
-    affected_by_icing_days: Optional[bool]
-    affected_by_hsds: Optional[bool]
-    affected_by_wdr: Optional[bool]
+    affected_by_icing_days: Optional[bool] = None
+    affected_by_hsds: Optional[bool] = None
+    affected_by_wdr: Optional[bool] = None
 
     @classmethod
     def from_orm(cls, obj, has_filter: bool = True):
         return cls(
             number_of_buildings=obj.number_of_buildings,
-            filtered_number_of_buildings=obj.filtered_number_of_buildings
-            if has_filter
-            else None,
+            filtered_number_of_buildings=(
+                obj.filtered_number_of_buildings if has_filter else None
+            ),
             affected_by_icing_days=obj.affected_by_icing_days,
             affected_by_hsds=obj.affected_by_hsds,
             affected_by_wdr=obj.affected_by_wdr,
@@ -455,3 +455,125 @@ class BuildingAttributePercentage(BaseModel):
 class BuildingAttributePercentagesPerRegion(BaseModel):
     region_name: str
     attributes: List[BuildingAttributePercentage]
+
+
+class BuildingWindDrivenRainSchema(BaseModel):
+    wdr20_0: float
+    wdr20_45: float
+    wdr20_90: float
+    wdr20_135: float
+    wdr20_180: float
+    wdr20_225: float
+    wdr20_270: float
+    wdr20_315: float
+
+    wdr40_0: float
+    wdr40_45: float
+    wdr40_90: float
+    wdr40_135: float
+    wdr40_180: float
+    wdr40_225: float
+    wdr40_270: float
+    wdr40_315: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            wdr20_0=obj.wdr20_0,
+            wdr20_45=obj.wdr20_45,
+            wdr20_90=obj.wdr20_90,
+            wdr20_135=obj.wdr20_135,
+            wdr20_180=obj.wdr20_180,
+            wdr20_225=obj.wdr20_225,
+            wdr20_270=obj.wdr20_270,
+            wdr20_315=obj.wdr20_315,
+            wdr40_0=obj.wdr40_0,
+            wdr40_45=obj.wdr40_45,
+            wdr40_90=obj.wdr40_90,
+            wdr40_135=obj.wdr40_135,
+            wdr40_180=obj.wdr40_180,
+            wdr40_225=obj.wdr40_225,
+            wdr40_270=obj.wdr40_270,
+            wdr40_315=obj.wdr40_315,
+        )
+
+
+class BuildingWindDrivenRainData(BaseModel):
+    north_two_degrees_median: float
+    east_two_degrees_median: float
+    south_east_two_degrees_median: float
+    south_two_degrees_median: float
+    south_west_two_degrees_median: float
+    west_two_degrees_median: float
+    north_west_two_degrees_median: float
+    north_east_two_degrees_median: float
+
+    north_four_degrees_median: float
+    east_four_degrees_median: float
+    south_east_four_degrees_median: float
+    south_four_degrees_median: float
+    south_west_four_degrees_median: float
+    west_four_degrees_median: float
+    north_west_four_degrees_median: float
+    north_east_four_degrees_median: float
+
+
+class BuildingHotSummerDaysSchema(BaseModel):
+    hsd_baseline_01_20_median: float
+    hsd_15_median: float
+    hsd_20_median: float
+    hsd_25_median: float
+    hsd_30_median: float
+    hsd_40_median: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            hsd_baseline_01_20_median=obj.hsd_baseline_01_20_median,
+            hsd_15_median=obj.hsd_15_median,
+            hsd_20_median=obj.hsd_20_median,
+            hsd_25_median=obj.hsd_25_median,
+            hsd_30_median=obj.hsd_30_median,
+            hsd_40_median=obj.hsd_40_median,
+        )
+
+
+class BuildingHotSummerDaysData(BaseModel):
+    hsd_baseline: float
+    hsd_1_5_degree_above_baseline: float
+    hsd_2_0_degree_above_baseline: float
+    hsd_2_5_degree_above_baseline: float
+    hsd_3_0_degree_above_baseline: float
+    hsd_4_0_degree_above_baseline: float
+
+
+class BuildingIcingDaysSchema(BaseModel):
+    icingdays: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(icingdays=obj.icingdays)
+
+
+class BuildingIcingDaysData(BaseModel):
+    icing_days: float
+
+
+class BuildingExtremeWeatherSummarySchema(BaseModel):
+    affected_by_icing_days: Optional[bool] = None
+    affected_by_hsds: Optional[bool] = None
+    affected_by_wdr: Optional[bool] = None
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            affected_by_icing_days=obj.affected_by_icing_days,
+            affected_by_hsds=obj.affected_by_hsds,
+            affected_by_wdr=obj.affected_by_wdr,
+        )
+
+
+class BuildingExtremeWeatherSummaryData(BaseModel):
+    affected_by_icing_days: bool
+    affected_by_hot_summer_days: bool
+    affected_by_wind_driven_rain: bool

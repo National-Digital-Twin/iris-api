@@ -3,19 +3,16 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import datetime
+from unittest.mock import AsyncMock
 
+import db as db_module
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 # Import from your routes module (adjust path if needed)
 import api.routes as routes
 from api.config import get_settings
-
-from fastapi import FastAPI
-from unittest.mock import AsyncMock
-import db as db_module
-
 
 # --- Dummy classes and helper functions for testing ---
 
@@ -278,6 +275,9 @@ def test_read_root(client):
     assert response.json() == {"ok": True}
 
 
+@pytest.mark.skip(
+    reason="Endpoints for flagging have been disabled as they need to be reworked"
+)
 def test_invalidate_flag_bad_assessment_type(client, monkeypatch):
     monkeypatch.setattr(
         routes.access_client, "get_user_details", lambda headers: dummy_user
@@ -294,6 +294,9 @@ def test_invalidate_flag_bad_assessment_type(client, monkeypatch):
     assert response.status_code == 422
 
 
+@pytest.mark.skip(
+    reason="Endpoints for flagging have been disabled as they need to be reworked"
+)
 def test_get_flagged_buildings(client, monkeypatch):
     dummy_result = {
         "results": {
@@ -315,6 +318,9 @@ def test_get_flagged_buildings(client, monkeypatch):
     assert data[0]["UPRN"] == "12345678"
 
 
+@pytest.mark.skip(
+    reason="Endpoints for flagging have been disabled as they need to be reworked"
+)
 def test_post_flag_investigate(client, monkeypatch):
     monkeypatch.setattr(
         routes.access_client, "get_user_details", lambda headers: dummy_user
@@ -601,7 +607,7 @@ def test_post_assessment_not_found(monkeypatch):
 def test_epc_ratings_invalid_area_level(client):
     response = client.get(
         "/dashboard/epc-ratings",
-        params={"area_level": "invalid", "area_names": ["Test"]}
+        params={"area_level": "invalid", "area_names": ["Test"]},
     )
     assert response.status_code == 422
 
@@ -619,7 +625,7 @@ def test_epc_ratings_valid_area_level(client, monkeypatch):
 
     response = client.get(
         "/dashboard/epc-ratings",
-        params={"area_level": "region", "area_names": ["Test"]}
+        params={"area_level": "region", "area_names": ["Test"]},
     )
     assert response.status_code == 200
 
@@ -637,7 +643,7 @@ def test_sap_rating_overtime_invalid_area_level(client, monkeypatch):
 
     response = client.get(
         "/dashboard/sap-rating-overtime",
-        params={"area_level": "invalid", "area_names": ["Test"]}
+        params={"area_level": "invalid", "area_names": ["Test"]},
     )
     assert response.status_code == 422
 
@@ -645,7 +651,7 @@ def test_sap_rating_overtime_invalid_area_level(client, monkeypatch):
 def test_fuel_types_invalid_area_level(client):
     response = client.get(
         "/dashboard/fuel-types-by-building-type",
-        params={"area_level": "invalid", "area_names": ["Test"]}
+        params={"area_level": "invalid", "area_names": ["Test"]},
     )
     assert response.status_code == 422
 
@@ -653,7 +659,7 @@ def test_fuel_types_invalid_area_level(client):
 def test_building_attributes_invalid_area_level(client):
     response = client.get(
         "/dashboard/building-attributes-percentage-per-region",
-        params={"area_level": "invalid", "area_names": ["Test"]}
+        params={"area_level": "invalid", "area_names": ["Test"]},
     )
     assert response.status_code == 422
 
@@ -670,16 +676,14 @@ def test_epc_ratings_by_feature_valid_feature(client, monkeypatch):
     monkeypatch.setattr(db_module, "get_db", mock_get_db)
 
     response = client.get(
-        "/dashboard/epc-ratings-by-feature",
-        params={"feature": "glazing_types"}
+        "/dashboard/epc-ratings-by-feature", params={"feature": "glazing_types"}
     )
     assert response.status_code == 200
 
 
 def test_epc_ratings_by_feature_invalid_feature(client):
     response = client.get(
-        "/dashboard/epc-ratings-by-feature",
-        params={"feature": "invalid_feature"}
+        "/dashboard/epc-ratings-by-feature", params={"feature": "invalid_feature"}
     )
     assert response.status_code == 422
 
@@ -700,8 +704,8 @@ def test_epc_ratings_by_feature_with_area_filter(client, monkeypatch):
         params={
             "feature": "fuel_types",
             "area_level": "region",
-            "area_names": ["East Midlands", "Eastern"]
-        }
+            "area_names": ["East Midlands", "Eastern"],
+        },
     )
     assert response.status_code == 200
 
@@ -712,8 +716,8 @@ def test_epc_ratings_by_feature_invalid_area_level(client):
         params={
             "feature": "glazing_types",
             "area_level": "invalid",
-            "area_names": ["Test"]
-        }
+            "area_names": ["Test"],
+        },
     )
     assert response.status_code == 422
 
@@ -730,16 +734,14 @@ def test_epc_ratings_by_area_level_valid(client, monkeypatch):
     monkeypatch.setattr(db_module, "get_db", mock_get_db)
 
     response = client.get(
-        "/dashboard/epc-ratings-by-area-level",
-        params={"group_by_level": "region"}
+        "/dashboard/epc-ratings-by-area-level", params={"group_by_level": "region"}
     )
     assert response.status_code == 200
 
 
 def test_epc_ratings_by_area_level_invalid_group_by(client):
     response = client.get(
-        "/dashboard/epc-ratings-by-area-level",
-        params={"group_by_level": "invalid"}
+        "/dashboard/epc-ratings-by-area-level", params={"group_by_level": "invalid"}
     )
     assert response.status_code == 422
 
@@ -760,8 +762,8 @@ def test_epc_ratings_by_area_level_with_filter(client, monkeypatch):
         params={
             "group_by_level": "county",
             "filter_area_level": "region",
-            "filter_area_names": ["East Midlands"]
-        }
+            "filter_area_names": ["East Midlands"],
+        },
     )
     assert response.status_code == 200
 
@@ -772,7 +774,7 @@ def test_epc_ratings_by_area_level_invalid_filter_level(client):
         params={
             "group_by_level": "county",
             "filter_area_level": "invalid",
-            "filter_area_names": ["Test"]
-        }
+            "filter_area_names": ["Test"],
+        },
     )
     assert response.status_code == 422

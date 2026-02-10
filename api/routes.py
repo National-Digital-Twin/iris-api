@@ -774,19 +774,19 @@ class InvalidateFlag(BaseModel):
     securityLabel: EDH = default_security_label
 
 
-@router.post(
-    "/invalidate-flag",
-    description="Post to this endpoint to invalidate an existing flag.",
-    response_model=str,
-    responses={
-        422: {
-            "description": "assessmentTypeOverride must be a subclass of ndt_ont:AssessToBeFalse"
-        },
-        500: {
-            "description": ACCESS_API_CALL_ERROR,
-        },
-    },
-)
+# @router.post(
+#     "/invalidate-flag",
+#     description="Post to this endpoint to invalidate an existing flag.",
+#     response_model=str,
+#     responses={
+#         422: {
+#             "description": "assessmentTypeOverride must be a subclass of ndt_ont:AssessToBeFalse"
+#         },
+#         500: {
+#             "description": ACCESS_API_CALL_ERROR,
+#         },
+#     },
+# )
 def invalidate_flag(request: Request, invalid: InvalidateFlag):
     try:
         user = access_client.get_user_details(request.headers)
@@ -961,37 +961,37 @@ async def get_building_by_uprn(
     return building
 
 
-@router.get(
-    "/buildings/{uprn}/flag-history",
-    response_model=list[FlagHistory],
-    description="Gets the flagging and assessment history for a specific building identified by its UPRN",
-)
+# @router.get(
+#     "/buildings/{uprn}/flag-history",
+#     response_model=list[FlagHistory],
+#     description="Gets the flagging and assessment history for a specific building identified by its UPRN",
+# )
 def get_building_flag_history(uprn: str, req: Request):
     query = get_flag_history(uprn)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_structure_unit_flag_history_response(results)
 
 
-@router.get(
-    "/flagged-buildings",
-    description="Gets all buildings that have been flagged",
-    response_model=list[FlaggedBuilding],
-)
+# @router.get(
+#     "/flagged-buildings",
+#     description="Gets all buildings that have been flagged",
+#     response_model=list[FlaggedBuilding],
+# )
 def get_all_flagged_buildings(req: Request):
     query = get_flagged_buildings()
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_flagged_buildings_response(results)
 
 
-@router.post(
-    "/flag-to-investigate",
-    description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
-    response_model=str,
-    responses={
-        422: {"description": "URI of flagged entity must be provided"},
-        500: {"description": ACCESS_API_CALL_ERROR},
-    },
-)
+# @router.post(
+#     "/flag-to-investigate",
+#     description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
+#     response_model=str,
+#     responses={
+#         422: {"description": "URI of flagged entity must be provided"},
+#         500: {"description": ACCESS_API_CALL_ERROR},
+#     },
+# )
 def post_flag_investigate(request: Request, visited: IesEntity):
     if not visited or not visited.uri:
         raise HTTPException(422, "URI of flagged entity must be provided")

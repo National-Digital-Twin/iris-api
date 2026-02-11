@@ -82,6 +82,7 @@ from requests import codes, exceptions
 from services.climate_service import (fetch_geojson_for_hot_summer_days,
                                       fetch_geojson_for_icing_days,
                                       fetch_geojson_for_wind_driven_rain)
+from services.demographics_service import fetch_geojson_for_deprivation
 from services.energy_performance_service import (
     fetch_geojson_for_energy_performance_by_counties,
     fetch_geojson_for_energy_performance_by_districts,
@@ -1044,6 +1045,12 @@ async def get_icing_days_data(
 @router.get("/data/climate/hot-summer-days")
 async def get_hot_summer_days_data(
     geojson: Annotated[Tuple, Depends(fetch_geojson_for_hot_summer_days)],
+):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/demographics/deprivation")
+async def get_deprivation_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_deprivation)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 

@@ -259,6 +259,21 @@ def test_test_user_passthrough(client, monkeypatch):
     assert data[0] == dummy_user
 
 
+def test_get_deprivation_data_returns_geojson(client):
+    expected_geojson = '{"type":"FeatureCollection","features":[]}'
+
+    async def override_fetch_geojson_for_deprivation():
+        return expected_geojson
+
+    client.app.dependency_overrides[routes.fetch_geojson_for_deprivation] = (
+        override_fetch_geojson_for_deprivation
+    )
+
+    response = client.get("/data/demographics/deprivation")
+    assert response.status_code == 200
+    assert response.json() == {"type": "FeatureCollection", "features": []}
+
+
 def test_version_info(client):
     routes.config["metadata"] = {"version": "1.0"}
     response = client.get("/version-info")

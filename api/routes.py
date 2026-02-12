@@ -30,6 +30,7 @@ from models.dto_models import (AverageSapRatingPerLodgementDate,
                                BuildingHotSummerDaysData,
                                BuildingHotSummerDaysSchema,
                                BuildingIcingDaysData, BuildingIcingDaysSchema,
+                               BuildingsByDeprivationDimension,
                                BuildingsAffectedByExtremeWeather,
                                BuildingWindDrivenRainData,
                                BuildingWindDrivenRainSchema, CountOfEpcRatings,
@@ -48,6 +49,7 @@ from models.ies_models import (EDH, ClassificationEmum, IesAccount,
                                IesPerson, IesState, IesThing, ies)
 from pydantic import AfterValidator, BaseModel
 from query import (get_all_ngd_attributes_pg, get_building,
+                   get_buildings_by_deprivation_dimension_query,
                    get_buildings_affected_by_extreme_weather_data_query,
                    get_buildings_in_bounding_box_query,
                    get_count_of_epc_rating_by_area_level_query,
@@ -661,6 +663,25 @@ async def get_number_of_in_date_and_expired_epcs(
     )
     results = await db.execute(text(query), params)
     mapped_results = [NumberOfInDateAndExpiredEpcs.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get(
+    "/dashboard/buildings-by-deprivation-dimension",
+    response_model=List[BuildingsByDeprivationDimension],
+)
+async def get_buildings_by_deprivation_dimension_for_dashboard(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
+):
+    query, params = get_buildings_by_deprivation_dimension_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
+    results = await db.execute(text(query), params)
+    mapped_results = [BuildingsByDeprivationDimension.from_orm(row) for row in results]
 
     return mapped_results
 

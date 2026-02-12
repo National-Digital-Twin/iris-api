@@ -679,6 +679,32 @@ def test_building_attributes_invalid_area_level(client):
     assert response.status_code == 422
 
 
+def test_buildings_by_deprivation_dimension_invalid_area_level(client):
+    response = client.get(
+        "/dashboard/buildings-by-deprivation-dimension",
+        params={"area_level": "invalid", "area_names": ["Test"]},
+    )
+    assert response.status_code == 422
+
+
+def test_buildings_by_deprivation_dimension_valid_area_level(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/buildings-by-deprivation-dimension",
+        params={"area_level": "region", "area_names": ["Test"]},
+    )
+    assert response.status_code == 200
+
+
 def test_epc_ratings_by_feature_valid_feature(client, monkeypatch):
     mock_result = AsyncMock()
     mock_result.__iter__ = lambda self: iter([])

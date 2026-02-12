@@ -57,3 +57,16 @@ async def fetch_geojson_for_hot_summer_days(
     row = result.fetchone()
     return row[0]
 
+async def fetch_geojson_for_sunlight_hours(
+    db: AsyncSession = Depends(get_db),
+) -> Tuple: 
+    """Query the database to fetch sunlight hours data in GeoJSON format. 
+
+    Keyword arguments: 
+    db -- an AsyncSession for sql alchemy 
+    """
+    result = await db.execute(
+        text("SELECT geojson::text AS geojson FROM iris.annual_average_sunlight_hours_geojson;")
+    )
+    row = result.fetchone()
+    return row[0]

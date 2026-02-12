@@ -270,6 +270,20 @@ def test_get_deprivation_data_returns_geojson(client):
     assert response.status_code == 200
     assert response.json() == {"type": "FeatureCollection", "features": []}
 
+def test_get_sunlight_hours_data_returns_geojson(client):
+    expected_geojson = '{"type":"FeatureCollection","features":[]}'
+
+    async def override_fetch_geojson_for_sunlight_hours():
+        return expected_geojson
+
+    client.app.dependency_overrides[routes.fetch_geojson_for_sunlight_hours] = (
+        override_fetch_geojson_for_sunlight_hours
+    )
+
+    response = client.get("/data/climate/sunlight-hours")
+    assert response.status_code == 200
+    assert response.json() == {"type": "FeatureCollection", "features": []}
+
 
 def test_version_info(client):
     routes.config["metadata"] = {"version": "1.0"}

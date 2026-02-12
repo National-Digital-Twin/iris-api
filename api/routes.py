@@ -83,7 +83,8 @@ from rdflib import Graph
 from requests import codes, exceptions
 from services.climate_service import (fetch_geojson_for_hot_summer_days,
                                       fetch_geojson_for_icing_days,
-                                      fetch_geojson_for_wind_driven_rain)
+                                      fetch_geojson_for_wind_driven_rain,
+                                      fetch_geojson_for_sunlight_hours)
 from services.demographics_service import fetch_geojson_for_deprivation
 from services.energy_performance_service import (
     fetch_geojson_for_energy_performance_by_counties,
@@ -1066,6 +1067,12 @@ async def get_icing_days_data(
 @router.get("/data/climate/hot-summer-days")
 async def get_hot_summer_days_data(
     geojson: Annotated[Tuple, Depends(fetch_geojson_for_hot_summer_days)],
+):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/climate/sunlight-hours")
+async def get_sunlight_hours_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_sunlight_hours)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 

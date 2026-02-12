@@ -19,6 +19,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 ## Unreleased
 
 - [DPAV-2486]: Added endpoint to fetch deprivation data geojson
+- [DPAV-2499]: Added endpoint to fetch dashboard analytics deprivation data 
 
 ## [0.95.5] - 2026-02-03
 

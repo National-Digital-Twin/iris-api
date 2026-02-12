@@ -952,6 +952,64 @@ def get_number_of_in_date_and_expired_epcs_query(
     return query, params
 
 
+def get_buildings_by_deprivation_dimension_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
+    """Get percentage of households in each deprivation dimension (0-4)."""
+    params = {}
+    where_conditions = []
+
+    if polygon:
+        params["polygon"] = polygon
+        where_conditions.append(
+            "ST_Intersects(mb.geom, ST_Transform(ST_GeomFromGeoJSON(:polygon), 27700))"
+        )
+    elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
+        params["area_names"] = area_names
+        area_column = area_level_to_column(area_level)
+        where_conditions.append(
+            f"""EXISTS (
+                SELECT 1
+                FROM iris.building_epc_analytics bea
+                WHERE bea.{area_column} = ANY(:area_names)
+                AND ST_Intersects(bea.point, ST_Transform(mb.geom, 4326))
+            )"""
+        )
+
+    where_clause = ""
+    if where_conditions:
+        where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    query = f"""
+        WITH filtered_metrics AS (
+            SELECT dm.dep_0, dm.dep_1, dm.dep_2, dm.dep_3, dm.dep_4
+            FROM iris.ons_deprivation_metrics_analytics dm
+            JOIN iris.oa_boundaries_analytics mb
+              ON dm.oa_id = mb.oa21cd
+            {where_clause}
+        ),
+        totals AS (
+            SELECT
+                COALESCE(SUM(dep_0), 0) AS dep_0,
+                COALESCE(SUM(dep_1), 0) AS dep_1,
+                COALESCE(SUM(dep_2), 0) AS dep_2,
+                COALESCE(SUM(dep_3), 0) AS dep_3,
+                COALESCE(SUM(dep_4), 0) AS dep_4
+            FROM filtered_metrics
+        )
+        SELECT
+            COALESCE(ROUND(100.0 * dep_0 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_0_pct,
+            COALESCE(ROUND(100.0 * dep_1 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_1_pct,
+            COALESCE(ROUND(100.0 * dep_2 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_2_pct,
+            COALESCE(ROUND(100.0 * dep_3 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_3_pct,
+            COALESCE(ROUND(100.0 * dep_4 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_4_pct
+        FROM totals;
+    """
+
+    return query, params
+
+
 def get_region_names_query() -> str:
     return f"""
         SELECT DISTINCT {_wales_grouped_column("region_name")} AS region_name

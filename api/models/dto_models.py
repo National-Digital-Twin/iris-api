@@ -447,6 +447,24 @@ class NumberOfInDateAndExpiredEpcs(BaseModel):
         return cls(year=obj.year, expired=obj.expired, active=obj.active)
 
 
+class BuildingsByDeprivationDimension(BaseModel):
+    dep_0_pct: float
+    dep_1_pct: float
+    dep_2_pct: float
+    dep_3_pct: float
+    dep_4_pct: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            dep_0_pct=obj.dep_0_pct,
+            dep_1_pct=obj.dep_1_pct,
+            dep_2_pct=obj.dep_2_pct,
+            dep_3_pct=obj.dep_3_pct,
+            dep_4_pct=obj.dep_4_pct,
+        )
+
+
 class BuildingAttributePercentage(BaseModel):
     label: str
     value: float

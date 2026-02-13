@@ -5,19 +5,29 @@
 import datetime
 import re
 
-from models.dto_models import (BuildingAttributePercentage,
-                               BuildingAttributePercentagesPerRegion,
-                               BuildingExtremeWeatherSummaryData,
-                               BuildingExtremeWeatherSummarySchema,
-                               BuildingHotSummerDaysData,
-                               BuildingHotSummerDaysSchema,
-                               BuildingIcingDaysData, BuildingIcingDaysSchema,
-                               BuildingWindDrivenRainData,
-                               BuildingWindDrivenRainSchema, DetailedBuilding,
-                               EpcAndOsBuildingSchema, EpcStatistics,
-                               FilterableBuilding, FilterableBuildingSchema,
-                               FilterSummary, FlaggedBuilding, FlagHistory,
-                               SimpleBuilding)
+from models.dto_models import (
+    BuildingAttributePercentage,
+    BuildingAttributePercentagesPerRegion,
+    BuildingDetailsForBulkDownload,
+    BuildingDetailsForBulkDownloadSchema,
+    BuildingExtremeWeatherSummaryData,
+    BuildingExtremeWeatherSummarySchema,
+    BuildingHotSummerDaysData,
+    BuildingHotSummerDaysSchema,
+    BuildingIcingDaysData,
+    BuildingIcingDaysSchema,
+    BuildingWindDrivenRainData,
+    BuildingWindDrivenRainSchema,
+    DetailedBuilding,
+    EpcAndOsBuildingSchema,
+    EpcStatistics,
+    FilterableBuilding,
+    FilterableBuildingSchema,
+    FilterSummary,
+    FlaggedBuilding,
+    FlagHistory,
+    SimpleBuilding,
+)
 
 structure_unit_type_hierarchy = {
     "House": 1,
@@ -752,6 +762,65 @@ def map_building_weather_summary_response(row: BuildingExtremeWeatherSummarySche
         affected_by_wind_driven_rain=(
             row.affected_by_wdr if row.affected_by_wdr is not None else False
         ),
+    )
+
+    return data
+
+
+def map_building_details_for_bulk_download(row: BuildingDetailsForBulkDownloadSchema):
+    data = BuildingDetailsForBulkDownload(
+        uprn=row.uprn,
+        longitude=row.longitude,
+        latitude=row.lattitude,
+        first_line_of_address=row.first_line_of_address,
+        energy_rating=row.epc_rating,
+        toid=row.toid,
+        lodgement_date=row.lodgement_date,
+        built_form=row.built_form,
+        floor_construction=row.floor_construction,
+        floor_insulation=row.floor_insulation,
+        roof_construction=row.roof_construction,
+        roof_insulation_location=row.roof_insulation,
+        roof_insulation_thickness=row.roof_insulation_thickness,
+        wall_construction=row.wall_construction,
+        wall_insulation=row.wall_insulation,
+        window_glazing=row.window_glazing,
+        fueltype=row.fuel_type,
+        roof_material=row.roof_material,
+        solar_panel_presence=row.solar_panel_presence,
+        roof_shape=row.roof_shape,
+        roof_aspect_area_facing_north_m2=row.roof_aspect_area_facing_north_m2,
+        roof_aspect_area_facing_north_east_m2=row.roof_aspect_area_facing_north_east_m2,
+        roof_aspect_area_facing_east_m2=row.roof_aspect_area_facing_east_m2,
+        roof_aspect_area_facing_south_east_m2=row.roof_aspect_area_facing_south_east_m2,
+        roof_aspect_area_facing_south_m2=row.roof_aspect_area_facing_south_m2,
+        roof_aspect_area_facing_south_west_m2=row.roof_aspect_area_facing_south_west_m2,
+        roof_aspect_area_facing_west_m2=row.roof_aspect_area_facing_west_m2,
+        roof_aspect_area_facing_north_west_m2=row.roof_aspect_area_facing_north_west_m2,
+        roof_aspect_area_indeterminable_m2=row.roof_aspect_area_indeterminable_m2,
+        north_two_degrees_median=row.wdr20_0,
+        north_east_two_degrees_median=row.wdr20_45,
+        east_two_degrees_median=row.wdr20_90,
+        south_east_two_degrees_median=row.wdr20_135,
+        south_two_degrees_median=row.wdr20_180,
+        south_west_two_degrees_median=row.wdr20_225,
+        west_two_degrees_median=row.wdr20_270,
+        north_west_two_degrees_median=row.wdr20_315,
+        north_four_degrees_median=row.wdr40_0,
+        north_east_four_degrees_median=row.wdr40_45,
+        east_four_degrees_median=row.wdr40_90,
+        south_east_four_degrees_median=row.wdr40_135,
+        south_four_degrees_median=row.wdr40_180,
+        south_west_four_degrees_median=row.wdr40_225,
+        west_four_degrees_median=row.wdr40_270,
+        north_west_four_degrees_median=row.wdr40_315,
+        hsd_baseline=row.hsd_baseline_01_20_median,
+        hsd_1_5_degree_above_baseline=row.hsd_15_median,
+        hsd_2_0_degree_above_baseline=row.hsd_20_median,
+        hsd_2_5_degree_above_baseline=row.hsd_25_median,
+        hsd_3_0_degree_above_baseline=row.hsd_30_median,
+        hsd_4_0_degree_above_baseline=row.hsd_40_median,
+        icing_days=row.icingdays,
     )
 
     return data

@@ -448,20 +448,30 @@ class NumberOfInDateAndExpiredEpcs(BaseModel):
 
 
 class BuildingsByDeprivationDimension(BaseModel):
-    dep_0_pct: float
-    dep_1_pct: float
-    dep_2_pct: float
-    dep_3_pct: float
-    dep_4_pct: float
+    dep_3_pct: Optional[float] = None
+    dep_4_pct: Optional[float] = None
+    dep_3_count: Optional[int] = None
+    dep_4_count: Optional[int] = None
+    unfiltered_dep_3_pct: float
+    unfiltered_dep_4_pct: float
+    min_dep_3_pct: float
+    max_dep_3_pct: float
+    min_dep_4_pct: float
+    max_dep_4_pct: float
 
     @classmethod
     def from_orm(cls, obj):
         return cls(
-            dep_0_pct=obj.dep_0_pct,
-            dep_1_pct=obj.dep_1_pct,
-            dep_2_pct=obj.dep_2_pct,
             dep_3_pct=obj.dep_3_pct,
             dep_4_pct=obj.dep_4_pct,
+            dep_3_count=obj.dep_3_count,
+            dep_4_count=obj.dep_4_count,
+            unfiltered_dep_3_pct=obj.unfiltered_dep_3_pct,
+            unfiltered_dep_4_pct=obj.unfiltered_dep_4_pct,
+            min_dep_3_pct=obj.min_dep_3_pct,
+            max_dep_3_pct=obj.max_dep_3_pct,
+            min_dep_4_pct=obj.min_dep_4_pct,
+            max_dep_4_pct=obj.max_dep_4_pct,
         )
 
 

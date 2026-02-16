@@ -969,7 +969,6 @@ def get_buildings_by_deprivation_dimension_query(
         )
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
-        params["area_names"] = area_names
         params["area_level"] = area_level
         join_clause = """
             JOIN (
@@ -1428,5 +1427,79 @@ def get_weather_summary_data_for_building_query(uprn: str):
     """
 
     params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_building_details_for_bulk_download_query(uprns: [str]):
+
+    query = """
+        SELECT b.uprn,
+            b.toid,
+            b.first_line_of_address,
+            b.post_code,
+            ST_X(b.point) AS longitude,
+            ST_Y(b.point) AS lattitude,
+            ea.epc_rating,
+            ea.lodgement_date,
+            ea.sap_rating,
+            ea.expiry_date,
+            su.type,
+            su.built_form,
+            su.fuel_type,
+            su.window_glazing,
+            su.wall_construction,
+            su.wall_insulation,
+            su.roof_construction,
+            su.roof_insulation,
+            su.roof_insulation_thickness,
+            su.floor_construction,
+            su.floor_insulation,
+            COALESCE(su.has_roof_solar_panels, bsu.has_roof_solar_panels) AS has_roof_solar_panels,
+            COALESCE(su.roof_material, bsu.roof_material) AS roof_material,
+            COALESCE(su.roof_shape, bsu.roof_shape) AS roof_shape,
+            COALESCE(su.roof_aspect_area_facing_north_m2, bsu.roof_aspect_area_facing_north_m2) AS roof_aspect_area_facing_north_m2,
+            COALESCE(su.roof_aspect_area_facing_north_east_m2, bsu.roof_aspect_area_facing_north_east_m2) AS roof_aspect_area_facing_north_east_m2,
+            COALESCE(su.roof_aspect_area_facing_east_m2, bsu.roof_aspect_area_facing_east_m2) AS roof_aspect_area_facing_east_m2,
+            COALESCE(su.roof_aspect_area_facing_south_east_m2, bsu.roof_aspect_area_facing_south_east_m2) AS roof_aspect_area_facing_south_east_m2,
+            COALESCE(su.roof_aspect_area_facing_south_m2, bsu.roof_aspect_area_facing_south_m2) AS roof_aspect_area_facing_south_m2,
+            COALESCE(su.roof_aspect_area_facing_south_west_m2, bsu.roof_aspect_area_facing_south_west_m2) AS roof_aspect_area_facing_south_west_m2,
+            COALESCE(su.roof_aspect_area_facing_west_m2, bsu.roof_aspect_area_facing_west_m2) AS roof_aspect_area_facing_west_m2,
+            COALESCE(su.roof_aspect_area_facing_north_west_m2, bsu.roof_aspect_area_facing_north_west_m2) AS roof_aspect_area_facing_north_west_m2,
+            COALESCE(su.roof_aspect_area_indeterminable_m2, bsu.roof_aspect_area_indeterminable_m2) AS roof_aspect_area_indeterminable_m2,
+            mpps.wdr20_0,
+            mpps.wdr40_0,
+            mpps.wdr20_45,
+            mpps.wdr40_45,
+            mpps.wdr20_90,
+            mpps.wdr40_90,
+            mpps.wdr20_135,
+            mpps.wdr40_135,
+            mpps.wdr20_180,
+            mpps.wdr40_180,
+            mpps.wdr20_225,
+            mpps.wdr40_225,
+            mpps.wdr20_270,
+            mpps.wdr40_270,
+            mpps.wdr20_315,
+            mpps.wdr40_315,
+            msdpp.hsd_baseline_01_20_median,
+            msdpp.hsd_15_median,
+            msdpp.hsd_20_median,
+            msdpp.hsd_25_median,
+            msdpp.hsd_30_median,
+            msdpp.hsd_40_median,
+            acoid.icingdays
+        FROM iris.building b
+        LEFT JOIN iris.epc_assessment ea ON ea.uprn = b.uprn
+        LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id
+        LEFT JOIN iris.structure_unit bsu ON b.uprn = bsu.uprn
+        JOIN iris.median_projections_per_shape mpps ON ST_INTERSECTS(mpps.shape::geometry, b.point)
+        JOIN iris.median_summer_days_per_projection msdpp ON ST_INTERSECTS(msdpp.shape, b.point)
+        JOIN iris.annual_count_of_icing_days_1991_2020 acoid ON ST_INTERSECTS(acoid.shape, b.point)
+        WHERE b.uprn IN :uprns;
+    """
+
+    params = {"uprns": uprns}
 
     return query, params

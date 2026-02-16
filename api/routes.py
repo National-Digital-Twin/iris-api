@@ -1514,16 +1514,16 @@ async def get_building_details_for_bulk_download(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     query, params = get_building_details_for_bulk_download_query(uprns)
-    queryText = text(query)
-    queryText = queryText.bindparams(bindparam("uprns", expanding=True))
+    query_text = text(query)
+    query_text = query_text.bindparams(bindparam("uprns", expanding=True))
 
-    results = await db.execute(queryText, params)
+    results = await db.execute(query_text, params)
 
-    schemaResults = [
+    schema_results = [
         BuildingDetailsForBulkDownloadSchema.from_orm(row) for row in results
     ]
-    mappedResults = [
-        map_building_details_for_bulk_download(result) for result in schemaResults
+    mapped_results = [
+        map_building_details_for_bulk_download(result) for result in schema_results
     ]
 
-    return mappedResults
+    return mapped_results

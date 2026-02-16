@@ -1028,15 +1028,15 @@ def get_buildings_by_deprivation_dimension_query(
         )
         SELECT
             CASE
-                WHEN :has_filter THEN COALESCE(ROUND(100.0 * dep_3 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0)
+                WHEN :has_filter THEN COALESCE(ROUND(100.0 * totals.dep_3 / NULLIF(totals.dep_0 + totals.dep_1 + totals.dep_2 + totals.dep_3 + totals.dep_4, 0), 2), 0)
                 ELSE NULL
             END AS dep_3_pct,
             CASE
-                WHEN :has_filter THEN COALESCE(ROUND(100.0 * dep_4 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0)
+                WHEN :has_filter THEN COALESCE(ROUND(100.0 * totals.dep_4 / NULLIF(totals.dep_0 + totals.dep_1 + totals.dep_2 + totals.dep_3 + totals.dep_4, 0), 2), 0)
                 ELSE NULL
             END AS dep_4_pct,
-            dep_3 AS dep_3_count,
-            dep_4 AS dep_4_count,
+            totals.dep_3 AS dep_3_count,
+            totals.dep_4 AS dep_4_count,
             COALESCE(ROUND(100.0 * unfiltered_totals.dep_3 / NULLIF(unfiltered_totals.dep_0 + unfiltered_totals.dep_1 + unfiltered_totals.dep_2 + unfiltered_totals.dep_3 + unfiltered_totals.dep_4, 0), 2), 0) AS unfiltered_dep_3_pct,
             COALESCE(ROUND(100.0 * unfiltered_totals.dep_4 / NULLIF(unfiltered_totals.dep_0 + unfiltered_totals.dep_1 + unfiltered_totals.dep_2 + unfiltered_totals.dep_3 + unfiltered_totals.dep_4, 0), 2), 0) AS unfiltered_dep_4_pct,
             filtered_bounds.min_dep_3_pct,

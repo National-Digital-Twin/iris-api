@@ -958,6 +958,9 @@ def get_buildings_by_deprivation_dimension_query(
     """Get percentage of households in each deprivation dimension (0-4)."""
     params = {}
     where_conditions = []
+    has_filter = bool(polygon or (area_level and area_names))
+    params["has_filter"] = has_filter
+    join_clause = ""
 
     if polygon:
         params["polygon"] = polygon
@@ -966,14 +969,16 @@ def get_buildings_by_deprivation_dimension_query(
         )
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
-        params["area_names"] = area_names
-        area_column = area_level_to_column(area_level)
-        where_conditions.append(f"""EXISTS (
-                SELECT 1
-                FROM iris.building_epc_analytics bea
-                WHERE bea.{area_column} = ANY(:area_names)
-                AND ST_Intersects(bea.point, ST_Transform(mb.geom, 4326))
-            )""")
+        params["area_level"] = area_level
+        join_clause = """
+            JOIN (
+                SELECT DISTINCT oa21cd
+                FROM iris.oa_area_membership_mv
+                WHERE area_level = :area_level
+                  AND area_name = ANY(:area_names)
+            ) am
+              ON dm.oa_id = am.oa21cd
+        """
 
     where_clause = ""
     if where_conditions:
@@ -985,7 +990,22 @@ def get_buildings_by_deprivation_dimension_query(
             FROM iris.ons_deprivation_metrics_analytics dm
             JOIN iris.oa_boundaries_analytics mb
               ON dm.oa_id = mb.oa21cd
+            {join_clause}
             {where_clause}
+        ),
+        filtered_oa_percentages AS (
+            SELECT
+                COALESCE(100.0 * dep_3 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 0) AS dep_3_pct,
+                COALESCE(100.0 * dep_4 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 0) AS dep_4_pct
+            FROM filtered_metrics
+        ),
+        filtered_bounds AS (
+            SELECT
+                COALESCE(ROUND(MIN(dep_3_pct), 2), 0) AS min_dep_3_pct,
+                COALESCE(ROUND(MAX(dep_3_pct), 2), 0) AS max_dep_3_pct,
+                COALESCE(ROUND(MIN(dep_4_pct), 2), 0) AS min_dep_4_pct,
+                COALESCE(ROUND(MAX(dep_4_pct), 2), 0) AS max_dep_4_pct
+            FROM filtered_oa_percentages
         ),
         totals AS (
             SELECT
@@ -995,14 +1015,36 @@ def get_buildings_by_deprivation_dimension_query(
                 COALESCE(SUM(dep_3), 0) AS dep_3,
                 COALESCE(SUM(dep_4), 0) AS dep_4
             FROM filtered_metrics
+        ),
+        unfiltered_totals AS (
+            SELECT
+                COALESCE(SUM(dm.dep_0), 0) AS dep_0,
+                COALESCE(SUM(dm.dep_1), 0) AS dep_1,
+                COALESCE(SUM(dm.dep_2), 0) AS dep_2,
+                COALESCE(SUM(dm.dep_3), 0) AS dep_3,
+                COALESCE(SUM(dm.dep_4), 0) AS dep_4
+            FROM iris.ons_deprivation_metrics_analytics dm
         )
         SELECT
-            COALESCE(ROUND(100.0 * dep_0 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_0_pct,
-            COALESCE(ROUND(100.0 * dep_1 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_1_pct,
-            COALESCE(ROUND(100.0 * dep_2 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_2_pct,
-            COALESCE(ROUND(100.0 * dep_3 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_3_pct,
-            COALESCE(ROUND(100.0 * dep_4 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0) AS dep_4_pct
-        FROM totals;
+            CASE
+                WHEN :has_filter THEN COALESCE(ROUND(100.0 * dep_3 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0)
+                ELSE NULL
+            END AS dep_3_pct,
+            CASE
+                WHEN :has_filter THEN COALESCE(ROUND(100.0 * dep_4 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 2), 0)
+                ELSE NULL
+            END AS dep_4_pct,
+            dep_3 AS dep_3_count,
+            dep_4 AS dep_4_count,
+            COALESCE(ROUND(100.0 * unfiltered_totals.dep_3 / NULLIF(unfiltered_totals.dep_0 + unfiltered_totals.dep_1 + unfiltered_totals.dep_2 + unfiltered_totals.dep_3 + unfiltered_totals.dep_4, 0), 2), 0) AS unfiltered_dep_3_pct,
+            COALESCE(ROUND(100.0 * unfiltered_totals.dep_4 / NULLIF(unfiltered_totals.dep_0 + unfiltered_totals.dep_1 + unfiltered_totals.dep_2 + unfiltered_totals.dep_3 + unfiltered_totals.dep_4, 0), 2), 0) AS unfiltered_dep_4_pct,
+            filtered_bounds.min_dep_3_pct,
+            filtered_bounds.max_dep_3_pct,
+            filtered_bounds.min_dep_4_pct,
+            filtered_bounds.max_dep_4_pct
+        FROM totals
+        CROSS JOIN unfiltered_totals
+        CROSS JOIN filtered_bounds;
     """
 
     return query, params

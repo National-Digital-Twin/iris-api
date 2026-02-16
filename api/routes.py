@@ -14,6 +14,7 @@ from db import execute_with_timeout, get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from mappers import (map_bounded_buildings_response,
                      map_bounded_filterable_buildings_response,
+                     map_building_details_for_bulk_download,
                      map_building_hot_summer_days_response,
                      map_building_icing_days_response,
                      map_building_weather_summary_response,
@@ -25,13 +26,15 @@ from mappers import (map_bounded_buildings_response,
                      map_structure_unit_flag_history_response)
 from models.dto_models import (AverageSapRatingPerLodgementDate,
                                BuildingAttributePercentagesPerRegion,
+                               BuildingDetailsForBulkDownload,
+                               BuildingDetailsForBulkDownloadSchema,
                                BuildingExtremeWeatherSummaryData,
                                BuildingExtremeWeatherSummarySchema,
                                BuildingHotSummerDaysData,
                                BuildingHotSummerDaysSchema,
                                BuildingIcingDaysData, BuildingIcingDaysSchema,
-                               BuildingsByDeprivationDimension,
                                BuildingsAffectedByExtremeWeather,
+                               BuildingsByDeprivationDimension,
                                BuildingWindDrivenRainData,
                                BuildingWindDrivenRainSchema, CountOfEpcRatings,
                                CountOfEpcRatingsPerRegion, DetailedBuilding,
@@ -39,7 +42,6 @@ from models.dto_models import (AverageSapRatingPerLodgementDate,
                                EpcRatingCountsOvertime, EPCRatingsByCategory,
                                EpcStatistics, FilterableBuilding,
                                FilterableBuildingSchema, FilterSummary,
-                               FlaggedBuilding, FlagHistory,
                                FuelTypesByBuildingType,
                                NumberOfInDateAndExpiredEpcs,
                                SapRatingTimelineDataPoint, SimpleBuilding)
@@ -49,8 +51,9 @@ from models.ies_models import (EDH, ClassificationEmum, IesAccount,
                                IesPerson, IesState, IesThing, ies)
 from pydantic import AfterValidator, BaseModel
 from query import (get_all_ngd_attributes_pg, get_building,
-                   get_buildings_by_deprivation_dimension_query,
+                   get_building_details_for_bulk_download_query,
                    get_buildings_affected_by_extreme_weather_data_query,
+                   get_buildings_by_deprivation_dimension_query,
                    get_buildings_in_bounding_box_query,
                    get_count_of_epc_rating_by_area_level_query,
                    get_count_of_epc_rating_by_features_query,
@@ -83,15 +86,15 @@ from rdflib import Graph
 from requests import codes, exceptions
 from services.climate_service import (fetch_geojson_for_hot_summer_days,
                                       fetch_geojson_for_icing_days,
-                                      fetch_geojson_for_wind_driven_rain,
-                                      fetch_geojson_for_sunlight_hours)
+                                      fetch_geojson_for_sunlight_hours,
+                                      fetch_geojson_for_wind_driven_rain)
 from services.demographics_service import fetch_geojson_for_deprivation
 from services.energy_performance_service import (
     fetch_geojson_for_energy_performance_by_counties,
     fetch_geojson_for_energy_performance_by_districts,
     fetch_geojson_for_energy_performance_by_regions,
     fetch_geojson_for_energy_performance_by_wards)
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_headers as get_forwarding_headers
 from utils import has_bindings, validate_geojson_polygon
@@ -1070,11 +1073,13 @@ async def get_hot_summer_days_data(
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
+
 @router.get("/data/climate/sunlight-hours")
 async def get_sunlight_hours_data(
     geojson: Annotated[Tuple, Depends(fetch_geojson_for_sunlight_hours)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
 
 @router.get("/data/demographics/deprivation")
 async def get_deprivation_data(
@@ -1388,10 +1393,8 @@ def get_signout_links():
     response_model=BuildingWindDrivenRainData,
     description="returns wind driven rain data for the building that corresponds to the provided UPRN",
     responses={
-        404: {
-            "detail": "Unable to find wind driven rain data for the provided UPRN!"
-        }
-    }
+        404: {"detail": "Unable to find wind driven rain data for the provided UPRN!"}
+    },
 )
 async def get_wind_driven_rain_data_by_uprn(
     uprn: str,
@@ -1421,7 +1424,7 @@ async def get_wind_driven_rain_data_by_uprn(
         404: {
             "description": "Unable to find hot summer days data for the provided UPRN!"
         }
-    }
+    },
 )
 async def get_hot_summer_days_data_by_uprn(
     uprn: str,
@@ -1448,10 +1451,8 @@ async def get_hot_summer_days_data_by_uprn(
     response_model=BuildingIcingDaysData,
     description="returns icing days data for the building that corresponds to the provided UPRN",
     responses={
-        404: {
-            "description": "Unable to find icing days data for the provided UPRN!"
-        }
-    }
+        404: {"description": "Unable to find icing days data for the provided UPRN!"}
+    },
 )
 async def get_icing_days_data_by_uprn(
     uprn: str,
@@ -1481,7 +1482,7 @@ async def get_icing_days_data_by_uprn(
         404: {
             "description": "Unable to find weather summary data for the provided UPRN!"
         }
-    }
+    },
 )
 async def get_weather_summary_data_by_uprn(
     uprn: str,
@@ -1501,3 +1502,28 @@ async def get_weather_summary_data_by_uprn(
 
     row = BuildingExtremeWeatherSummarySchema.from_orm(row)
     return map_building_weather_summary_response(row)
+
+
+@router.get(
+    "/data/buildings/download",
+    response_model=List[BuildingDetailsForBulkDownload],
+    description="returns a list of building details for the provided uprns",
+)
+async def get_building_details_for_bulk_download(
+    uprns: Annotated[List[str], Query()],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_building_details_for_bulk_download_query(uprns)
+    query_text = text(query)
+    query_text = query_text.bindparams(bindparam("uprns", expanding=True))
+
+    results = await db.execute(query_text, params)
+
+    schema_results = [
+        BuildingDetailsForBulkDownloadSchema.from_orm(row) for row in results
+    ]
+    mapped_results = [
+        map_building_details_for_bulk_download(result) for result in schema_results
+    ]
+
+    return mapped_results

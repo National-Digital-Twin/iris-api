@@ -16,6 +16,8 @@ from models.dto_models import (
     BuildingHotSummerDaysSchema,
     BuildingIcingDaysData,
     BuildingIcingDaysSchema,
+    BuildingSunlightHoursData,
+    BuildingSunlightHoursSchema,
     BuildingWindDrivenRainData,
     BuildingWindDrivenRainSchema,
     DetailedBuilding,
@@ -745,6 +747,14 @@ def map_building_hot_summer_days_response(
 
 def map_building_icing_days_response(row: BuildingIcingDaysSchema):
     data = BuildingIcingDaysData(icing_days=row.icingdays)
+
+    return data
+
+
+def map_building_sunlight_hours_response(row: BuildingSunlightHoursSchema):
+    data = BuildingSunlightHoursData(
+        sunlight_hours=row.sunlight_hours, daily_sunlight_hours=row.daily_sunlight_hours
+    )
 
     return data
 

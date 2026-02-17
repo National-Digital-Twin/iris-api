@@ -1419,6 +1419,20 @@ def get_icing_days_data_for_building_query(uprn: str):
     return query, params
 
 
+def get_sunlight_hours_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT sunlight_hours, ROUND((sunlight_hours / 365)::numeric, 3) AS daily_sunlight_hours
+        FROM iris.average_annual_count_of_sunlight_hours_5km aacosh
+        JOIN iris.building b ON ST_INTERSECTS(aacosh.shape, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
 def get_weather_summary_data_for_building_query(uprn: str):
 
     query = """

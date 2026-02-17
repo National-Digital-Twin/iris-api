@@ -969,6 +969,7 @@ def get_buildings_by_deprivation_dimension_query(
         )
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
+        params["area_names"] = area_names
         params["area_level"] = area_level
         join_clause = """
             JOIN (

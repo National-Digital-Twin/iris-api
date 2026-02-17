@@ -17,6 +17,7 @@ from mappers import (map_bounded_buildings_response,
                      map_building_details_for_bulk_download,
                      map_building_hot_summer_days_response,
                      map_building_icing_days_response,
+                     map_building_sunlight_hours_response,
                      map_building_weather_summary_response,
                      map_building_wind_driven_rain_response,
                      map_epc_statistics_response, map_filter_summary_response,
@@ -35,6 +36,8 @@ from models.dto_models import (AverageSapRatingPerLodgementDate,
                                BuildingIcingDaysData, BuildingIcingDaysSchema,
                                BuildingsAffectedByExtremeWeather,
                                BuildingsByDeprivationDimension,
+                               BuildingSunlightHoursData,
+                               BuildingSunlightHoursSchema,
                                BuildingWindDrivenRainData,
                                BuildingWindDrivenRainSchema, CountOfEpcRatings,
                                CountOfEpcRatingsPerRegion, DetailedBuilding,
@@ -79,6 +82,7 @@ from query import (get_all_ngd_attributes_pg, get_building,
                    get_sap_rating_overtime_by_area_query,
                    get_sap_rating_overtime_by_property_type_query,
                    get_statistics_for_wards,
+                   get_sunlight_hours_data_for_building_query,
                    get_walls_and_windows_for_building, get_ward_names_query,
                    get_weather_summary_data_for_building_query,
                    get_wind_driven_rain_data_for_building_query)
@@ -1472,6 +1476,36 @@ async def get_icing_days_data_by_uprn(
 
     row = BuildingIcingDaysSchema.from_orm(row)
     return map_building_icing_days_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/hours-of-sunlight",
+    response_model=BuildingSunlightHoursData,
+    description="returns hours of sunlight data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find hours of sunlight data for the provided UPRN!"
+        }
+    },
+)
+async def get_sunlight_hours_data_by_uprn(
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_sunlight_hours_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find hours of sunlight data for the provided UPRN!",
+        )
+
+    row = BuildingSunlightHoursSchema.from_orm(row)
+    return map_building_sunlight_hours_response(row)
 
 
 @router.get(

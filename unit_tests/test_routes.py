@@ -883,7 +883,20 @@ def test_icing_days_data_uprn_not_found(test_app):
     client, mock_db_session = test_app
     mock_db_session.execute.return_value = mock_db_result
 
-    response = client.get(f"/buildings/{uprn}/icing_days")
+    response = client.get(f"/buildings/{uprn}/icing-days")
+
+    assert response.status_code == 404
+
+
+def test_sunlight_hours_data_uprn_not_found(test_app):
+    uprn = 100000
+    mock_db_result = Mock()
+    mock_db_result.first.return_value = None
+
+    client, mock_db_session = test_app
+    mock_db_session.execute.return_value = mock_db_result
+
+    response = client.get(f"/buildings/{uprn}/hours-of-sunlight")
 
     assert response.status_code == 404
 

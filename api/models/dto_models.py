@@ -587,6 +587,18 @@ class BuildingIcingDaysData(BaseModel):
     icing_days: float
 
 
+class BuildingSunlightHoursSchema(BaseModel):
+    sunlight_hours: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(sunlight_hours=obj.sunlight_hours)
+
+
+class BuildingSunlightHoursData(BaseModel):
+    sunlight_hours: float
+
+
 class BuildingExtremeWeatherSummarySchema(BaseModel):
     affected_by_icing_days: Optional[bool] = None
     affected_by_hsds: Optional[bool] = None

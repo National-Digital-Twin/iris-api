@@ -752,7 +752,9 @@ def map_building_icing_days_response(row: BuildingIcingDaysSchema):
 
 
 def map_building_sunlight_hours_response(row: BuildingSunlightHoursSchema):
-    data = BuildingSunlightHoursData(sunlight_hours=row.sunlight_hours)
+    data = BuildingSunlightHoursData(
+        sunlight_hours=row.sunlight_hours, daily_sunlight_hours=row.daily_sunlight_hours
+    )
 
     return data
 

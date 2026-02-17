@@ -589,14 +589,19 @@ class BuildingIcingDaysData(BaseModel):
 
 class BuildingSunlightHoursSchema(BaseModel):
     sunlight_hours: float
+    daily_sunlight_hours: float
 
     @classmethod
     def from_orm(cls, obj):
-        return cls(sunlight_hours=obj.sunlight_hours)
+        return cls(
+            sunlight_hours=obj.sunlight_hours,
+            daily_sunlight_hours=obj.daily_sunlight_hours,
+        )
 
 
 class BuildingSunlightHoursData(BaseModel):
     sunlight_hours: float
+    daily_sunlight_hours: float
 
 
 class BuildingExtremeWeatherSummarySchema(BaseModel):

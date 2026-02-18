@@ -863,7 +863,9 @@ def is_missing(value):
 def apply_epc_fallback(building: DetailedBuilding, pg_row):
 
     updates = {
+        "post_code": pg_row.post_code,
         "lodgement_date": str(pg_row.lodgement_date) if pg_row.lodgement_date else None,
+        "sap_rating": pg_row.sap_rating,
         "built_form": pg_row.built_form,
         "structure_unit_type": pg_row.structure_unit_type,
         "floor_construction": pg_row.floor_construction,

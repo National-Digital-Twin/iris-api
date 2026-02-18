@@ -783,7 +783,9 @@ def map_building_details_for_bulk_download(row: BuildingDetailsForBulkDownloadSc
         longitude=row.longitude,
         latitude=row.lattitude,
         first_line_of_address=row.first_line_of_address,
+        post_code=row.post_code,
         energy_rating=row.epc_rating,
+        sap_rating=row.sap_rating,
         toid=row.toid,
         lodgement_date=row.lodgement_date,
         built_form=row.built_form,
@@ -831,6 +833,8 @@ def map_building_details_for_bulk_download(row: BuildingDetailsForBulkDownloadSc
         hsd_3_0_degree_above_baseline=row.hsd_30_median,
         hsd_4_0_degree_above_baseline=row.hsd_40_median,
         icing_days=row.icingdays,
+        sunlight_hours=row.sunlight_hours,
+        daily_sunlight_hours=row.daily_sunlight_hours,
     )
 
     return data

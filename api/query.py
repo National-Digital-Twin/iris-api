@@ -254,7 +254,7 @@ def get_epc_attributes_pg() -> str:
             su.built_form, 
             su.type as structure_unit_type,
             su.fuel_type,
-            ea.lodgement_date, su.window_glazing,
+            ea.lodgement_date, ea.sap_rating, su.window_glazing,
             su.wall_construction, su.wall_insulation,
             su.floor_construction, su.floor_insulation,
             su.roof_construction, 
@@ -265,8 +265,7 @@ def get_epc_attributes_pg() -> str:
         LEFT JOIN LATERAL (
             SELECT
                 id,
-                uprn,
-                epc_rating,
+                sap_rating,
                 lodgement_date
             FROM
                 iris.epc_assessment
@@ -1422,7 +1421,7 @@ def get_icing_days_data_for_building_query(uprn: str):
 def get_sunlight_hours_data_for_building_query(uprn: str):
 
     query = """
-        SELECT sunlight_hours, ROUND((sunlight_hours / 365)::numeric, 3) AS daily_sunlight_hours
+        SELECT sunlight_hours, (sunlight_hours / 365) AS daily_sunlight_hours
         FROM iris.average_annual_count_of_sunlight_hours_5km aacosh
         JOIN iris.building b ON ST_INTERSECTS(aacosh.shape, b.point)
         WHERE b.uprn = :uprn;
@@ -1504,7 +1503,9 @@ def get_building_details_for_bulk_download_query(uprns: [str]):
             msdpp.hsd_25_median,
             msdpp.hsd_30_median,
             msdpp.hsd_40_median,
-            acoid.icingdays
+            acoid.icingdays,
+            aacosh.sunlight_hours,
+            (aacosh.sunlight_hours / 365) as daily_sunlight_hours
         FROM iris.building b
         LEFT JOIN iris.epc_assessment ea ON ea.uprn = b.uprn
         LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id
@@ -1512,6 +1513,7 @@ def get_building_details_for_bulk_download_query(uprns: [str]):
         JOIN iris.median_projections_per_shape mpps ON ST_INTERSECTS(mpps.shape::geometry, b.point)
         JOIN iris.median_summer_days_per_projection msdpp ON ST_INTERSECTS(msdpp.shape, b.point)
         JOIN iris.annual_count_of_icing_days_1991_2020 acoid ON ST_INTERSECTS(acoid.shape, b.point)
+        JOIN iris.average_annual_count_of_sunlight_hours_5km aacosh ON ST_INTERSECTS(aacosh.shape, b.point)
         WHERE b.uprn IN :uprns;
     """
 

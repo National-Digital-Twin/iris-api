@@ -37,7 +37,9 @@ class Building(IesThing):
 
 
 class DetailedBuilding(Building):
+    post_code: Optional[str] = None
     lodgement_date: Optional[str] = None
+    sap_rating: Optional[float] = None
     built_form: Optional[str] = None
     floor_construction: Optional[str] = None
     floor_insulation: Optional[str] = None
@@ -632,6 +634,7 @@ class BuildingDetailsForBulkDownloadSchema(BaseModel):
     longitude: float
     lattitude: float
     epc_rating: Optional[str] = None
+    sap_rating: Optional[float] = None
     lodgement_date: Optional[datetime.date] = None
     sap_rating: Optional[int] = None
     type: Optional[str] = None
@@ -680,6 +683,8 @@ class BuildingDetailsForBulkDownloadSchema(BaseModel):
     hsd_30_median: float
     hsd_40_median: float
     icingdays: float
+    sunlight_hours: float
+    daily_sunlight_hours: float
 
     @classmethod
     def from_orm(cls, obj):
@@ -758,6 +763,8 @@ class BuildingDetailsForBulkDownloadSchema(BaseModel):
             hsd_30_median=obj.hsd_30_median,
             hsd_40_median=obj.hsd_40_median,
             icingdays=obj.icingdays,
+            sunlight_hours=obj.sunlight_hours,
+            daily_sunlight_hours=obj.daily_sunlight_hours,
         )
 
 
@@ -766,7 +773,9 @@ class BuildingDetailsForBulkDownload(BaseModel):
     longitude: Optional[float] = None
     latitude: Optional[float] = None
     first_line_of_address: Optional[str] = None
+    post_code: Optional[str] = None
     energy_rating: Optional[str] = None
+    sap_rating: Optional[float] = None
     toid: Optional[str] = None
     lodgement_date: Optional[datetime.date] = None
     built_form: Optional[str] = None
@@ -814,3 +823,5 @@ class BuildingDetailsForBulkDownload(BaseModel):
     hsd_3_0_degree_above_baseline: float
     hsd_4_0_degree_above_baseline: float
     icing_days: float
+    sunlight_hours: float
+    daily_sunlight_hours: float

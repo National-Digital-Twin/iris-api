@@ -712,6 +712,45 @@ def get_count_of_epc_rating_query(
     return _get_epc_rating_query_from_aggregates(per_region, area_level, area_names)
 
 
+def get_average_daily_sunlight_hours_per_region_query(
+    per_region: bool = False,
+    area_level: str = None,
+    area_names: list = None,
+):
+    where_conditions = []
+    params = {}
+
+    if area_level and area_names:
+        area_names = expand_wales_region(area_names)
+        where_conditions.append(
+            f"{area_level_to_column(area_level)} = ANY(:area_names)"
+        )
+        params["area_names"] = area_names
+
+    if per_region:
+        where_conditions.append("bea.region_name IS NOT NULL AND bea.region_name != ''")
+    
+    region_select = (
+        _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
+    )
+    group_by = (
+        "GROUP BY " + _wales_grouped_column("region_name")
+        if per_region
+        else ""
+    )
+
+    query = f"""
+        SELECT {region_select}
+                AVG(bwa.average_daily_sunlight_hours) AS average_sunlight_hours
+        FROM iris.building_weather_analytics bwa
+        JOIN iris.building_epc_analytics bea ON bwa.uprn = bea.uprn
+        WHERE {" AND ".join(where_conditions)}
+        {group_by};
+    """
+    return query
+
+    
+
 def get_percentage_of_buildings_attributes_per_region_query(
     polygon: str = None, area_level: str = None, area_names: list = None
 ):

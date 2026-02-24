@@ -475,6 +475,17 @@ class BuildingsByDeprivationDimension(BaseModel):
             min_dep_4_pct=obj.min_dep_4_pct,
             max_dep_4_pct=obj.max_dep_4_pct,
         )
+    
+class AverageDailySunlightHoursPerRegion(BaseModel):
+    region_name: str
+    sunlight_hours: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            region_name=obj.region_name,
+            average_sunlight_hours=obj.average_sunlight_hours,
+        )
 
 
 class BuildingAttributePercentage(BaseModel):

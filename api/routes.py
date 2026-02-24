@@ -25,8 +25,8 @@ from mappers import (map_bounded_buildings_response,
                      map_percentage_building_attributes_per_region_response,
                      map_single_building_response,
                      map_structure_unit_flag_history_response)
-from models.dto_models import (AverageSapRatingPerLodgementDate,
-                               AverageDailySunlightHoursPerRegion,
+from models.dto_models import (AverageDailySunlightHoursPerRegion,
+                               AverageSapRatingPerLodgementDate,
                                BuildingAttributePercentagesPerRegion,
                                BuildingDetailsForBulkDownload,
                                BuildingDetailsForBulkDownloadSchema,
@@ -55,9 +55,8 @@ from models.ies_models import (EDH, ClassificationEmum, IesAccount,
                                IesPerson, IesState, IesThing, ies)
 from pydantic import AfterValidator, BaseModel
 from query import (get_all_ngd_attributes_pg,
-                   get_average_daily_sunlight_hours_per_region_query, 
-                   get_building,
-                   get_building_details_for_bulk_download_query,
+                   get_average_daily_sunlight_hours_per_area_query,
+                   get_building, get_building_details_for_bulk_download_query,
                    get_buildings_affected_by_extreme_weather_data_query,
                    get_buildings_by_deprivation_dimension_query,
                    get_buildings_in_bounding_box_query,
@@ -696,21 +695,24 @@ async def get_buildings_by_deprivation_dimension_for_dashboard(
 
     return mapped_results
 
+
 @router.get(
-    "/dashboard/average-daily-sunlight-hours-per-region",
+    "/dashboard/average-daily-sunlight-hours-by-area-level",
     response_model=List[AverageDailySunlightHoursPerRegion],
 )
 async def get_average_daily_sunlight_hours_per_region(
     db: Annotated[AsyncSession, Depends(get_db)],
-    per_region: Annotated[bool, Query()] = True,
-    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
-    area_names: Annotated[Optional[List[str]], Query()] = None,
+    group_by_level: Annotated[str, Query(..., pattern=AREA_LEVEL_PATTERN)],
+    filter_area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    filter_area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
-    query, params = get_average_daily_sunlight_hours_per_region_query(
-        per_region=per_region, area_level=area_level, area_names=area_names
+    query, params = get_average_daily_sunlight_hours_per_area_query(
+        group_by_level=group_by_level, area_level=filter_area_level, area_names=filter_area_names
     )
     results = await db.execute(text(query), params)
-    mapped_results = [AverageDailySunlightHoursPerRegion.from_orm(row) for row in results]
+    mapped_results = [
+        AverageDailySunlightHoursPerRegion.from_orm(row) for row in results
+    ]
 
     return mapped_results
 

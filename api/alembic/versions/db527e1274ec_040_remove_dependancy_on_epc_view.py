@@ -106,6 +106,8 @@ def _create_building_weather_analytics_view() -> None:
                 wdrp_270.wdr_40_median as wdr_40_median_270,
                 wdrp_315.wdr_40_median as wdr_40_median_315,
                 acohdp.hsd_40_median,
+                aacosh.sunlight_hours as average_annual_sunlight_hours,
+                aacosh.sunlight_hours / 365.0 as average_daily_sunlight_hours,
                 COALESCE(er.name, sawr.name) AS region_name,
                 blcc.name AS county_name,
                 dbu.name AS district_name,
@@ -123,6 +125,7 @@ def _create_building_weather_analytics_view() -> None:
             JOIN iris.annual_count_of_hot_summer_days_projections_12km acohdp ON ST_CONTAINS(acohdp.shape, b.point)
             JOIN iris.boundary_line_ceremonial_counties blcc ON st_contains(blcc.geometry, b.point)
             JOIN iris.district_borough_unitary dbu ON st_contains(dbu.geometry, b.point)
+            JOIN iris.average_annual_count_of_sunlight_hours_5km aacosh ON ST_CONTAINS(aacosh.shape, b.point)
             LEFT JOIN iris.district_borough_unitary_ward dbuw ON st_contains(dbuw.geometry, b.point)
             LEFT JOIN iris.unitary_electoral_division ued ON st_contains(ued.geometry, b.point)
             LEFT JOIN iris.english_region er ON er.fid = dbu.english_region_fid

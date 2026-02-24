@@ -478,7 +478,7 @@ class BuildingsByDeprivationDimension(BaseModel):
     
 class AverageDailySunlightHoursPerRegion(BaseModel):
     region_name: str
-    sunlight_hours: float
+    average_sunlight_hours: float
 
     @classmethod
     def from_orm(cls, obj):

@@ -728,7 +728,7 @@ def get_average_daily_sunlight_hours_per_region_query(
         params["area_names"] = area_names
 
     if per_region:
-        where_conditions.append("bea.region_name IS NOT NULL AND bea.region_name != ''")
+        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
     
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -747,7 +747,7 @@ def get_average_daily_sunlight_hours_per_region_query(
         WHERE {" AND ".join(where_conditions)}
         {group_by};
     """
-    return query
+    return query, params
 
     
 

@@ -712,44 +712,48 @@ def get_count_of_epc_rating_query(
     return _get_epc_rating_query_from_aggregates(per_region, area_level, area_names)
 
 
-def get_average_daily_sunlight_hours_per_region_query(
-    per_region: bool = False,
+def get_average_daily_sunlight_hours_per_area_query(
+    group_by_level: str,
     area_level: str = None,
     area_names: list = None,
 ):
     where_conditions = []
     params = {}
+    other_area_level_group_by = ""
+
+    area_level_column = area_level_to_column(group_by_level)
 
     if area_level and area_names:
         area_names = expand_wales_region(area_names)
+
         where_conditions.append(
             f"{area_level_to_column(area_level)} = ANY(:area_names)"
         )
         params["area_names"] = area_names
+        other_area_level_group_by = ", " + area_level_to_column(area_level)
+
+    per_region = area_level == "region" and group_by_level == "region"
 
     if per_region:
         where_conditions.append("region_name IS NOT NULL AND region_name != ''")
-    
-    region_select = (
-        _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
-    )
-    group_by = (
-        "GROUP BY " + _wales_grouped_column("region_name")
-        if per_region
-        else ""
-    )
+
+        area_level_select = _wales_grouped_column("region_name") + " AS area_name,"
+
+        group_by = "GROUP BY " + _wales_grouped_column("region_name")
+    else:
+        area_level_select = area_level_column + " AS area_name,"
+
+        group_by = "GROUP BY " + area_level_column + other_area_level_group_by
 
     query = f"""
-        SELECT {region_select}
-                AVG(bwa.average_daily_sunlight_hours) AS average_sunlight_hours
-        FROM iris.building_weather_analytics bwa
-        JOIN iris.building_epc_analytics bea ON bwa.uprn = bea.uprn
-        WHERE {" AND ".join(where_conditions)}
+        SELECT {area_level_select}
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics_aggregates
+        {"WHERE " + " AND ".join(where_conditions) if any(where_conditions) else ""}
         {group_by};
     """
     return query, params
 
-    
 
 def get_percentage_of_buildings_attributes_per_region_query(
     polygon: str = None, area_level: str = None, area_names: list = None

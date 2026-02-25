@@ -849,6 +849,20 @@ def test_epc_ratings_by_area_level_invalid_filter_level(test_app):
     assert response.status_code == 422
 
 
+def test_average_daily_sunlight_hours_by_area_level_invalid_filter_level(test_app):
+    client, _ = test_app
+
+    response = client.get(
+        "/dashboard/average-daily-sunlight-hours-by-area-level",
+        params={
+            "group_by_level": "county",
+            "filter_area_level": "invalid",
+            "filter_area_names": ["Test"],
+        },
+    )
+    assert response.status_code == 422
+
+
 def test_wind_driven_rain_data_uprn_not_found(test_app):
     uprn = 100000
     mock_db_result = Mock()

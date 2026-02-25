@@ -5,6 +5,7 @@
 from utils import WELSH_REGIONS, expand_wales_region
 
 EPC_ACTIVE_TRUE = "epc_active = true"
+REGION_NAME_PRESENT = "region_name IS NOT NULL AND region_name != ''"
 WELSH_REGIONS_SQL = ", ".join(f"'{region}'" for region in sorted(WELSH_REGIONS))
 
 
@@ -638,7 +639,7 @@ def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
         "ST_Within(point, ST_GeomFromGeoJSON(:polygon))",
     ]
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -678,7 +679,7 @@ def _get_epc_rating_query_from_aggregates(
         params["area_names"] = area_names
 
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -712,7 +713,7 @@ def get_count_of_epc_rating_query(
     return _get_epc_rating_query_from_aggregates(per_region, area_level, area_names)
 
 
-def get_average_daily_sunlight_hours_per_area_query(
+def _get_average_daily_sunlight_hours_per_area_query(
     group_by_level: str,
     area_level: str = None,
     area_names: list = None,
@@ -735,7 +736,7 @@ def get_average_daily_sunlight_hours_per_area_query(
     per_region = area_level == "region" and group_by_level == "region"
 
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
         area_level_select = _wales_grouped_column("region_name") + " AS area_name,"
 
@@ -753,6 +754,39 @@ def get_average_daily_sunlight_hours_per_area_query(
         {group_by};
     """
     return query, params
+
+def _get_average_daily_sunlight_hours_query_with_polygon(
+        polygon: str
+    ):
+
+    params = {"polygon": polygon}
+    where_conditions = ["ST_Within(point, ST_GeomFromGeoJSON(:polygon))"]
+
+    query = f"""
+        SELECT
+            'Area average' AS area_name,
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics
+        WHERE {" AND ".join(where_conditions)}
+
+        UNION ALL
+
+        SELECT
+            'National average' AS area_name,
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics
+    """
+    return query, params
+
+def get_average_daily_sunlight_hours_query(
+    group_by_level: str,
+    polygon: str = None,
+    area_level: str = None,
+    area_names: list = None,
+):
+    if polygon:
+        return _get_average_daily_sunlight_hours_query_with_polygon(polygon)
+    return _get_average_daily_sunlight_hours_per_area_query(group_by_level, area_level, area_names)
 
 
 def get_percentage_of_buildings_attributes_per_region_query(

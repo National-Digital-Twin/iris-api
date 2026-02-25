@@ -856,8 +856,8 @@ def test_average_daily_sunlight_hours_by_area_level_invalid_filter_level(test_ap
         "/dashboard/average-daily-sunlight-hours-by-area-level",
         params={
             "group_by_level": "county",
-            "filter_area_level": "invalid",
-            "filter_area_names": ["Test"],
+            "area_level": "invalid",
+            "area_names": ["Test"],
         },
     )
     assert response.status_code == 422

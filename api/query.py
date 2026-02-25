@@ -712,7 +712,7 @@ def get_count_of_epc_rating_query(
     return _get_epc_rating_query_from_aggregates(per_region, area_level, area_names)
 
 
-def get_average_daily_sunlight_hours_per_area_query(
+def _get_average_daily_sunlight_hours_per_area_query(
     group_by_level: str,
     area_level: str = None,
     area_names: list = None,
@@ -753,6 +753,39 @@ def get_average_daily_sunlight_hours_per_area_query(
         {group_by};
     """
     return query, params
+
+def _get_average_daily_sunlight_hours_query_with_polygon(
+        polygon: str
+    ):
+
+    params = {"polygon": polygon}
+    where_conditions = ["ST_Within(point, ST_GeomFromGeoJSON(:polygon))"]
+
+    query = f"""
+        SELECT
+            'Area average' AS area_name,
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics
+        WHERE {" AND ".join(where_conditions)}
+
+        UNION ALL
+
+        SELECT
+            'National average' AS area_name,
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics
+    """
+    return query, params
+
+def get_average_daily_sunlight_hours_query(
+    group_by_level: str,
+    polygon: str = None,
+    area_level: str = None,
+    area_names: list = None,
+):
+    if polygon:
+        return _get_average_daily_sunlight_hours_query_with_polygon(polygon)
+    return _get_average_daily_sunlight_hours_per_area_query(group_by_level, area_level, area_names)
 
 
 def get_percentage_of_buildings_attributes_per_region_query(

@@ -5,6 +5,7 @@
 from utils import WELSH_REGIONS, expand_wales_region
 
 EPC_ACTIVE_TRUE = "epc_active = true"
+REGION_NAME_PRESENT = "region_name IS NOT NULL AND region_name != ''"
 WELSH_REGIONS_SQL = ", ".join(f"'{region}'" for region in sorted(WELSH_REGIONS))
 
 
@@ -638,7 +639,7 @@ def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
         "ST_Within(point, ST_GeomFromGeoJSON(:polygon))",
     ]
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -678,7 +679,7 @@ def _get_epc_rating_query_from_aggregates(
         params["area_names"] = area_names
 
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -735,7 +736,7 @@ def _get_average_daily_sunlight_hours_per_area_query(
     per_region = area_level == "region" and group_by_level == "region"
 
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
         area_level_select = _wales_grouped_column("region_name") + " AS area_name,"
 

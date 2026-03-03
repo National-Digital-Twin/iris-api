@@ -16,6 +16,24 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## [0.96.0] - 2026-02-25
+
+- [DPAV-2408]: Added endpoints for weather data per building
+- [DPAV-2490]: Disabled endpoints providing flagging functionality
+- [DPAV-2486]: Added endpoint to fetch deprivation data geojson
+- [DPAV-2499]: Added endpoint to fetch dashboard analytics deprivation data
+- [DPAV-2436]: Added migration and endpoint for the sunlight hours
+- [DPAV-2500]: Updated the query to fetch deprivation data for the dashboards to account for area level
+- [DPAV-2496]: Added endpoint to fetch building details for bulk downloads
+- [NON-REQ]: Added migrations for deprivation data structures
+- [DPAV-2418]: Added new endpoint to fetch sunlight hours data for a building
+- [DPAV-2496]: Added sunlight hours data to bulk download & fixed issues with general downloads
+- [DPAV-2484]: Fixed the ONS deprivation data resource migration
+- [DPAV-2497]: Added sunlight hours to building weather analytics view
+- [DPAV-2497]: Added endpoint to fetch the data per region for the sunlight hours
+- [DPAV-2497]: Added new materialized view for weather analytics aggregates
+- [DPAV-2498]: Handle polygons in sunlight hours query
+
 ## [0.95.5] - 2026-02-03
 
 - [DPAV-2425]: updated api queries to handle UPRNs which are linked to address-matched EPC certificates
